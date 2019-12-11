@@ -1,0 +1,48 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0",
+  "FriendlyName": "AI Avatar",
+  "Description": "AI Avatar from the IAI Uni-Bremen",
+  "Category": "UIAIAvatar",
+  "CreatedBy": "Jose Rojas, Mona Abdel-Keream, Patrick Mania",
+  "CreatedByURL": "https://ai.uni-bremen.de",
+  "DocsURL": "https://github.com/code-iai/UE4Avatar/wiki",
+  "MarketplaceURL": "",
+  "SupportURL": "https://github.com/code-iai/UE4Avatar",
+  "CanContainContent": true,
+  "IsBetaVersion": false,
+  "Installed": false,
+  "Modules": [
+    {
+      "Name": "UIAIAvatar",
+      "Type": "Developer",
+      "LoadingPhase": "Default",
+      "AdditionalDependencies": [
+        "UROSBridge"
+      ]
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "UROSBridge",
+      "Enabled": true
+    },
+    {
+      "Name": "UUtils",
+      "Enabled": true
+    },
+    {
+      "Name": "UPIDController",
+      "Enabled": true
+    },
+    {
+      "Name": "ProceduralMeshComponent",
+      "Enabled": true
+    },
+    {
+      "Name": "SteamVR",
+      "Enabled": true
+    }
+  ]
+}
