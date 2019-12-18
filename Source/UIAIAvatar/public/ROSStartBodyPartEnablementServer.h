@@ -36,15 +36,15 @@ public:
 
   
         UE_LOG(LogAvatarROS, Log, TEXT("[%s] In actor %s: Service [%s] Server: Vector %f %f %f"),
-			*FString(__FUNCTION__), *Owner->GetName(), *Name, 
+			*FString(__FUNCTION__), *Owner->GetName(), *MyName, 
 			Request->GetTarget().GetX(),
 			Request->GetTarget().GetY(),
 			Request->GetTarget().GetZ() );
 		
 		FVector NewVec(Request->GetTarget().GetX(), Request->GetTarget().GetY(),   Request->GetTarget().GetZ());
-		FString Name(Request->GetName());
+		FString M_Name(Request->GetName());
 
-		AsyncTask(ENamedThreads::GameThread, [this, NewVec, Name]()
+		AsyncTask(ENamedThreads::GameThread, [this, NewVec, M_Name]()
 		{
 			// Search for a static mesh actor with the name cube and move it up
 			UE_LOG(LogAvatarROS, Log, TEXT("[%s] Executing on game thread."), *FString(__FUNCTION__));
@@ -58,28 +58,28 @@ public:
 
 			UE_LOG(LogAvatarROS, Log, TEXT("About to execute  on %s"), *(Avatar->GetName()) );
 
-			if (Name.Equals("spine")) {
+			if (M_Name.Equals("spine")) {
 				Avatar->StartSpineEnablement(FRotator(NewVec.Y, NewVec.Z, NewVec.X));
 			}
-			else if (Name.Equals("left_hand_rotation"))
+			else if (M_Name.Equals("left_hand_rotation"))
 			{
 				Avatar->StartLeftHandRotationEnablement(FRotator(NewVec.Y, NewVec.Z, NewVec.X));
 			}
-			else if (Name.Equals("left_hand_ik"))
+			else if (M_Name.Equals("left_hand_ik"))
 			{
 				Avatar->StartLeftHandIKEnablement(NewVec);
 			}
-			else if (Name.Equals("right_hand_rotation"))
+			else if (M_Name.Equals("right_hand_rotation"))
 			{
 				Avatar->StartRightHandRotationEnablement(FRotator(NewVec.Y, NewVec.Z, NewVec.X));
 			}
-			else if (Name.Equals("right_hand_ik"))
+			else if (M_Name.Equals("right_hand_ik"))
 			{
 				Avatar->StartRightHandIKEnablement(NewVec);
 			}
 			else
 			{
-				UE_LOG(LogAvatarROS, Warning, TEXT("Called StartBodyPartEnablement without known name %s"), *Name);
+				UE_LOG(LogAvatarROS, Warning, TEXT("Called StartBodyPartEnablement without known name %s"), *M_Name);
 			}
 			// Avatar->InterpolateLeftHandIKTo(NewVec);
 			//Avatar->SetAbsoluteActorRotationWithTimeline(NewVec);
