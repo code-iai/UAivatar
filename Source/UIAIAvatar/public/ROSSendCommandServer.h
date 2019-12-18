@@ -36,7 +36,7 @@ public:
             StaticCastSharedPtr<iai_avatar_msgs::Command::Request>(InRequest);
 
         UE_LOG(LogAvatarROS, Log, TEXT("[%s] In actor %s: Service [%s] Server: Received the following command: %s"),
-			*FString(__FUNCTION__), *Owner->GetName(), *Name, 
+			*FString(__FUNCTION__), *Owner->GetName(), *MyName, 
 			*(Request->GetCommand())
 		);
 

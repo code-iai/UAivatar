@@ -33,7 +33,7 @@ public:
             StaticCastSharedPtr<iai_avatar_msgs::PanTilt::Request>(InRequest);
 
         UE_LOG(LogTemp, Log, TEXT("[%s] In actor %s: Service [%s] Server: Add Two Ints: %f %f"),
-			*FString(__FUNCTION__), *Owner->GetName(), *Name, 
+			*FString(__FUNCTION__), *Owner->GetName(), *MyName, 
 			Request->GetPan(),
 			Request->GetTilt());
 

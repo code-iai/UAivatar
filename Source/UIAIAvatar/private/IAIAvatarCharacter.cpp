@@ -276,7 +276,7 @@ void AIAIAvatarCharacter::LookUpAtRate(float Rate)
 
 	 check(GetMesh());
 
-	 auto Mesh = GetMesh();
+	 auto MyMesh = GetMesh();
 
 	 if (ObjectToGrasp)
 	 {
@@ -291,7 +291,7 @@ void AIAIAvatarCharacter::LookUpAtRate(float Rate)
 		 
 		 // Calculate transform between bone and world space
 		 // Alternatively you can also set the IK coord space to "World space"
-		 FVector GraspObjectLocationInComponentSpace = Mesh->GetComponentTransform().InverseTransformPosition(graspObjectTransform.GetLocation());
+		 FVector GraspObjectLocationInComponentSpace = MyMesh->GetComponentTransform().InverseTransformPosition(graspObjectTransform.GetLocation());
 
 		 AnimationInstance->Spine1Rotation = FRotator(0, 0, 20);
 		 AnimationInstance->Spine2Rotation = FRotator(0, 0, 0);
@@ -312,7 +312,7 @@ void AIAIAvatarCharacter::LookUpAtRate(float Rate)
 
 	 check(GetMesh());
 
-	 auto Mesh = GetMesh();
+	 auto MyMesh = GetMesh();
 
 	 if (ObjectToGrasp_r)
 	 {
@@ -327,7 +327,7 @@ void AIAIAvatarCharacter::LookUpAtRate(float Rate)
 
 		 // Calculate transform between bone and world space
 		 // Alternatively you can also set the IK coord space to "World space"
-		 FVector GraspObjectLocationInComponentSpace = Mesh->GetComponentTransform().InverseTransformPosition(graspObjectTransform.GetLocation());
+		 FVector GraspObjectLocationInComponentSpace = MyMesh->GetComponentTransform().InverseTransformPosition(graspObjectTransform.GetLocation());
 
 		 AnimationInstance->Spine1Rotation  = FRotator(20, -40, 20);
 		 AnimationInstance->Spine2Rotation  = FRotator(0, 0, 0);
@@ -346,7 +346,7 @@ void AIAIAvatarCharacter::LookUpAtRate(float Rate)
 	 FTransform ObjectTransform;
 	 FVector ObjLocationInCompSpace;
 	 FString obj_name;
-	 TMap<FString, FHitResult> UniqueHits;
+	 TMap<FString, FHitResult> MyUniqueHits;
 
 	 HitResults = TraceObjectsWithBP();
 
@@ -363,27 +363,27 @@ void AIAIAvatarCharacter::LookUpAtRate(float Rate)
 		 // Verifying locations
 		 if (ObjLocationInCompSpace.Y > 0 && ObjLocationInCompSpace.Z > -6.5) {			// Front and over surface
 
-			 if (!UniqueHits.Contains(obj_name)) { // Ensure unique objects
-				 UniqueHits.Emplace(obj_name, *It); // Add to list
+			 if (!MyUniqueHits.Contains(obj_name)) { // Ensure unique objects
+				 MyUniqueHits.Emplace(obj_name, *It); // Add to list
 			 }
 		 }
 	 }
 
-	 return UniqueHits;
+	 return MyUniqueHits;
  }
 
  // List reachable objects and set a target
  void AIAIAvatarCharacter::SetTargetObject() {
 
 	 // Local variables
-	 TMap<FString, FHitResult> UniqueHits;
+	 TMap<FString, FHitResult> MyUniqueHits;
 	 TMap<int, FString> ObjectsIndex;
 
-	 UniqueHits = ListObjects();
+	 MyUniqueHits = ListObjects();
 
 	 // Printing objects into screen
 	 int index_count = 0;
-	 for (auto It = UniqueHits.CreateIterator(); It; ++It) {
+	 for (auto It = MyUniqueHits.CreateIterator(); It; ++It) {
 		 ObjectsIndex.Emplace(index_count, (*It).Key);
 		 
 		 GEngine->AddOnScreenDebugMessage(INDEX_NONE, 10, FColor::Green, FString::Printf(TEXT("  - %s"), *(*It).Key), true, FVector2D(1.2, 1.2));
@@ -394,8 +394,8 @@ void AIAIAvatarCharacter::LookUpAtRate(float Rate)
 	 GEngine->AddOnScreenDebugMessage(INDEX_NONE, 10, FColor::Green, "Object List:", true, FVector2D(1.5, 1.5));
 
 	 current_obj_target.Key++;
-	 if (UniqueHits.Num() != 0) {
-		 if (current_obj_target.Key >= UniqueHits.Num()) {
+	 if (MyUniqueHits.Num() != 0) {
+		 if (current_obj_target.Key >= MyUniqueHits.Num()) {
 			 current_obj_target.Key = 0;
 		 }
 		 current_obj_target.Value = ObjectsIndex[current_obj_target.Key];
@@ -413,22 +413,22 @@ void AIAIAvatarCharacter::LookUpAtRate(float Rate)
  void AIAIAvatarCharacter::GraspTargetObject() {
 
 	 // Local variables
-	 TMap<FString, FHitResult> UniqueHits;
+	 TMap<FString, FHitResult> MyUniqueHits;
 
-	 UniqueHits = ListObjects();
+	 MyUniqueHits = ListObjects();
 
 	 // Verify if target is valid
 	 if (current_obj_target.Key != -1) {
 
 		 // Verify list hasn't changed
-		 if (UniqueHits.FindRef(current_obj_target.Value).GetActor() == NULL) {		 
+		 if (MyUniqueHits.FindRef(current_obj_target.Value).GetActor() == NULL) {		 
 			 UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Sorry. The object list changed."));
 			 GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, "ERROR: Sorry. The object list changed.", true, FVector2D(1.7, 1.7));
 		 }
 		 else {
 			 UE_LOG(LogAvatarCharacter, Log, TEXT("Grasping target: %s "), *current_obj_target.Value);
 			 GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Green, FString::Printf(TEXT("Grasping target: %s"), *current_obj_target.Value), true, FVector2D(1.2, 1.2));
-			 StartGrasp(UniqueHits[current_obj_target.Value]);
+			 StartGrasp(MyUniqueHits[current_obj_target.Value]);
 		 }
 	 }
 	 else {
@@ -441,23 +441,23 @@ void AIAIAvatarCharacter::LookUpAtRate(float Rate)
  TArray<FString>  AIAIAvatarCharacter::GraspTargetObject_ROS(FString targetObject, bool hold) {
 
 	 // Local variables
-	 TMap<FString, FHitResult> UniqueHits;
+	 TMap<FString, FHitResult> MyUniqueHits;
 	 TArray<FString> objectList;
 
-	 UniqueHits = ListObjects();
+	 MyUniqueHits = ListObjects();
  
 	 // Verify list hasn't changed
-	 if (UniqueHits.FindRef(targetObject).GetActor() == NULL) {
+	 if (MyUniqueHits.FindRef(targetObject).GetActor() == NULL) {
 		 UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Object \"%s\" not found!"),*targetObject);
 		 GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Object \"%s\" not found!"), *targetObject), true, FVector2D(1.7, 1.7));
 	 }
 	 else {
 		 UE_LOG(LogAvatarCharacter, Log, TEXT("Grasping: %s "), *targetObject);
 		 GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Green, FString::Printf(TEXT("Grasping: %s"), *targetObject), true, FVector2D(1.2, 1.2));
-		 StartGrasp(UniqueHits[targetObject], hold);
+		 StartGrasp(MyUniqueHits[targetObject], hold);
 	 }
 
-	 for (auto It = UniqueHits.CreateIterator(); It; ++It) {
+	 for (auto It = MyUniqueHits.CreateIterator(); It; ++It) {
 		 objectList.Add((*It).Key);
 	 }
 
@@ -669,7 +669,7 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 void AIAIAvatarCharacter::PlaceObject(FString targetPlace, FString Hand, FVector targetPoint) {
 	
 	// Local variables
-	TMap<FString, FHitResult> UniqueHits;
+	TMap<FString, FHitResult> MyUniqueHits;
 	FRotator placingRotation;
 	FRotator TargetRotation;
 	FVector TargetLocation;
@@ -790,10 +790,10 @@ void AIAIAvatarCharacter::PlaceObject(FString targetPlace, FString Hand, FVector
 
 	}
 	else if (targetPlace.Equals("microwave")) {	
-		UniqueHits = ListObjects();
+		MyUniqueHits = ListObjects();
 
 		// Verify microwave is near
-		if (UniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor() == NULL) {
+		if (MyUniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor() == NULL) {
 			UE_LOG(LogAvatarCharacter, Error, TEXT("ERROR: Microwave is not near you."));
 			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: The Microwave is not near you.")), true, FVector2D(1.7, 1.7));
 
@@ -801,8 +801,8 @@ void AIAIAvatarCharacter::PlaceObject(FString targetPlace, FString Hand, FVector
 		}
 		else {
 			// Getting location relative to component
-			TargetLocation = UniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor()->GetActorLocation();
-			TargetRotation = UniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor()->GetActorRotation();
+			TargetLocation = MyUniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor()->GetActorLocation();
+			TargetRotation = MyUniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor()->GetActorRotation();
 			TargetLocation += TargetRotation.RotateVector(FVector(0, -5, -10));
 			AnimationInstance->Spine1Rotation.Roll = 47;
 			TargetLocation = GetMesh()->GetComponentTransform().InverseTransformPosition(TargetLocation);
@@ -916,7 +916,7 @@ void AIAIAvatarCharacter::PlaceObject(FString targetPlace, FString Hand, FVector
 void AIAIAvatarCharacter::PressMicrowaveButton(FString button) {
 
 	// Local variables
-	TMap<FString, FHitResult> UniqueHits;
+	TMap<FString, FHitResult> MyUniqueHits;
 	FRotator ObjRotation;
 	FVector ObjLocation;
 	FVector MidLocation;
@@ -934,9 +934,9 @@ void AIAIAvatarCharacter::PressMicrowaveButton(FString button) {
 	
 	AActor *Microwave;
 	
-	UniqueHits = ListObjects();
+	MyUniqueHits = ListObjects();
 
-	Microwave = UniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor();
+	Microwave = MyUniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor();
 
 	// Verify microwave is near
 	if (Microwave == nullptr) {
@@ -1029,8 +1029,8 @@ void AIAIAvatarCharacter::PressMicrowaveButton(FString button) {
 void AIAIAvatarCharacter::CloseDoor(FString door) {
 
 	// Local variables
-	TMap<FString, FHitResult> UniqueHits;
-	FRotator HandRotation;
+	TMap<FString, FHitResult> MyUniqueHits;
+	FRotator Hand_Rotation;
 	FRotator ObjRotation;
 	FVector ObjLocation;
 	FVector MidLocation;
@@ -1048,7 +1048,7 @@ void AIAIAvatarCharacter::CloseDoor(FString door) {
 	FTimerDelegate SpineDelegate_end;
 	FTimerDelegate HandRotDelegate_end;
 
-	UniqueHits = ListObjects();
+	MyUniqueHits = ListObjects();
 
 	// Get Animation
 	UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
@@ -1056,7 +1056,7 @@ void AIAIAvatarCharacter::CloseDoor(FString door) {
 
 	if (door.Equals("microwave")) {
 		// Verify microwave is near
-		if (UniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor() == NULL) {
+		if (MyUniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor() == NULL) {
 			UE_LOG(LogAvatarCharacter, Error, TEXT("ERROR: The microwave is not near to you."));
 			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: The microwave is not near to you.")), true, FVector2D(1.7, 1.7));
 			return;
@@ -1064,8 +1064,8 @@ void AIAIAvatarCharacter::CloseDoor(FString door) {
 		else {
 
 			// Getting location
-			ObjLocation = UniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor()->GetActorLocation();
-			ObjRotation = UniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor()->GetActorRotation();
+			ObjLocation = MyUniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor()->GetActorLocation();
+			ObjRotation = MyUniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor()->GetActorRotation();
 			
 			ObjLocation += ObjRotation.RotateVector(FVector(-12, 57, 0));
 			MidLocation = ObjLocation;
@@ -1086,11 +1086,11 @@ void AIAIAvatarCharacter::CloseDoor(FString door) {
 	// Using right or left hand
 	if (!isGrasped_l) {
 		
-		HandRotation = FRotator(0, 45,180);
+		Hand_Rotation = FRotator(0, 45,180);
 
 		// 0s) Move Hand to mid location
 		StartLeftHandIKEnablement(MidLocation);
-		StartLeftHandRotationEnablement(HandRotation);
+		StartLeftHandRotationEnablement(Hand_Rotation);
 
 		HandRotDelegate_end = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::StartLeftHandRotationDisablement);
 		HandIKSetDelegate_target = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::InterpolateLeftHandIKTo, DoorLocation);
@@ -1099,11 +1099,11 @@ void AIAIAvatarCharacter::CloseDoor(FString door) {
 	}
 	else if (!isGrasped_r) {
 
-		HandRotation = FRotator(0, -45, 0);
+		Hand_Rotation = FRotator(0, -45, 0);
 
 		// 0s) Move Hand to mid location
 		StartRightHandIKEnablement(MidLocation);
-		StartRightHandRotationEnablement(HandRotation);
+		StartRightHandRotationEnablement(Hand_Rotation);
 
 		HandRotDelegate_end = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::StartRightHandRotationDisablement);
 		HandIKSetDelegate_target = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::InterpolateRightHandIKTo, DoorLocation);
@@ -2520,7 +2520,7 @@ void AIAIAvatarCharacter::MoveRight(float Value)
 	 UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
 	 check(AnimationInstance != nullptr);
 
-	 const float InterpSpeed = 6.0f;
+	 const float Interp_Speed = 6.0f;
 
 	 if (IKEnableTickDirection == -1 && AnimationInstance->LeftHandIKAlpha <= 0.0f) {
 		 IKEnableActive = false;
@@ -2532,14 +2532,14 @@ void AIAIAvatarCharacter::MoveRight(float Value)
 	 }
 
 	 if (IKEnableTickDirection == 1) {
-		 AnimationInstance->LeftHandIKAlpha = FMath::FInterpTo(AnimationInstance->LeftHandIKAlpha, 1.0f, DeltaTime, InterpSpeed);
-		 AnimationInstance->HandRotationAlpha = FMath::FInterpTo(AnimationInstance->HandRotationAlpha, 1.0f, DeltaTime, InterpSpeed);
-		 AnimationInstance->SpineRotationAlpha = FMath::FInterpTo(AnimationInstance->SpineRotationAlpha, 1.0f, DeltaTime, InterpSpeed);
+		 AnimationInstance->LeftHandIKAlpha = FMath::FInterpTo(AnimationInstance->LeftHandIKAlpha, 1.0f, DeltaTime, Interp_Speed);
+		 AnimationInstance->HandRotationAlpha = FMath::FInterpTo(AnimationInstance->HandRotationAlpha, 1.0f, DeltaTime, Interp_Speed);
+		 AnimationInstance->SpineRotationAlpha = FMath::FInterpTo(AnimationInstance->SpineRotationAlpha, 1.0f, DeltaTime, Interp_Speed);
 	 }
 	 else {
-		 AnimationInstance->LeftHandIKAlpha = FMath::FInterpTo(AnimationInstance->LeftHandIKAlpha, 0.0f, DeltaTime, InterpSpeed);
-		 AnimationInstance->HandRotationAlpha = FMath::FInterpTo(AnimationInstance->HandRotationAlpha, 0.0f, DeltaTime, InterpSpeed);
-		 AnimationInstance->SpineRotationAlpha = FMath::FInterpTo(AnimationInstance->SpineRotationAlpha, 0.0f, DeltaTime, InterpSpeed);
+		 AnimationInstance->LeftHandIKAlpha = FMath::FInterpTo(AnimationInstance->LeftHandIKAlpha, 0.0f, DeltaTime, Interp_Speed);
+		 AnimationInstance->HandRotationAlpha = FMath::FInterpTo(AnimationInstance->HandRotationAlpha, 0.0f, DeltaTime, Interp_Speed);
+		 AnimationInstance->SpineRotationAlpha = FMath::FInterpTo(AnimationInstance->SpineRotationAlpha, 0.0f, DeltaTime, Interp_Speed);
 	 }
  }
 
@@ -2548,7 +2548,7 @@ void AIAIAvatarCharacter::MoveRight(float Value)
 	 UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
 	 check(AnimationInstance != nullptr);
 
-	 const float InterpSpeed = 6.0f;
+	 const float Interp_Speed = 6.0f;
 
 	 if (IKEnableTickDirection_r == -1 && AnimationInstance->RightHandIKAlpha <= 0.0f) {
 		 IKEnableActive_r = false;
@@ -2560,14 +2560,14 @@ void AIAIAvatarCharacter::MoveRight(float Value)
 	 }
 
     if (IKEnableTickDirection_r == 1) {
-		 AnimationInstance->RightHandIKAlpha = FMath::FInterpTo(AnimationInstance->RightHandIKAlpha, 1.0f, DeltaTime, InterpSpeed);
-		 AnimationInstance->RightHandRotationAlpha = FMath::FInterpTo(AnimationInstance->RightHandRotationAlpha, 1.0f, DeltaTime, InterpSpeed);
-		 AnimationInstance->SpineRotationAlpha = FMath::FInterpTo(AnimationInstance->SpineRotationAlpha, 1.0f, DeltaTime, InterpSpeed);
+		 AnimationInstance->RightHandIKAlpha = FMath::FInterpTo(AnimationInstance->RightHandIKAlpha, 1.0f, DeltaTime, Interp_Speed);
+		 AnimationInstance->RightHandRotationAlpha = FMath::FInterpTo(AnimationInstance->RightHandRotationAlpha, 1.0f, DeltaTime, Interp_Speed);
+		 AnimationInstance->SpineRotationAlpha = FMath::FInterpTo(AnimationInstance->SpineRotationAlpha, 1.0f, DeltaTime, Interp_Speed);
 	 }
 	 else {
-		 AnimationInstance->RightHandIKAlpha = FMath::FInterpTo(AnimationInstance->RightHandIKAlpha, 0.0f, DeltaTime, InterpSpeed);
-		 AnimationInstance->RightHandRotationAlpha = FMath::FInterpTo(AnimationInstance->RightHandRotationAlpha, 0.0f, DeltaTime, InterpSpeed);
-		 AnimationInstance->SpineRotationAlpha = FMath::FInterpTo(AnimationInstance->SpineRotationAlpha, 0.0f, DeltaTime, InterpSpeed);
+		 AnimationInstance->RightHandIKAlpha = FMath::FInterpTo(AnimationInstance->RightHandIKAlpha, 0.0f, DeltaTime, Interp_Speed);
+		 AnimationInstance->RightHandRotationAlpha = FMath::FInterpTo(AnimationInstance->RightHandRotationAlpha, 0.0f, DeltaTime, Interp_Speed);
+		 AnimationInstance->SpineRotationAlpha = FMath::FInterpTo(AnimationInstance->SpineRotationAlpha, 0.0f, DeltaTime, Interp_Speed);
 	 }
  }
 
