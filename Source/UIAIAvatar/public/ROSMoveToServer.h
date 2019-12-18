@@ -36,7 +36,7 @@ public:
 
   
         UE_LOG(LogAvatarROS, Log, TEXT("[%s] In actor %s: Service [%s] Server: Move to Coords %f %f %f"),
-			*FString(__FUNCTION__), *Owner->GetName(), *Name, 
+			*FString(__FUNCTION__), *Owner->GetName(), *MyName, 
 			Request->GetPosition().GetX(),
 			Request->GetPosition().GetY(), 
 			Request->GetPosition().GetZ());

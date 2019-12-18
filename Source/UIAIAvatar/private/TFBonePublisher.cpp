@@ -179,7 +179,8 @@ geometry_msgs::TransformStamped UTFBonePublisher::GetTransformStampedMsg(const F
 
     //FTransform ROSTransf = FConversions::UToROS(bone_transform.SetToRelativeTransform(Mesh->GetBoneTransform(pbone_index)));
 
-    FTransform ROSTransf = FConversions::UToROS(UKismetMathLibrary::ConvertTransformToRelative(ParentTransform,ChildTransform));
+    //FTransform ROSTransf = FConversions::UToROS(UKismetMathLibrary::ConvertTransformToRelative(ParentTransform,ChildTransform));
+	FTransform ROSTransf = FConversions::UToROS(UKismetMathLibrary::MakeRelativeTransform(ParentTransform, ChildTransform));
 
     geometry_msgs::Transform TransfMsg(
             geometry_msgs::Vector3(ROSTransf.GetLocation()),

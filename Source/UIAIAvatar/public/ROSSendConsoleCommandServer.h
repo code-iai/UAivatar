@@ -36,13 +36,13 @@ public:
             StaticCastSharedPtr<iai_avatar_msgs::Command::Request>(InRequest);
 
         UE_LOG(LogAvatarROS, Log, TEXT("[%s] In actor %s: Service [%s] Server: Received the following console command: %s"),
-			*FString(__FUNCTION__), *Owner->GetName(), *Name, 
+			*FString(__FUNCTION__), *Owner->GetName(), *MyName, 
 			*(Request->GetCommand())
 		);
 
 
 		FString RequestString = Request->GetCommand();
-
+		
 		 AsyncTask(ENamedThreads::GameThread, [this, RequestString]()
 		 {
 			 UE_LOG(LogTemp, Log, TEXT("[%s] Executing on game thread."), *FString(__FUNCTION__));	
@@ -58,11 +58,16 @@ public:
 				 );
 
 			 }
+
+			 UE_LOG(LogTemp, Log, TEXT("[%s] Game thread finished."), *FString(__FUNCTION__));
 		 }
 		 );
 
+        UE_LOG(LogAvatarROS, Log, TEXT("Returning response in FROSSendConsoleCommandServer"));
+
         return MakeShareable<FROSBridgeSrv::SrvResponse>
                 (new iai_avatar_msgs::Command::Response());
+
     }
 
 private:
