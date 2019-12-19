@@ -1,5 +1,5 @@
-// Copyright 2017, Institute for Artificial Intelligence - University of Bremen
-// Author: Andrei Haidu (http://haidu.eu)
+// Copyright 2019, Institute for Artificial Intelligence - University of Bremen
+// Author: 
 
 #include "UIAIAvatarModule.h"
 #include "Modules/ModuleManager.h"
@@ -7,7 +7,7 @@
 DEFINE_LOG_CATEGORY(LogAvatarROS);
 DEFINE_LOG_CATEGORY(LogAvatarCharacter);
 
-#define LOCTEXT_NAMESPACE "FIAIAvatarModule"
+#define LOCTEXT_NAMESPACE "FUIAIAvatarModule"
 
 void FUIAIAvatarModule::StartupModule()
 {
