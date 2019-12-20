@@ -43,7 +43,7 @@ public:
 
 		UE_LOG(LogAvatarROS, Log, TEXT("Service Request!"));
 		UE_LOG(LogAvatarROS, Log, TEXT("[%s] In actor %s: Service [%s] Command: %s -> \"%s\""),
-			*FString(__FUNCTION__), *Owner->GetName(), *MyName, *command, *targetObject);
+			*FString(__FUNCTION__), *Owner->GetName(), *Name, *command, *targetObject);
 
 		AsyncTask(ENamedThreads::GameThread, [this, targetObject, command]()
 		{
@@ -81,7 +81,7 @@ public:
 			}
 			else
 			{
-				UE_LOG(LogAvatarROS, Warning, TEXT("Called GeneralGrasp without known command %s"), *MyName);
+				UE_LOG(LogAvatarROS, Warning, TEXT("Called GeneralGrasp without known command %s"), *Name);
 			}
 			
 		}
