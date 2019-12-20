@@ -37,7 +37,7 @@ public:
 
   
         UE_LOG(LogAvatarROS, Log, TEXT("[%s] In actor %s: Service [%s] Server: Rotate to RPY %f %f %f"),
-			*FString(__FUNCTION__), *Owner->GetName(), *MyName, 
+			*FString(__FUNCTION__), *Owner->GetName(), *Name, 
 			Request->GetTarget().GetX(),
 			Request->GetTarget().GetY(),
 			Request->GetTarget().GetZ() );
