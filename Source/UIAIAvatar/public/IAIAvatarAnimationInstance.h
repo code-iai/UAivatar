@@ -50,7 +50,7 @@ public:
 UCLASS()
 class UIAIAVATAR_API UIAIAvatarAnimationInstance : public UAnimInstance
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 
 public:
 	// Target coordinates for the left hand of the Avatar
@@ -147,6 +147,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		bool EnableActorRotation;
+
+	/** Left Lower Leg Offset From Ground, Set in Character.cpp Tick */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		FRotator SkelControl_Head;
 
 	void resetRightHandFingerRots();
 	void resetLeftHandFingerRots();

@@ -150,9 +150,9 @@ void AIAIAvatarCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
 	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("Turn", this, &AIAIAvatarCharacter::TurnCam);
 	PlayerInputComponent->BindAxis("TurnRate", this, &AIAIAvatarCharacter::TurnAtRate);
-	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis("LookUp", this, &AIAIAvatarCharacter::LookCam);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AIAIAvatarCharacter::LookUpAtRate);
 
 	// handle touch devices
@@ -188,6 +188,42 @@ void AIAIAvatarCharacter::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+void AIAIAvatarCharacter::TurnCam(float Axis)
+{
+	if (enableDTW) {
+		FollowCamera->AddWorldRotation(FRotator(0, Axis, 0));
+
+		Cast<UIAIAvatarAnimationInstance>(this->GetMesh()->GetAnimInstance())->SkelControl_Head =
+			FollowCamera->GetComponentRotation() - FRotator(0, 180.f, 0);
+	}
+	else {
+		
+		if (Axis != 0.f && Controller && Controller->IsLocalPlayerController())
+		{
+			APlayerController* const PC = CastChecked<APlayerController>(Controller);
+			PC->AddYawInput(Axis);
+		}
+	}
+}
+
+void AIAIAvatarCharacter::LookCam(float Axis)
+{
+	if (enableDTW) {
+		FollowCamera->AddWorldRotation(FRotator(Axis, 0, 0));
+
+		Cast<UIAIAvatarAnimationInstance>(this->GetMesh()->GetAnimInstance())->SkelControl_Head =
+			FollowCamera->GetComponentRotation() - FRotator(0, 180.f, 0);
+	}
+	else {
+
+		if (Axis != 0.f && Controller && Controller->IsLocalPlayerController())
+		{
+			APlayerController* const PC = CastChecked<APlayerController>(Controller);
+			PC->AddPitchInput(Axis);
+		}
+	}
 }
 
  bool AIAIAvatarCharacter::ControlledByAI() {
@@ -3357,4 +3393,9 @@ void AIAIAvatarCharacter::StartRightFingerIKDisablement()
 
 		 return;
 	 }
+ }
+
+ void AIAIAvatarCharacter::ResetFollowCamera() {
+	 FollowCamera->SetRelativeRotation(FRotator(0,0,0));
+	 Cast<UIAIAvatarAnimationInstance>(this->GetMesh()->GetAnimInstance())->SkelControl_Head = FRotator(0,0,0);
  }

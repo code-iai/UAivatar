@@ -2,6 +2,11 @@
 
 #include "IAIAvatarAnimationInstance.h"
 
+UIAIAvatarAnimationInstance::UIAIAvatarAnimationInstance(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	//set any default values for your variables here
+	SkelControl_Head = FRotator(0, 0, 0);
+}
 
 void UIAIAvatarAnimationInstance::resetRightHandFingerRots() {
 	

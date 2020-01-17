@@ -10,7 +10,7 @@ public class UIAIAvatar : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "AIModule",
             "UPIDController","UROSBridge","Json","JsonUtilities", "UTags", "UConversions", "UIds", "ProceduralMeshComponent",
-            "RawMesh"});
+            "RawMesh", "UDTWPlugin"});
 
 
         PrivateDependencyModuleNames.AddRange(new string[] {

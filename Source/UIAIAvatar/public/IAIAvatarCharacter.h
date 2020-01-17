@@ -71,6 +71,9 @@ protected:
 	*/
 	void LookUpAtRate(float Rate);
 
+	void TurnCam(float Axis);
+	void LookCam(float Axis);
+
 	/** Handler for when a touch input begins. */
 	void TouchStarted(ETouchIndex::Type FingerIndex, FVector Location);
 
@@ -269,6 +272,9 @@ public:
 
 	// Current object targeted for grasping
 	TPair<int32, FString> current_obj_target;
+
+	// For enabling Head Movement Recognition 
+	bool enableDTW;
 
 	// ************************** Public Methods ***********************************
 
@@ -511,6 +517,9 @@ public:
 
 	/** Close Door */
 	void CloseDoor(FString door);
+
+	/** Reset Camera Rotation*/
+	void ResetFollowCamera();
 
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
