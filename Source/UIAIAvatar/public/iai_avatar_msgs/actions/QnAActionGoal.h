@@ -8,22 +8,22 @@
 
 namespace iai_avatar_msgs
 {
-	class QuestionActionGoal : public FROSBridgeMsg
+	class QnAActionGoal : public FROSBridgeMsg
 	{
 		std_msgs::Header Header;
 		actionlib_msgs::GoalID GoalId;
-		iai_avatar_msgs::QuestionGoal Goal;
+		iai_avatar_msgs::QnAGoal Goal;
 	public:
-		QuestionActionGoal()
+		QnAActionGoal()
 		{
 			MsgType = "iai_avatar_msgs/QnAActionGoal";
 		}
 
-		QuestionActionGoal
+		QnAActionGoal
 		(
 			std_msgs::Header InHeader,
 			actionlib_msgs::GoalID InGoalId,
-			iai_avatar_msgs::QuestionGoal InGoal
+			iai_avatar_msgs::QnAGoal InGoal
 		):
 			Header(InHeader),
 			GoalId(InGoalId),
@@ -32,7 +32,7 @@ namespace iai_avatar_msgs
 			MsgType = "iai_avatar_msgs/QnAActionGoal";
 		}
 
-		~QuestionActionGoal() override {}
+		~QnAActionGoal() override {}
 
 		std_msgs::Header GetHeader() const
 		{
@@ -44,7 +44,7 @@ namespace iai_avatar_msgs
 			return GoalId;
 		}
 
-		iai_avatar_msgs::QuestionGoal GetGoal() const
+		iai_avatar_msgs::QnAGoal GetGoal() const
 		{
 			return Goal;
 		}
@@ -59,7 +59,7 @@ namespace iai_avatar_msgs
 			GoalId = InGoalId;
 		}
 
-		void Setgoal(iai_avatar_msgs::QuestionGoal InGoal)
+		void SetGoal(iai_avatar_msgs::QnAGoal InGoal)
 		{
 			Goal = InGoal;
 		}
@@ -70,13 +70,13 @@ namespace iai_avatar_msgs
 
 			GoalId = actionlib_msgs::GoalID::GetFromJson(JsonObject->GetObjectField(TEXT("goal_id")));
 
-			Goal = iai_avatar_msgs::QuestionGoal::GetFromJson(JsonObject->GetObjectField(TEXT("goal")));
+			Goal = iai_avatar_msgs::QnAGoal::GetFromJson(JsonObject->GetObjectField(TEXT("goal")));
 
 		}
 
-		static QuestionActionGoal GetFromJson(TSharedPtr<FJsonObject> JsonObject)
+		static QnAActionGoal GetFromJson(TSharedPtr<FJsonObject> JsonObject)
 		{
-			QuestionActionGoal Result;
+			QnAActionGoal Result;
 			Result.FromJson(JsonObject);
 			return Result;
 		}

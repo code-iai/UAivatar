@@ -72,6 +72,7 @@ protected:
 	void LookUpAtRate(float Rate);
 
 	void TurnCam(float Axis);
+
 	void LookCam(float Axis);
 
 	/** Handler for when a touch input begins. */

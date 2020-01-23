@@ -13,8 +13,8 @@ void FAvatarQnAActionGoalCallback::Callback(TSharedPtr<FROSBridgeMsg> Msg)
 {
 	if (Controller)
 	{
-		TSharedPtr<iai_avatar_msgs::QuestionActionGoal> QuestionMSg = 
-			StaticCastSharedPtr<iai_avatar_msgs::QuestionActionGoal>(Msg);
+		TSharedPtr<iai_avatar_msgs::QnAActionGoal> QuestionMSg =
+			StaticCastSharedPtr<iai_avatar_msgs::QnAActionGoal>(Msg);
 		Controller->Question = QuestionMSg->GetGoal().GetQuestion();
 
 		actionlib_msgs::GoalID Id = QuestionMSg->GetGoalId();
@@ -32,8 +32,8 @@ void FAvatarQnAActionGoalCallback::Callback(TSharedPtr<FROSBridgeMsg> Msg)
 TSharedPtr<FROSBridgeMsg> FAvatarQnAActionGoalCallback::ParseMessage
 (TSharedPtr<FJsonObject> JsonObject) const
 {
-	TSharedPtr<iai_avatar_msgs::QuestionActionGoal> Message =
-		MakeShareable<iai_avatar_msgs::QuestionActionGoal>(new iai_avatar_msgs::QuestionActionGoal());
+	TSharedPtr<iai_avatar_msgs::QnAActionGoal> Message =
+		MakeShareable<iai_avatar_msgs::QnAActionGoal>(new iai_avatar_msgs::QnAActionGoal());
 
 	Message->FromJson(JsonObject);
 

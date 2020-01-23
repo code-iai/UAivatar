@@ -5,6 +5,8 @@
 
 UAPublisher::UAPublisher()
 {
+	skip_frames = 0;
+	frame_counter = 0;
 }
 
 void UAPublisher::DeInit()
@@ -50,3 +52,18 @@ void UAPublisher::CreatePublisher()
 	}
 }
 
+bool UAPublisher::skip() {
+	
+	bool skip = true;
+
+	if (frame_counter > skip_frames) {
+		frame_counter = 0;
+	}
+
+	if (!frame_counter)
+		skip = false;
+
+	frame_counter++;
+
+	return skip;
+}

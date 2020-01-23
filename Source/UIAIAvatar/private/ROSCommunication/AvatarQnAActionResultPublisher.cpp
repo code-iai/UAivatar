@@ -16,12 +16,11 @@ void UAvatarQnAActionResultPublisher::SetOwner(UObject* InAgent)
 
 void UAvatarQnAActionResultPublisher::Publish()
 {
-	/* UE_LOG(LogTemp, Error, TEXT("bPublishResult pub: %s"), Owner->bPublishResult ? TEXT("True") : TEXT("False")); */
 	if (Owner->bPublishResult)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Publish QnA Result"));
-		TSharedPtr<iai_avatar_msgs::QuestionActionResult> ActionResult =
-			MakeShareable(new iai_avatar_msgs::QuestionActionResult());
+		UE_LOG(LogTemp, Log, TEXT("Publish QnA Result: %s"), *Owner->Answer);
+		TSharedPtr<iai_avatar_msgs::QnAActionResult> ActionResult =
+			MakeShareable(new iai_avatar_msgs::QnAActionResult());
 
 		ActionResult->SetHeader(std_msgs::Header(Seq, FROSTime(), ""));
 
@@ -29,7 +28,7 @@ void UAvatarQnAActionResultPublisher::Publish()
 		actionlib_msgs::GoalStatus GS(actionlib_msgs::GoalID(FROSTime(StatusInfo.Secs, StatusInfo.NSecs), StatusInfo.Id), StatusInfo.Status, "");
 		ActionResult->SetStatus(GS);
 
-		iai_avatar_msgs::QuestionResult Result(Owner->Answer);
+		iai_avatar_msgs::QnAResult Result(Owner->Answer);
 		ActionResult->SetResult(Result);
 
 		Handler->PublishMsg(Topic, ActionResult);
@@ -37,5 +36,7 @@ void UAvatarQnAActionResultPublisher::Publish()
 
 		Seq++;
 		Owner->bPublishResult = false;
+
+		UE_LOG(LogTemp, Error, TEXT("Publish QnA Result Sent"));
 	}
 }

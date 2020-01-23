@@ -4,35 +4,35 @@
 
 #include "std_msgs/Header.h"
 #include "actionlib_msgs/GoalStatus.h"
-#include "iai_avatar_msgs/actions/QnAResult.h"
+#include "iai_avatar_msgs/actions/QnAFeedback.h"
 
 namespace iai_avatar_msgs
 {
-	class QnAActionResult : public FROSBridgeMsg
+	class QnAActionFeedback : public FROSBridgeMsg
 	{
 		std_msgs::Header Header;
 		actionlib_msgs::GoalStatus Status;
-		iai_avatar_msgs::QnAResult Result;
+		QnAFeedback Feedback;
 	public:
-		QnAActionResult()
+		QnAActionFeedback()
 		{
-			MsgType = "iai_avatar_msgs/QnAActionResult";
+			MsgType = "iai_avatar_msgs/QnAActionFeedback";
 		}
 
-		QnAActionResult
+		QnAActionFeedback
 		(
 			std_msgs::Header InHeader,
 			actionlib_msgs::GoalStatus InStatus,
-			iai_avatar_msgs::QnAResult InResult
+			QnAFeedback InFeedback
 		):
 			Header(InHeader),
 			Status(InStatus),
-			Result(InResult)
+			Feedback(InFeedback)
 		{
-			MsgType = "iai_avatar_msgs/QnAActionResult";
+			MsgType = "iai_avatar_msgs/QnAActionFeedback";
 		}
 
-		~QnAActionResult() override {}
+		~QnAActionFeedback() override {}
 
 		std_msgs::Header GetHeader() const
 		{
@@ -44,9 +44,9 @@ namespace iai_avatar_msgs
 			return Status;
 		}
 
-		iai_avatar_msgs::QnAResult GetResult() const
+		QnAFeedback GetFeedback() const
 		{
-			return Result;
+			return Feedback;
 		}
 
 		void SetHeader(std_msgs::Header InHeader)
@@ -59,9 +59,9 @@ namespace iai_avatar_msgs
 			Status = InStatus;
 		}
 
-		void SetResult(iai_avatar_msgs::QnAResult InResult)
+		void SetFeedback(QnAFeedback Infeedback)
 		{
-			Result = InResult;
+			Feedback = Infeedback;
 		}
 
 		virtual void FromJson(TSharedPtr<FJsonObject> JsonObject) override
@@ -70,13 +70,13 @@ namespace iai_avatar_msgs
 
 			Status = actionlib_msgs::GoalStatus::GetFromJson(JsonObject->GetObjectField(TEXT("status")));
 
-			Result = iai_avatar_msgs::QnAResult::GetFromJson(JsonObject->GetObjectField(TEXT("result")));
+			Feedback = QnAFeedback::GetFromJson(JsonObject->GetObjectField(TEXT("feedback")));
 
 		}
 
-		static QnAActionResult GetFromJson(TSharedPtr<FJsonObject> JsonObject)
+		static QnAActionFeedback GetFromJson(TSharedPtr<FJsonObject> JsonObject)
 		{
-			QnAActionResult Result;
+			QnAActionFeedback Result;
 			Result.FromJson(JsonObject);
 			return Result;
 		}
@@ -87,7 +87,7 @@ namespace iai_avatar_msgs
 
 			Object->SetObjectField(TEXT("header"), Header.ToJsonObject());
 			Object->SetObjectField(TEXT("status"), Status.ToJsonObject());
-			Object->SetObjectField(TEXT("result"), Result.ToJsonObject());
+			Object->SetObjectField(TEXT("feedback"), Feedback.ToJsonObject());
 			return Object;
 		}
 		virtual FString ToYamlString() const override

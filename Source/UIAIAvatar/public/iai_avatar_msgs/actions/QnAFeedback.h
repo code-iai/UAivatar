@@ -5,23 +5,23 @@
 
 namespace iai_avatar_msgs
 {
-	class QuestionFeedback : public FROSBridgeMsg
+	class QnAFeedback : public FROSBridgeMsg
 	{
 	public:
-		QuestionFeedback()
+		QnAFeedback()
 		{
 			MsgType = "iai_avatar_msgs/QnAFeedback";
 		}
 
-		~QuestionFeedback() override {}
+		~QnAFeedback() override {}
 
 		virtual void FromJson(TSharedPtr<FJsonObject> JsonObject) override
 		{
 		}
 
-		static QuestionFeedback GetFromJson(TSharedPtr<FJsonObject> JsonObject)
+		static QnAFeedback GetFromJson(TSharedPtr<FJsonObject> JsonObject)
 		{
-			QuestionFeedback Result;
+			QnAFeedback Result;
 			Result.FromJson(JsonObject);
 			return Result;
 		}

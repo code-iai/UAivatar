@@ -27,6 +27,7 @@ public:
 
 	UPROPERTY()
 		FString ControllerName;
+
 protected:
 
 
@@ -41,5 +42,11 @@ protected:
 	virtual void SetMessageType() {};
 	virtual void SetOwner(UObject* InOwner) {};
 	virtual void CreatePublisher();
+	bool skip();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		uint8 skip_frames;
+
+	uint8 frame_counter;
 };
 

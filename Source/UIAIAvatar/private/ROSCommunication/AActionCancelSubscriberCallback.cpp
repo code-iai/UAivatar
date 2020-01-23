@@ -1,15 +1,15 @@
-#include "ROSCommunication/AvatarActionCancelSubscriberCallback.h"
+#include "ROSCommunication/AActionCancelSubscriberCallback.h"
 #include "actionlib_msgs/GoalStatusArray.h"
 #include "Conversions.h"
 
-FAvatarActionCancelCallback::FAvatarActionCancelCallback(
+FAActionCancelCallback::FAActionCancelCallback(
 	const FString& InTopic, const FString& InType, UObject* InController) :
 	FROSBridgeSubscriber(InTopic, InType)
 {
 	Controller = Cast<UAController>(InController);
 }
 
-void FAvatarActionCancelCallback::Callback(TSharedPtr<FROSBridgeMsg> Msg)
+void FAActionCancelCallback::Callback(TSharedPtr<FROSBridgeMsg> Msg)
 {
 	if (Controller)
 	{
@@ -21,7 +21,7 @@ void FAvatarActionCancelCallback::Callback(TSharedPtr<FROSBridgeMsg> Msg)
 	}
 }
 
-TSharedPtr<FROSBridgeMsg> FAvatarActionCancelCallback::ParseMessage
+TSharedPtr<FROSBridgeMsg> FAActionCancelCallback::ParseMessage
 (TSharedPtr<FJsonObject> JsonObject) const
 {
 	TSharedPtr<actionlib_msgs::GoalID> GoalId =
@@ -32,6 +32,6 @@ TSharedPtr<FROSBridgeMsg> FAvatarActionCancelCallback::ParseMessage
 	return StaticCastSharedPtr<FROSBridgeMsg>(GoalId);
 }
 
-FAvatarActionCancelCallback::~FAvatarActionCancelCallback()
+FAActionCancelCallback::~FAActionCancelCallback()
 {
 }

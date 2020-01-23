@@ -22,6 +22,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		FString ControllerName;
+
 protected:
 
 	UPROPERTY(EditAnywhere)

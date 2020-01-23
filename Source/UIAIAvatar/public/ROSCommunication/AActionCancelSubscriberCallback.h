@@ -9,12 +9,12 @@
 #include "Controller/AController.h"
 
 
-class UIAIAVATAR_API FAvatarActionCancelCallback : public FROSBridgeSubscriber
+class UIAIAVATAR_API FAActionCancelCallback : public FROSBridgeSubscriber
 {
 public:
-	FAvatarActionCancelCallback(const FString& InTopic, const FString& InType, UObject* InController);
+	FAActionCancelCallback(const FString& InTopic, const FString& InType, UObject* InController);
 
-	~FAvatarActionCancelCallback() override;
+	~FAActionCancelCallback() override;
 
 	TSharedPtr<FROSBridgeMsg> ParseMessage(TSharedPtr<FJsonObject> JsonObject) const override;
 

@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "ROSCommunication/AActionServer.h"
-#include "ROSCommunication/AvatarActionCancelSubscriber.h"
+#include "ROSCommunication/AActionStatusPublisher.h"
+#include "ROSCommunication/AActionCancelSubscriber.h"
 #include "ROSCommunication/AvatarQnAActionResultPublisher.h"
 #include "ROSCommunication/AvatarQnAActionGoalSubscriber.h"
 #include "AvatarQnAActionServer.generated.h"

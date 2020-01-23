@@ -5,16 +5,16 @@
 
 namespace iai_avatar_msgs
 {
-	class QuestionGoal : public FROSBridgeMsg
+	class QnAGoal : public FROSBridgeMsg
 	{
 		FString Question;
 	public:
-		QuestionGoal()
+		QnAGoal()
 		{
 			MsgType = "iai_avatar_msgs/QnAGoal";
 		}
 
-		QuestionGoal
+		QnAGoal
 		(
 			FString InQuestion
 		):
@@ -23,7 +23,7 @@ namespace iai_avatar_msgs
 			MsgType = "iai_avatar_msgs/QnAGoal";
 		}
 
-		~QuestionGoal() override {}
+		~QnAGoal() override {}
 
 		FString GetQuestion() const
 		{
@@ -41,9 +41,9 @@ namespace iai_avatar_msgs
 
 		}
 
-		static QuestionGoal GetFromJson(TSharedPtr<FJsonObject> JsonObject)
+		static QnAGoal GetFromJson(TSharedPtr<FJsonObject> JsonObject)
 		{
-			QuestionGoal Result;
+			QnAGoal Result;
 			Result.FromJson(JsonObject);
 			return Result;
 		}

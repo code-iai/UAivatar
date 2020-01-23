@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "ROSCommunication/ASubscriber.h"
-#include "ROSCommunication/AvatarActionCancelSubscriberCallback.h"
-#include "AvatarActionCancelSubscriber.generated.h"
+#include "ROSCommunication/AActionCancelSubscriberCallback.h"
+#include "AActionCancelSubscriber.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UIAIAVATAR_API UAvatarActionCancelSubscriber : public UASubscriber
+class UIAIAVATAR_API UAActionCancelSubscriber : public UASubscriber
 {
 	GENERATED_BODY()
 public:
