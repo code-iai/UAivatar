@@ -17,6 +17,7 @@ public:
 
 	UAPublisher();
 	virtual void DeInit();
+	virtual void Publish(float DeltaTime) {};
 	virtual void Publish() {};
 
 	virtual void Init(UObject* InOwner, TSharedPtr<FROSBridgeHandler> InHandler, FString InRosTopic);
@@ -42,11 +43,12 @@ protected:
 	virtual void SetMessageType() {};
 	virtual void SetOwner(UObject* InOwner) {};
 	virtual void CreatePublisher();
-	bool skip();
+	bool skip(float Deltatime);
 
+	/** Max Publishing Frequency (Hz). Use 0 for no limit*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		uint8 skip_frames;
+		float maxFrequency;
 
-	uint8 frame_counter;
+	float timekeeper;
 };
 

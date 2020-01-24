@@ -10,12 +10,12 @@ void UAController::CancelAction()
 	{
 		if (bActive)
 		{
-			//GoalStatusList.Last().Status = 6;
+			GoalStatusList.Last().Status = 6;
 			bActive = false;
 		}
 		else
 		{
-			//GoalStatusList.Last().Status = 2;
+			GoalStatusList.Last().Status = 2;
 			bActive = false;
 		}
 		bPublishResult = true;

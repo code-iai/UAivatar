@@ -16,9 +16,9 @@ void UAvatarQnAActionFeedbackPublisher::SetOwner(UObject* InAgent)
 	Owner = Cast<UAvatarQnAController>(ControllerComp->Controller.ControllerList[ControllerName]);
 }
 
-void UAvatarQnAActionFeedbackPublisher::Publish()
+void UAvatarQnAActionFeedbackPublisher::Publish(float DeltaTime)
 {
-	if (Owner->bActive && !skip())
+	if (Owner->bActive && !skip(DeltaTime))
 	{
 		TSharedPtr<iai_avatar_msgs::QnAActionFeedback> Feedback =
 			MakeShareable(new iai_avatar_msgs::QnAActionFeedback());

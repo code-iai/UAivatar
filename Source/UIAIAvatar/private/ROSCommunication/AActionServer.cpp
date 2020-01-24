@@ -26,7 +26,7 @@ void UAActionServer::Init(FString InHostIp, uint32 InPort, UObject* InOwner, FSt
 
 }
 
-void UAActionServer::Tick()
+void UAActionServer::Tick(float DeltaTime)
 {
 	if (Handler.IsValid())
 	{
@@ -35,7 +35,7 @@ void UAActionServer::Tick()
 
 	if (FeedbackPublisher)
 	{
-		FeedbackPublisher->Publish();
+		FeedbackPublisher->Publish(DeltaTime);
 	}
 
 	if (ResultPublisher)
@@ -45,7 +45,7 @@ void UAActionServer::Tick()
 
 	if (StatusPublisher)
 	{
-		StatusPublisher->Publish();
+		StatusPublisher->Publish(DeltaTime);
 	}
 }
 

@@ -35,7 +35,7 @@ void UAROSCommunicationComponent::BeginPlay()
 // Called every frame
 void UAROSCommunicationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	RosComunication.Tick();
+	RosComunication.Tick(DeltaTime);
 }
 
 void UAROSCommunicationComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)

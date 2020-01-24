@@ -18,7 +18,7 @@ public:
 	virtual void Init(TSharedPtr<FROSBridgeHandler> InHandler, UObject* InOwner, FString InActionName = "");
 	virtual void Init(FString InHostIp, uint32 InPort, UObject* InOwner, FString InActionName = "");
 
-	virtual void Tick();
+	virtual void Tick(float DeltaTime);
 
 	UPROPERTY(EditAnywhere)
 		FString ControllerName;

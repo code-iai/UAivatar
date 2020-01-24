@@ -68,8 +68,9 @@ void FAROSCommunicationContainer::InitAllActionServer()
 	}
 }
 
-void FAROSCommunicationContainer::Tick()
+void FAROSCommunicationContainer::Tick(float DeltaTime)
 {
+
 	if (Handler.IsValid())
 	{
 		for (auto& Publisher : PublisherList)
@@ -79,7 +80,7 @@ void FAROSCommunicationContainer::Tick()
 
 		for (auto& ActionServer : ActionServerList)
 		{
-			ActionServer.Value->Tick();
+			ActionServer.Value->Tick(DeltaTime);
 		}
 
 		Handler->Process();

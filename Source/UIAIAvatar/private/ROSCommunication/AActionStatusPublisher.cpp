@@ -8,9 +8,10 @@ void UAActionStatusPublisher::SetMessageType()
 	MessageType = TEXT("actionlib_msgs/GoalStatusArray");
 }
 
-void UAActionStatusPublisher::Publish()
+void UAActionStatusPublisher::Publish(float DeltaTime)
 {
-	if (!skip()) {
+	if (!skip(DeltaTime)) {
+		
 		TSharedPtr<actionlib_msgs::GoalStatusArray> GoalStatusArrayMsg =
 			MakeShareable(new actionlib_msgs::GoalStatusArray());
 

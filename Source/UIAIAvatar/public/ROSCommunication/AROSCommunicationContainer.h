@@ -89,7 +89,7 @@ public:
 
 	virtual void Init();
 	virtual void DeInit();
-	virtual void Tick();
+	virtual void Tick(float DeltaTime);
 
 protected:
 

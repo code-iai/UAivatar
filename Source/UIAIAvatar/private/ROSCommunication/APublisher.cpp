@@ -5,8 +5,8 @@
 
 UAPublisher::UAPublisher()
 {
-	skip_frames = 0;
-	frame_counter = 0;
+	maxFrequency = 0;
+	timekeeper = 0;
 }
 
 void UAPublisher::DeInit()
@@ -52,18 +52,23 @@ void UAPublisher::CreatePublisher()
 	}
 }
 
-bool UAPublisher::skip() {
+bool UAPublisher::skip(float DeltaTime) {
 	
-	bool skip = true;
+	if (maxFrequency != 0) {
+		
+		bool skip = true;
+		float period = 1 / maxFrequency;
+		if (timekeeper >= period) {
+			timekeeper = 0;
+		}
 
-	if (frame_counter > skip_frames) {
-		frame_counter = 0;
+		if (!timekeeper)
+			skip = false;
+
+		timekeeper += DeltaTime;
+
+		return skip;
 	}
 
-	if (!frame_counter)
-		skip = false;
-
-	frame_counter++;
-
-	return skip;
+	return false;
 }

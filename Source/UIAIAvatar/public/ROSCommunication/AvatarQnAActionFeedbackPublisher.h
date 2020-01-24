@@ -19,7 +19,8 @@ class UIAIAVATAR_API UAvatarQnAActionFeedbackPublisher : public UAPublisher
 	
 public:
 
-	virtual void Publish();
+	virtual void Publish(float DeltaTime);
+
 protected:
 	virtual void SetMessageType();
 	virtual void SetOwner(UObject* InAgent);

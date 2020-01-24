@@ -19,7 +19,7 @@ class UIAIAVATAR_API UAActionStatusPublisher : public UAPublisher
 	
 public:
 
-	virtual void Publish();
+	virtual void Publish(float DeltaTime);
 
 protected:
 	virtual void SetMessageType();
