@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "ROSCommunication/ROSSubscriber.h"
-#include "ROSCommunication/AvatarQnAActionGoalSubscriberCallback.h"
-#include "AvatarQnAActionGoalSubscriber.generated.h"
+#include "ROSCommunication/AvatarPerceiveObjActionGoalSubscriberCallback.h"
+#include "AvatarPerceiveObjActionGoalSubscriber.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UIAIAVATAR_API UAvatarQnAActionGoalSubscriber : public UROSSubscriber
+class UIAIAVATAR_API UAvatarPerceiveObjActionGoalSubscriber : public UROSSubscriber
 {
 	GENERATED_BODY()
 public:

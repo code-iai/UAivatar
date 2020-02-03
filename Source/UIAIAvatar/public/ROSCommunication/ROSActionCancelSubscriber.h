@@ -4,18 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "ROSCommunication/ROSSubscriber.h"
-#include "ROSCommunication/AvatarQnAActionGoalSubscriberCallback.h"
-#include "AvatarQnAActionGoalSubscriber.generated.h"
+#include "ROSCommunication/ROSActionCancelSubscriberCallback.h"
+#include "ROSActionCancelSubscriber.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UIAIAVATAR_API UAvatarQnAActionGoalSubscriber : public UROSSubscriber
+class UIAIAVATAR_API UROSActionCancelSubscriber : public UROSSubscriber
 {
 	GENERATED_BODY()
 public:
-
 	virtual void SetMessageType();
 	virtual void CreateSubscriber();
 };

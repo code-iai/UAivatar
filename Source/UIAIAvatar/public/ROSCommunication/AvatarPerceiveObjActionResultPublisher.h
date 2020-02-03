@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "ROSCommunication/ROSPublisher.h"
-#include "Controller/AvatarQnAController.h"
+#include "Controller/AvatarPerceiveObjController.h"
 #include "Controller/AControllerComponent.h"
 #include "actionlib_msgs/GoalStatusArray.h"
-#include "iai_avatar_msgs/actions/QnAActionResult.h"
-#include "AvatarQnAActionResultPublisher.generated.h"
+#include "urobosim_msgs/PerceiveObjectActionResult.h"
+#include "AvatarPerceiveObjActionResultPublisher.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UIAIAVATAR_API UAvatarQnAActionResultPublisher : public UROSPublisher
+class UIAIAVATAR_API UAvatarPerceiveObjActionResultPublisher : public UROSPublisher
 {
 	GENERATED_BODY()
 
@@ -26,5 +26,5 @@ protected:
 	virtual void SetOwner(UObject* InOwner);
 
 	UPROPERTY()
-		UAvatarQnAController* Owner;
+		UAvatarPerceiveObjController* Owner;
 };

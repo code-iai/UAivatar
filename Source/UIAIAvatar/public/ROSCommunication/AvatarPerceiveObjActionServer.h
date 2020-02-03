@@ -6,18 +6,18 @@
 #include "ROSCommunication/ROSActionServer.h"
 #include "ROSCommunication/ROSActionStatusPublisher.h"
 #include "ROSCommunication/ROSActionCancelSubscriber.h"
-#include "ROSCommunication/AvatarQnAActionResultPublisher.h"
-#include "ROSCommunication/AvatarQnAActionFeedbackPublisher.h"
-#include "ROSCommunication/AvatarQnAActionGoalSubscriber.h"
-#include "AvatarQnAActionServer.generated.h"
+#include "ROSCommunication/AvatarPerceiveObjActionResultPublisher.h"
+#include "ROSCommunication/AvatarPerceiveObjActionFeedbackPublisher.h"
+#include "ROSCommunication/AvatarPerceiveObjActionGoalSubscriber.h"
+#include "AvatarPerceiveObjActionServer.generated.h"
 
 /**
  * 
  */
 UCLASS(Blueprintable, DefaultToInstanced, collapsecategories, hidecategories = Object, editinlinenew)
-class UIAIAVATAR_API UAvatarQnAActionServer : public UROSActionServer
+class UIAIAVATAR_API UAvatarPerceiveObjActionServer : public UROSActionServer
 {
 	GENERATED_BODY()
 public:
-	UAvatarQnAActionServer();
+	UAvatarPerceiveObjActionServer();
 };

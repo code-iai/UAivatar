@@ -56,6 +56,4 @@ public:
 	UPROPERTY()
 		float CummulatedError = 0;
 
-	UPROPERTY(EditAnywhere)
-		float HackOffset = 0;
 };

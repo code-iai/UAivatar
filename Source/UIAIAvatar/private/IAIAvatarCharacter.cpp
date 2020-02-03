@@ -2398,7 +2398,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 
 void AIAIAvatarCharacter::BeginPlay() {
 	Super::BeginPlay();
-	/*
+	
 	 // Decide if this is a Player or AI controlled instance
 	check(ControlledByAI() || ControlledByPlayer());
 
@@ -2408,7 +2408,7 @@ void AIAIAvatarCharacter::BeginPlay() {
 	 else {
 		 UE_LOG(LogAvatarCharacter, Log, TEXT("Actor %s is Player controlled"), *GetName());
 	 }
-	 */
+	 
 	 UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
 	 check(AnimationInstance != nullptr);
 

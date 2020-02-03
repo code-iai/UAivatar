@@ -4,16 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "ROSCommunication/ROSPublisher.h"
-#include "Controller/AvatarQnAController.h"
+#include "actionlib_msgs/GoalStatusArray.h"
+#include "Controller/AController.h"
 #include "Controller/AControllerComponent.h"
-#include "iai_avatar_msgs/actions/QnAActionFeedback.h"
-#include "AvatarQnAActionFeedbackPublisher.generated.h"
+#include "ROSActionStatusPublisher.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UIAIAVATAR_API UAvatarQnAActionFeedbackPublisher : public UROSPublisher
+class UIAIAVATAR_API UROSActionStatusPublisher : public UROSPublisher
 {
 	GENERATED_BODY()
 	
@@ -23,8 +23,8 @@ public:
 
 protected:
 	virtual void SetMessageType();
-	virtual void SetOwner(UObject* InAgent);
+	virtual void SetOwner(UObject* InOwner);
 
 	UPROPERTY()
-		UAvatarQnAController* Owner;
+		UAController* Owner;
 };

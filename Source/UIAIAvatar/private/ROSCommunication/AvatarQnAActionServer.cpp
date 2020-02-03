@@ -5,8 +5,8 @@
 
 UAvatarQnAActionServer::UAvatarQnAActionServer()
 {
-	CancelSubscriber = CreateDefaultSubobject<UAActionCancelSubscriber>(TEXT("QnAACancelSubscriber"));
-	StatusPublisher = CreateDefaultSubobject<UAActionStatusPublisher>(TEXT("QnAAStatusPublisher"));
+	CancelSubscriber = CreateDefaultSubobject<UROSActionCancelSubscriber>(TEXT("QnAACancelSubscriber"));
+	StatusPublisher = CreateDefaultSubobject<UROSActionStatusPublisher>(TEXT("QnAAStatusPublisher"));
 	ResultPublisher = CreateDefaultSubobject<UAvatarQnAActionResultPublisher>(TEXT("QnAAResultPublisher"));
 	GoalSubscriber = CreateDefaultSubobject<UAvatarQnAActionGoalSubscriber>(TEXT("QnAAGoalSubscriber"));
 	FeedbackPublisher = CreateDefaultSubobject<UAvatarQnAActionFeedbackPublisher>(TEXT("QnAAFeedbackPublisher"));

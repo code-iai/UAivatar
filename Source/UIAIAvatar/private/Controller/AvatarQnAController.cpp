@@ -1,6 +1,5 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
-
 #include "AvatarQnAController.h"
 #include "Engine.h"
 
@@ -8,7 +7,7 @@ void UAvatarQnAController::Init(AActor* InAgent)
 {
 	if (!InAgent)
 	{
-		UE_LOG(LogTemp, Error, TEXT("RobotComandsComponent not attached to an Avatar"));
+		UE_LOG(LogTemp, Error, TEXT("Avatar QnA Controller not attached to an Avatar"));
 	}
 
 	Avatar = Cast<AIAIAvatarCharacter>(InAgent);
