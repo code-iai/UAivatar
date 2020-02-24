@@ -16,6 +16,10 @@ public:
 	virtual void Init(UObject* InModel, TSharedPtr<FROSBridgeHandler> InHandler, FString InName);
 
 	TSharedPtr<FROSBridgeSrvServer> ServiceServer;
+
+	UPROPERTY(EditAnywhere)
+		FString ControllerName;
+
 protected:
 
 	UPROPERTY(EditAnywhere, Category = "ROS Service Server")

@@ -14,7 +14,8 @@ void UAvatarSemanticCameraService::SetOwner(UObject* InOwner)
 
 void UAvatarSemanticCameraService::CreateServiceServer()
 {
-	ServiceServer = MakeShareable<FAvatarSemanticCameraServer>(new FAvatarSemanticCameraServer(Name, Type, Owner));
+	ServiceServer = MakeShareable<FAvatarSemanticCameraServer>(
+		new FAvatarSemanticCameraServer(Name, Type, Owner->Controller.ControllerList[ControllerName]));
 }
 
 void UAvatarSemanticCameraService::SetType()

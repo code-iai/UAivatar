@@ -13,7 +13,8 @@ void UAvatarConsoleCommandService::SetOwner(UObject* InOwner)
 
 void UAvatarConsoleCommandService::CreateServiceServer()
 {
-	ServiceServer = MakeShareable<FAvatarConsoleCommandsServer>(new FAvatarConsoleCommandsServer(Name, Type, Owner));
+	ServiceServer = MakeShareable<FAvatarConsoleCommandsServer>(
+		new FAvatarConsoleCommandsServer(Name, Type, Owner->Controller.ControllerList[ControllerName]));
 }
 
 void UAvatarConsoleCommandService::SetType()

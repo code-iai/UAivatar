@@ -8,8 +8,7 @@ class FAvatarConsoleCommandsServer final : public FROSBridgeSrvServer
 {
 public:
 
-	// TSharedPtr<FROSBridgeHandler> Handler;
-	FAvatarConsoleCommandsServer(const FString& InName, const FString& InType, UObject* InOwner) :
+	FAvatarConsoleCommandsServer(const FString& InName, const FString& InType, UAController* InOwner) :
 				FROSBridgeSrvServer(InName, InType)
 	{
 		Owner = Cast<UAvatarConsoleCommandController>(InOwner);

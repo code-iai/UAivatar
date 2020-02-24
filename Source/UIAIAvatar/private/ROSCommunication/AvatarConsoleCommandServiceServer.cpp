@@ -11,8 +11,8 @@ TSharedPtr<FROSBridgeSrv::SrvRequest> FAvatarConsoleCommandsServer::FromJson(TSh
 
 TSharedPtr<FROSBridgeSrv::SrvResponse> FAvatarConsoleCommandsServer::Callback(TSharedPtr<FROSBridgeSrv::SrvRequest> InRequest)
 {
-	TSharedPtr<iai_avatar_msgs::Command::Request> Request =
-		StaticCastSharedPtr<iai_avatar_msgs::Command::Request>(InRequest);
+        TSharedPtr<iai_avatar_msgs::Command::Request> Request =
+            StaticCastSharedPtr<iai_avatar_msgs::Command::Request>(InRequest);
 	
 	Owner->Command = Request->GetCommand();
 	Owner->bSuccess = false;

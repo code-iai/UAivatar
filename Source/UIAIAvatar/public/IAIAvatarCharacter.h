@@ -455,6 +455,8 @@ public:
 	// The movement will be interpolated by using this->HeadAlphaInterpolation
 	void MoveHead(FRotator rot);
 
+	void LookTo(FVector point);
+
 	void StartMoveHeadUp();
 	void StopMoveHeadUp();
 
@@ -506,11 +508,17 @@ public:
 		void Spoon();
 
 	/*C++ empty event (BP implemented) to be called from C++*/
+	/* This triggers cutting function in BP*/
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+		void Pour(const FString& ObjName);
+
+	/*C++ empty event (BP implemented) to be called from C++*/
 	/* Uses BP's multi trace by channel */
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 		TArray<FHitResult> TraceObjectsWithBP();
 
 	// List reachable objects 
+	UFUNCTION(BlueprintCallable)
 	TMap<FString, FHitResult> ListObjects();
 
 	/** Press microwave button */

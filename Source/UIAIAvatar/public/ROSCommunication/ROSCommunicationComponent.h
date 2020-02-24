@@ -18,7 +18,10 @@ public:
 	UROSCommunicationComponent();
 
 	UPROPERTY(EditAnywhere)
-		FROSCommunicationContainer RosComunication;
+		FROSCommunicationContainer RosCommunication;
+
+	UPROPERTY(EditAnywhere)
+		bool turnOffRosCommunication;
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

@@ -9,6 +9,7 @@ UROSCommunicationComponent::UROSCommunicationComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.TickGroup = TG_PrePhysics;
+	turnOffRosCommunication = false;
 }
 
 
@@ -16,31 +17,32 @@ UROSCommunicationComponent::UROSCommunicationComponent()
 void UROSCommunicationComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	AActor * Owner = GetOwner();
-	RosComunication.ControllerComponent = Owner->FindComponentByClass<UAControllerComponent>();
-	if (RosComunication.ControllerComponent)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Found Controller comp"));
-		RosComunication.Init();
+	if (!turnOffRosCommunication) {
+		AActor * Owner = GetOwner();
+		RosCommunication.ControllerComponent = Owner->FindComponentByClass<UAControllerComponent>();
+		if (RosCommunication.ControllerComponent)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Found Controller comp"));
+			RosCommunication.Init();
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("No FROSBridgeHandler created."));
+		}
 	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("No FROSBridgeHandler created."));
-	}
-
 }
 
 
 // Called every frame
 void UROSCommunicationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	RosComunication.Tick(DeltaTime);
+	if (!turnOffRosCommunication)
+		RosCommunication.Tick(DeltaTime);
 }
 
 void UROSCommunicationComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	RosComunication.DeInit();
+	RosCommunication.DeInit();
 	Super::EndPlay(EndPlayReason);
 }
 

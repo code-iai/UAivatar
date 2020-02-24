@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "IAIAvatarCharacter.h"
-#include "IAIAvatarAnimationInstance.h"
 #include "Components/ActorComponent.h"
+#include "IAIAvatarAnimationInstance.h"
 #include "TaskAnimParamLogic.generated.h"
 
 struct CuttableObjectData_t
@@ -82,12 +82,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		UCurveVector* SpooningSoupAnimRotCurve;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* PouringAnimCurve;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* PouringAnimRotCurve;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 	AIAIAvatarCharacter *Avatar;
-	UIAIAvatarAnimationInstance *AnimationInstance;
 	
 public:	
 	// Called every frame
@@ -96,6 +101,10 @@ public:
 	// Check for cuttable items within a list of unique hit results and filter out those out of proper reach
 	TArray<AActor*> CheckForCuttableObjects(TMap<FString, FHitResult> Objects);
 	
+	UFUNCTION(BlueprintCallable)
+	// Check for item within a list of unique hit results and filter out those out of proper reach
+	AActor* CheckForObject(TMap<FString, FHitResult> Objects, FString ObjName);
+
 	// This will choose the biggest cuttable object 
 	AActor* PickOneObject(TArray<AActor*> Cuttables);
 
@@ -104,6 +113,9 @@ public:
 
 	// Set parameters for task animation
 	FTaskAnimParameters_t calculateCutAnimParameters(CuttableObjectData_t &ItemData);
+
+	// Set parameters for task animation
+	FTaskAnimParameters_t calculatePourAnimParameters(AActor* Target);
 
 	// Process a task request
 	UFUNCTION(BlueprintCallable)

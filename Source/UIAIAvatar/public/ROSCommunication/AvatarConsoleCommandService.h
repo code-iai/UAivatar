@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "ROSCommunication/ROSService.h"
 #include "Controller/AControllerComponent.h"
+#include "Controller/AvatarConsoleCommandController.h"
 #include "ROSCommunication/AvatarConsoleCommandServiceServer.h"
 #include "AvatarConsoleCommandService.generated.h"
 

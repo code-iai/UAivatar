@@ -22,8 +22,7 @@ void UTaskAnimParamLogic::BeginPlay()
 
 	Avatar = Cast<AIAIAvatarCharacter>(GetOwner());
 	check(Avatar != nullptr);
-	AnimationInstance = Cast<UIAIAvatarAnimationInstance>(Avatar->GetMesh()->GetAnimInstance());
-	check(AnimationInstance != nullptr);
+
 }
 
 
@@ -67,6 +66,35 @@ TArray<AActor*> UTaskAnimParamLogic::CheckForCuttableObjects(TMap<FString, FHitR
 	return Cuttables;
 }
 #pragma optimize("", on)
+
+AActor* UTaskAnimParamLogic::CheckForObject(TMap<FString, FHitResult> Objects, FString ObjName) {
+
+	FBox ReachArea;
+	AActor* Object=  NULL;
+	FVector ObjLocationInCompSpace = FVector(0, 0, 0);
+
+	// Defining area of proper reach
+	ReachArea = FBox::BuildAABB(FVector(45, 0, -10), FVector(25, 20, 5));
+
+	// Filtering objects
+	for (auto& It : Objects)
+	{
+		AActor *Item = It.Value.GetActor();
+
+		if (Item->GetName().Equals(ObjName)) {
+
+			// Get location relative to component space
+			ObjLocationInCompSpace = Avatar->GetTransform().InverseTransformPosition(Item->GetActorLocation());
+
+			// Check if within reach area
+			if (ReachArea.IsInside(ObjLocationInCompSpace)) {
+				Object = Item;
+			}
+		}
+	}
+
+	return Object;
+}
 
 // This will choose the biggest cuttable object 
 AActor* UTaskAnimParamLogic::PickOneObject(TArray<AActor*> Cuttables) {
@@ -319,6 +347,36 @@ FTaskAnimParameters_t UTaskAnimParamLogic::calculateCutAnimParameters(CuttableOb
 }
 #pragma optimize("", on)
 
+FTaskAnimParameters_t UTaskAnimParamLogic::calculatePourAnimParameters(AActor* Target) {
+
+	FTaskAnimParameters_t AnimParams;
+	FVector StartPoint;
+	FVector EndPoint;
+	FVector Multiplier;
+	FVector EndAdjustment = FVector(-15, -5, 18);
+
+	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Target->GetActorLocation());
+	EndPoint += EndAdjustment;
+
+	StartPoint = FVector(-15, 15, 105);
+
+	// Motion Depth
+	Multiplier = (EndPoint - StartPoint);
+
+	//
+	AnimParams.RH_Curve_Offset = StartPoint;
+	AnimParams.RH_Curve_Multiplier = Multiplier;
+
+	// Skill
+	AnimParams.RH_Curve = PouringAnimCurve;
+	AnimParams.RH_Rotation_Curve = PouringAnimRotCurve;
+
+	AnimParams.animTime = 9;
+	AnimParams.Task = "Pour";
+
+	return AnimParams;
+}
+
 // Process a task request
 FTaskAnimParameters_t UTaskAnimParamLogic::processTask(FString task) {
 
@@ -347,16 +405,29 @@ FTaskAnimParameters_t UTaskAnimParamLogic::processTaskOn(FString task, AActor* O
 	CuttableObjectData_t CurrentCutable;
 	FTaskAnimParameters_t AnimParams;
 
-	if (task.Equals("Cut")) {
-		if (Object->GetRootComponent()->ComponentHasTag("Cuttable")) {
-			CurrentCutable.Object = Object;
-			if (isInGoodAlignment(CurrentCutable)) {
-				AnimParams = calculateCutAnimParameters(CurrentCutable);
-			}
-			else {
-				AnimParams.success = false;
+	if (Object != NULL) {
+		if (task.Equals("Cut")) {
+			if (Object->GetRootComponent()->ComponentHasTag("Cuttable")) {
+				CurrentCutable.Object = Object;
+				if (isInGoodAlignment(CurrentCutable)) {
+					AnimParams = calculateCutAnimParameters(CurrentCutable);
+				}
+				else {
+					AnimParams.success = false;
+				}
 			}
 		}
+		else if (task.Equals("PourOver")) {
+
+			AnimParams = calculatePourAnimParameters(Object);
+		}
+		else {
+			AnimParams.success = false;
+		}
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
+		AnimParams.success = false;
 	}
 
 	return AnimParams;

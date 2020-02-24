@@ -45,12 +45,12 @@ AIAIAvatarCharacter::AIAIAvatarCharacter()
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
-
+	
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-
+	
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 
@@ -565,7 +565,7 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 	// Calculate Bowing
 	if ((distance > 55) && (distance <= 120)) {
 		AnimationInstance->HipRotation.Roll = 0;
-		AnimationInstance->Spine1Rotation.Roll = (distance - 55) / 70 * 90;
+		AnimationInstance->Spine1Rotation.Roll = (distance - 55) / 70 * 65;
 	}
 	else if ((distance > 120) && (distance <= 150)) {
 		AnimationInstance->HipRotation.Roll = 90;
@@ -615,6 +615,19 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 			else {
 				GraspingRotation = FRotator(10, -70, 0);
 				ObjLocationInCompSpace += FVector(-7, -5, -1);
+				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(-5, -15, 15);
+			}
+		}
+		if (object.GetActor()->ActorHasTag("Jug")) {
+			if (use_left) {
+				GraspingRotation = FRotator(5, 100, -10);
+				ObjLocationInCompSpace += FVector(7, 8, 1);
+				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(5, -15, 15);
+
+			}
+			else {
+				GraspingRotation = FRotator(5, -100, 10);
+				ObjLocationInCompSpace += FVector(-7, -8, -1);
 				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(-5, -15, 15);
 			}
 		}
@@ -1365,13 +1378,36 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 						*tokens[1]), true, FVector2D(1.7, 1.7));
 				}
 			}
+			// Reset look to
+			else if (tokens[0].Equals("look") && tokens[1].Equals("to")) {
+				if (tokens[2].Equals("front")) {
+					StopMoveHeadLeft();
+				}
+				else {
+					TMap<FString, FHitResult> MyUniqueHits;
+					MyUniqueHits = ListObjects();
+
+					// Verify list hasn't changed
+					if (MyUniqueHits.FindRef(tokens[2]).GetActor() == NULL) {
+						UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Object \"%s\" not found!"), *tokens[2]);
+						GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Object \"%s\" not found!"), *tokens[2]), true, FVector2D(1.7, 1.7));
+					}
+					else {
+						LookTo(MyUniqueHits.FindRef(tokens[2]).GetActor()->GetActorLocation());
+					}
+				}
+			}
+			// Pouring
+			else if (tokens[0].Equals("pour") && tokens[1].Equals("over")) {
+				Pour(tokens[2]);
+			}
 			// None
 			else {
 				GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT(	\
 					"ERROR: No matching command for: %s %s %s"),									\
 					*tokens[0], *tokens[1], *tokens[2]), true, FVector2D(1.7, 1.7));
 				GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Yellow,						\
-					"Three words command are: interpolation, turn to, place and grasp.",			\
+					"Three words command are: interpolation, turn to, place, look to front and grasp.",			\
 					true, FVector2D(1.5, 1.5));
 			}
 		}
@@ -1480,6 +1516,34 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 						"ERROR: Make sure your rotator (%s %s %s) only have numeric values"), \
 						*tokens[2], *tokens[3], *tokens[4]), true, FVector2D(1.7, 1.7));
 				}
+			}
+			// looking at
+			else if (tokens[0].Equals("look") && tokens[1].Equals("to")) {
+				if (tokens[2].IsNumeric() && tokens[3].IsNumeric() && tokens[4].IsNumeric()) {
+					
+					FVector target;
+					target.X = FCString::Atof(*tokens[2]);
+					target.Y = FCString::Atof(*tokens[3]);
+					target.Z = FCString::Atof(*tokens[4]);
+
+					LookTo(target);
+				}
+				// No numeric vector
+				else {
+					GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT(\
+						"ERROR: Make sure your vector (%s %s %s) only have numeric values"), \
+						*tokens[2], *tokens[3], *tokens[4]), true, FVector2D(1.7, 1.7));
+				}
+			}
+			// None 
+			else {
+				GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT(\
+					"ERROR: No matching command for: %s %s %s %s %s"), \
+					*tokens[0], *tokens[1], *tokens[2], *tokens[3], *tokens[4]), true, FVector2D(1.7, 1.7));
+				GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Yellow, \
+					"5 words command are: look to <x> <y> <z>         \n\
+					                      place <left|right> <x> <y> <z> ", \
+					true, FVector2D(1.5, 1.5));
 			}
 		}
 		else if (tokens.Num() == 6) {
@@ -2030,6 +2094,41 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 				 NewObjRotation = FRotator(170, 0, 0);
 			 }
 		 }
+		 else if (ObjectToGrasp->ActorHasTag(TEXT("Jug"))) {		// ********** Milk Jug *********
+
+			 // Fingers' Rotations
+			 // Thumb
+			 NewFingerRots.thumb_01 = FRotator(-45, -48, 90);
+			 NewFingerRots.thumb_02 = FRotator(25, -55, 0);
+			 NewFingerRots.thumb_03 = FRotator(0, -45, 0);
+			 // Index
+			 NewFingerRots.index_01 = FRotator(-3, -80, 0);
+			 NewFingerRots.index_02 = FRotator(0, -90, 0);
+			 NewFingerRots.index_03 = FRotator(0, -45, 0);
+			 // Middle
+			 NewFingerRots.middle_01 = FRotator(0, -90, 0);
+			 NewFingerRots.middle_02 = FRotator(0, -90, 0);
+			 NewFingerRots.middle_03 = FRotator(0, -45, 0);
+			 // Ring
+			 NewFingerRots.ring_01 = FRotator(3, -90, 0);
+			 NewFingerRots.ring_02 = FRotator(0, -90, 0);
+			 NewFingerRots.ring_03 = FRotator(0, -45, 0);
+			 // Pinky
+			 NewFingerRots.pinky_01 = FRotator(5, -100, 0);
+			 NewFingerRots.pinky_02 = FRotator(0, -80, 10);
+			 NewFingerRots.pinky_03 = FRotator(0, -45, 0);
+
+			 // Object Location
+			 NewObjLocation = FVector(-4.7, 6, -2.4);
+
+			 if (isGrasping_r) {
+				 // Object Rotation
+				 NewObjRotation = FRotator(0, -30, 0);
+			 }
+			 else {
+				 NewObjRotation = FRotator(-69.5, 0, 90);
+			 }
+		 }
 		 else {		// ********** In General ***********
 
 			 FVector BoxExtent;
@@ -2300,6 +2399,21 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 	 GoalHeadRotation = rot;
  }
 
+ void AIAIAvatarCharacter::LookTo(FVector Point) {
+	 check(CurrentAnimationInstance != nullptr);
+
+	 UE_LOG(LogAvatarCharacter, Log, TEXT("Processing Command 'look to %f %f %f' ."), Point.X, Point.Y, Point.Z);
+
+	 FVector HeadLoc = GetMesh()->GetBoneLocation(TEXT("neck_01"), EBoneSpaces::ComponentSpace);
+	 FVector PointLoc = GetMesh()->GetComponentTransform().InverseTransformPosition(Point);
+	 FVector DirVec = HeadLoc - PointLoc;
+	 FRotator Rot = DirVec.ToOrientationRotator();
+	 Rot.Yaw += 90;
+	 Rot.Roll = Rot.Pitch;
+	 Rot.Pitch = 0;
+
+	 MoveHead(Rot);
+ }
 
  void AIAIAvatarCharacter::SimpleMoveToTargetPoint() {
 	 UE_LOG(LogAvatarCharacter, Log, TEXT("AutoMove"));
@@ -2512,15 +2626,15 @@ void AIAIAvatarCharacter::Tick(float DeltaTime) {
 			 return;
 		 }
 
-		 UE_LOG(LogAvatarCharacter, Log, TEXT("  Difference between current head and goal: %s = %f"), *(HeadRotationErrorVector.ToString()), HeadRotationErrorVector.Size());
+		 //UE_LOG(LogAvatarCharacter, Log, TEXT("  Difference between current head and goal: %s = %f"), *(HeadRotationErrorVector.ToString()), HeadRotationErrorVector.Size());
 
 		 const FVector PIDOutputVector = HeadPIDController.Update(HeadRotationErrorVector, DeltaTime);
-		 UE_LOG(LogAvatarCharacter, Log, TEXT("  PID Output is: %s"), *(PIDOutputVector.ToString()));
+		 //UE_LOG(LogAvatarCharacter, Log, TEXT("  PID Output is: %s"), *(PIDOutputVector.ToString()));
 
 		 const FRotator PIDOutputRotator = FRotator(PIDOutputVector.X, PIDOutputVector.Y, PIDOutputVector.Z);
 
 		 CurrentAnimationInstance->HeadRotation = PIDOutputRotator + CurrentHeadRotation;
-		 UE_LOG(LogAvatarCharacter, Log, TEXT("  New Head Rotation shall be: %s"), *(CurrentAnimationInstance->HeadRotation.ToString()));
+		 //UE_LOG(LogAvatarCharacter, Log, TEXT("  New Head Rotation shall be: %s"), *(CurrentAnimationInstance->HeadRotation.ToString()));
 	 }
 	
 }
@@ -2725,6 +2839,7 @@ void AIAIAvatarCharacter::HandleLeftHandRotationAlphaInterpolationProgress(float
 	AnimationInstance->HandRotationAlpha = Value;
 	//UE_LOG(LogTemp, Error, TEXT("LH: Rot Interpol active %f"), Value);
 }
+
 void AIAIAvatarCharacter::HandleLeftHandRotationBoneInterpolationProgress(float Value) {
 	FRotator New = FMath::Lerp(LeftHandRotationBoneInterpolation.InitialValue, LeftHandRotationBoneInterpolation.TargetValue, Value);
 
@@ -2767,6 +2882,7 @@ void AIAIAvatarCharacter::StartLeftHandRotationEnablement(FRotator NewRot) {
 	}
 
 }
+
 void AIAIAvatarCharacter::InterpolateLeftHandRotationTo(FRotator NewRot) {
 	if (HandRotationCurveFloat)
 	{
@@ -2788,6 +2904,7 @@ void AIAIAvatarCharacter::InterpolateLeftHandRotationTo(FRotator NewRot) {
 		UE_LOG(LogAvatarCharacter, Error, TEXT("LH: Can't execute InterpolateSpineTo without a HandRotationCurveFloat"));
 	}
 }
+
 void AIAIAvatarCharacter::StartLeftHandRotationDisablement() {
 	if (HandRotationCurveFloat)
 	{
@@ -2921,6 +3038,7 @@ void AIAIAvatarCharacter::HandleLeftHandIKAlphaInterpolationProgress(float Value
 	AnimationInstance->LeftHandIKAlpha = Value;
 	//UE_LOG(LogTemp, Error, TEXT("LH: Interpol active %f"), Value);
 }
+
 void AIAIAvatarCharacter::HandleLeftHandIKBoneInterpolationProgress(float Value)
 {
 	FVector New = FMath::Lerp(LeftHandIKBoneInterpolation.InitialValue, LeftHandIKBoneInterpolation.TargetValue, Value);
@@ -3016,7 +3134,6 @@ void AIAIAvatarCharacter::StartLeftHandIKDisablement()
 	}
 }
 
-
 // Right Hand IK interpolation Handling
 void AIAIAvatarCharacter::HandleRightHandIKAlphaInterpolationProgress(float Value)
 {
@@ -3025,6 +3142,7 @@ void AIAIAvatarCharacter::HandleRightHandIKAlphaInterpolationProgress(float Valu
 	AnimationInstance->RightHandIKAlpha = Value;
 	//UE_LOG(LogTemp, Error, TEXT("RH: Interpol active %f"), Value);
 }
+
 void AIAIAvatarCharacter::HandleRightHandIKBoneInterpolationProgress(float Value)
 {
 	FVector New = FMath::Lerp(RightHandIKBoneInterpolation.InitialValue, RightHandIKBoneInterpolation.TargetValue, Value);
@@ -3129,6 +3247,7 @@ void AIAIAvatarCharacter::HandleLeftFingerIKAlphaInterpolationProgress(float Val
 	AnimationInstance->LeftFingerIKAlpha = Value;
 	//UE_LOG(LogTemp, Error, TEXT("LH: Interpol active %f"), Value);
 }
+
 void AIAIAvatarCharacter::HandleLeftFingerIKBoneInterpolationProgress(float Value)
 {
 	FVector New = FMath::Lerp(LeftFingerIKBoneInterpolation.InitialValue, LeftFingerIKBoneInterpolation.TargetValue, Value);
@@ -3172,6 +3291,7 @@ void AIAIAvatarCharacter::StartLeftFingerIKEnablement(FVector NewVec)
 		UE_LOG(LogAvatarCharacter, Error, TEXT("LH: Can't execute StartLeftFingerIKEnablement without a LeftFingerIKCurveFloat"));
 	}
 }
+
 void AIAIAvatarCharacter::InterpolateLeftFingerIKTo(FVector NewVec)
 {
 	if (LeftFingerIKCurveFloat)
@@ -3195,6 +3315,7 @@ void AIAIAvatarCharacter::InterpolateLeftFingerIKTo(FVector NewVec)
 		UE_LOG(LogAvatarCharacter, Error, TEXT("LH: Can't execute InterpolateLeftFingerIKTo without a LeftFingerIKCurveFloat"));
 	}
 }
+
 void AIAIAvatarCharacter::StartLeftFingerIKDisablement()
 {
 	if (LeftFingerIKCurveFloat)
@@ -3233,6 +3354,7 @@ void AIAIAvatarCharacter::HandleRightFingerIKAlphaInterpolationProgress(float Va
 	AnimationInstance->RightFingerIKAlpha = Value;
 	//UE_LOG(LogTemp, Error, TEXT("RH: Interpol active %f"), Value);
 }
+
 void AIAIAvatarCharacter::HandleRightFingerIKBoneInterpolationProgress(float Value)
 {
 	FVector New = FMath::Lerp(RightFingerIKBoneInterpolation.InitialValue, RightFingerIKBoneInterpolation.TargetValue, Value);
@@ -3276,6 +3398,7 @@ void AIAIAvatarCharacter::StartRightFingerIKEnablement(FVector NewVec)
 		UE_LOG(LogAvatarCharacter, Error, TEXT("RH: Can't execute StartRightFingerIKEnablement without a RightFingerIKCurveFloat"));
 	}
 }
+
 void AIAIAvatarCharacter::InterpolateRightFingerIKTo(FVector NewVec)
 {
 	if (RightFingerIKCurveFloat)
@@ -3299,6 +3422,7 @@ void AIAIAvatarCharacter::InterpolateRightFingerIKTo(FVector NewVec)
 		UE_LOG(LogAvatarCharacter, Error, TEXT("RF: Can't execute InterpolateRightFingerIKTo without a RightFingerIKCurveFloat"));
 	}
 }
+
 void AIAIAvatarCharacter::StartRightFingerIKDisablement()
 {
 	if (RightFingerIKCurveFloat)
