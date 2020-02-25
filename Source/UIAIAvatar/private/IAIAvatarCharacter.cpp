@@ -504,6 +504,7 @@ void AIAIAvatarCharacter::LookCam(float Axis)
  }
 
 // Start general grasp
+#pragma optimize("", off)
 void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 
 	// Local variables
@@ -518,7 +519,7 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 	FVector HoldingLocationInCompSpace;
 	FVector ShouldersLocation = FVector(0, 0, 154);
 
-	FTimerHandle HandIKTimeHandle_target;
+	FTimerHandle *HandIKTimeHandle_target = new FTimerHandle();
 	FTimerHandle HandIKTimeHandle_mid;
 	FTimerHandle HandIKTimeHandle_end;
 	FTimerHandle HandRotTimeHandle_end;
@@ -618,7 +619,7 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(-5, -15, 15);
 			}
 		}
-		if (object.GetActor()->ActorHasTag("Jug")) {
+		else if (object.GetActor()->ActorHasTag("Jug")) {
 			if (use_left) {
 				GraspingRotation = FRotator(5, 100, -10);
 				ObjLocationInCompSpace += FVector(7, 8, 1);
@@ -673,6 +674,7 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 
 			// 0s) Rotate hand to grasping pose now
 			StartRightHandRotationEnablement(GraspingRotation);
+
 			// 0s) Move hand to aproach location now
 			StartRightHandIKEnablement(AproachLocationInCompSpace);
 
@@ -693,8 +695,9 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 		// 0s) Rotate spine to reach object
 		StartSpineEnablement(AnimationInstance->Spine1Rotation, AnimationInstance->Spine2Rotation, AnimationInstance->HipRotation);
 
+
 		// 0.5s) Move hand to object location
-		GetWorldTimerManager().SetTimer(HandIKTimeHandle_target, HandIKSetDelegate_target, 5, false, 0.5);
+		GetWorldTimerManager().SetTimer(*HandIKTimeHandle_target, HandIKSetDelegate_target, 5, false, 0.5);
 
 		// 1.5s) Attach
 		AttachDelegate = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::AttachObjectCPP);
@@ -716,6 +719,7 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 		GetWorldTimerManager().SetTimer(SpineTimeHandle_end, SpineDelegate_end, 5, false, 2.2);
 	}
 }
+#pragma optimize("", on)
 
 // Place object on left hand over/in specified place 
 void AIAIAvatarCharacter::PlaceObject(FString targetPlace, FString Hand, FVector targetPoint) {
@@ -2411,6 +2415,13 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 	 Rot.Yaw += 90;
 	 Rot.Roll = Rot.Pitch;
 	 Rot.Pitch = 0;
+
+	 // Limit rotation so Avatar doesn't look wierd
+	 if (Rot.Roll > 35) {
+		 Rot.Roll = 35;
+	 }
+
+	 UE_LOG(LogAvatarCharacter, Log, TEXT("Rotator: %f %f %f' ."), Rot.Yaw, Rot.Roll, Rot.Pitch);
 
 	 MoveHead(Rot);
  }

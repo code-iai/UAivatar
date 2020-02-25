@@ -20,7 +20,15 @@ void UAvatarConsoleCommandController::Tick(float InDeltaTime) {}
 
 void UAvatarConsoleCommandController::SendConsoleCommand() {
 
-	Avatar->ProcessConsoleCommand(Command);
+	//Avatar->ProcessConsoleCommand(Command);
+
+	AsyncTask(ENamedThreads::GameThread, [this]()
+	{
+		UE_LOG(LogTemp, Log, TEXT("[%s] Executing on game thread."), *FString(__FUNCTION__));
+		this->Avatar->ProcessConsoleCommand(this->Command);
+		UE_LOG(LogTemp, Log, TEXT("[%s] Game thread finished."), *FString(__FUNCTION__));
+	}
+	);
 
 	Message = "Command Sent";
 	bSuccess = true;

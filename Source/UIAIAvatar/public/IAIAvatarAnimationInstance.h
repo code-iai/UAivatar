@@ -93,6 +93,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
 	FRotator HeadRotation;
 
+	// Additive Rotation on the neck joint
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator NeckRotation;
+
 	// A value between 0 and 1 controls the amount of blending between the animation and the inverse kinematic
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 	float LeftHandIKAlpha;
@@ -124,6 +128,10 @@ public:
 	// A value between 0 and 1 controls the amount of blending between the animation and the bone modification
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 	float HeadRotationAlpha;
+
+	// A value between 0 and 1 controls the amount of blending between the animation and the bone modification
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+	float NeckRotationAlpha;
 
 	// True when object on left hand is grasped or false if nothing grasped. This is for proper animation and the bone modification
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)

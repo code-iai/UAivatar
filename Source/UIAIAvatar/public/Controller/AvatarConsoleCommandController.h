@@ -32,8 +32,6 @@ public:
 	UPROPERTY()
 		bool bSuccess;
 
-protected:
-
 	UPROPERTY()
 		AIAIAvatarCharacter* Avatar;
 };
