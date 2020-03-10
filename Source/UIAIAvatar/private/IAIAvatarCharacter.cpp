@@ -193,9 +193,8 @@ void AIAIAvatarCharacter::LookUpAtRate(float Rate)
 
 void AIAIAvatarCharacter::TurnCam(float Axis)
 {
-	if (enableDTW) {
+	if (true) {
 		FollowCamera->AddWorldRotation(FRotator(0, Axis, 0));
-
 		Cast<UIAIAvatarAnimationInstance>(this->GetMesh()->GetAnimInstance())->SkelControl_Head =
 			FollowCamera->GetComponentRotation() - FRotator(0, 180.f, 0);
 	}
@@ -211,7 +210,7 @@ void AIAIAvatarCharacter::TurnCam(float Axis)
 
 void AIAIAvatarCharacter::LookCam(float Axis)
 {
-	if (enableDTW) {
+	if (true) {
 		FollowCamera->AddWorldRotation(FRotator(Axis, 0, 0));
 
 		Cast<UIAIAvatarAnimationInstance>(this->GetMesh()->GetAnimInstance())->SkelControl_Head =
