@@ -168,15 +168,15 @@ bool UTaskAnimParamLogic::isInGoodAlignment(CuttableObjectData_t &ItemData) {
 	FRotator B = Avatar->GetActorForwardVector().ToOrientationRotator();
 	tempAngle = A.Yaw - B.Yaw;
 	if ((tempAngle > -6 && tempAngle < 6)||
-		(tempAngle > 354) && (tempAngle < 366)||
-		(tempAngle > -366) && (tempAngle < -354) ||
-		(tempAngle > -186) && (tempAngle < -174) ||
-		(tempAngle > 174) && (tempAngle < 186) 
+		(tempAngle > 354 && tempAngle < 366)||
+		(tempAngle > -366 && tempAngle < -354) ||
+		(tempAngle > -186 && tempAngle < -174) ||
+		(tempAngle > 174 && tempAngle < 186)
 		) {
 		ItemData.angle = tempAngle;
 	}
 	else {
-		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: The angle of %f between Item's short axis and the Avatar is too high for cutting. Good angle is 0° with ±6°.%f"), tempAngle);
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: The angle of %f between Item's short axis and the Avatar is too high for cutting. Good angle is 0Â° with Â±6Â°. %f"), tempAngle);
 		return false;
 	}
 
