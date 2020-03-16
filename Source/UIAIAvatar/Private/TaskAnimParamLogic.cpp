@@ -23,6 +23,12 @@ void UTaskAnimParamLogic::BeginPlay()
 	Avatar = Cast<AIAIAvatarCharacter>(GetOwner());
 	check(Avatar != nullptr);
 
+	Animation = Cast<UIAIAvatarAnimationInstance>(Avatar->GetMesh()->GetAnimInstance());
+	check(Animation != nullptr);
+
+	bRunAnimation = false;
+
+	currentAnimTime = 0;
 }
 
 
@@ -32,6 +38,85 @@ void UTaskAnimParamLogic::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+	if (bRunAnimation) {
+
+		SetJointAlphas();
+		AnimParams.AnimFunctionDelegate.ExecuteIfBound(currentAnimTime);
+
+		currentAnimTime += DeltaTime;
+		if (currentAnimTime > AnimParams.animTime) {
+			bRunAnimation = false;
+			UnSetJointAlphas();
+		}
+	}
+	else {
+		currentAnimTime = 0;
+	}
+}
+
+
+AActor* UTaskAnimParamLogic::CheckForObject(TMap<FString, FHitResult> Objects, FString ObjName) {
+
+	FBox ReachArea;
+	AActor* Object = NULL;
+	FVector ObjLocationInCompSpace = FVector(0, 0, 0);
+
+	// Defining area of proper reach
+	ReachArea = FBox::BuildAABB(FVector(45, 0, -10), FVector(25, 20, 5));
+
+	// Filtering objects
+	for (auto& It : Objects)
+	{
+		AActor *Item = It.Value.GetActor();
+
+		if (Item->GetName().Equals(ObjName)) {
+
+			// Get location relative to component space
+			ObjLocationInCompSpace = Avatar->GetTransform().InverseTransformPosition(Item->GetActorLocation());
+
+			// Check if within reach area
+			if (ReachArea.IsInside(ObjLocationInCompSpace)) {
+				Object = Item;
+			}
+		}
+	}
+
+	return Object;
+}
+
+void UTaskAnimParamLogic::SetJointAlphas() {
+
+	if (AnimParams.bSet_LH_Loc) 
+		Animation->LeftHandIKAlpha = 1;
+	if (AnimParams.bSet_RH_Loc)
+		Animation->RightHandIKAlpha = 1;
+	if (AnimParams.bSet_LH_Rot)
+		Animation->HandRotationAlpha = 1;
+	if (AnimParams.bSet_RH_Rot)
+		Animation->RightHandRotationAlpha = 1;
+	if (AnimParams.bSet_LF_Rot)
+		Animation->leftHandGraspingAlpha = 1;
+	if (AnimParams.bSet_RF_Rot)
+		Animation->rightHandGraspingAlpha = 1;
+	if (AnimParams.bSet_S01_Rot)
+		Animation->SpineRotationAlpha = 1;
+}
+
+void UTaskAnimParamLogic::UnSetJointAlphas() {
+	if (AnimParams.bSet_LH_Loc)
+		Animation->LeftHandIKAlpha = 0;
+	if (AnimParams.bSet_RH_Loc)
+		Animation->RightHandIKAlpha = 0;
+	if (AnimParams.bSet_LH_Rot)
+		Animation->HandRotationAlpha = 0;
+	if (AnimParams.bSet_RH_Rot)
+		Animation->RightHandRotationAlpha = 0;
+	if (AnimParams.bSet_LF_Rot)
+		Animation->leftHandGraspingAlpha = 0;
+	if (AnimParams.bSet_RF_Rot)
+		Animation->rightHandGraspingAlpha = 0;
+	if (AnimParams.bSet_S01_Rot)
+		Animation->SpineRotationAlpha = 0;
 }
 
 // Check for cuttable items within a list of unique hit results and filter out those out of proper reach
@@ -66,35 +151,6 @@ TArray<AActor*> UTaskAnimParamLogic::CheckForCuttableObjects(TMap<FString, FHitR
 	return Cuttables;
 }
 #pragma optimize("", on)
-
-AActor* UTaskAnimParamLogic::CheckForObject(TMap<FString, FHitResult> Objects, FString ObjName) {
-
-	FBox ReachArea;
-	AActor* Object=  NULL;
-	FVector ObjLocationInCompSpace = FVector(0, 0, 0);
-
-	// Defining area of proper reach
-	ReachArea = FBox::BuildAABB(FVector(45, 0, -10), FVector(25, 20, 5));
-
-	// Filtering objects
-	for (auto& It : Objects)
-	{
-		AActor *Item = It.Value.GetActor();
-
-		if (Item->GetName().Equals(ObjName)) {
-
-			// Get location relative to component space
-			ObjLocationInCompSpace = Avatar->GetTransform().InverseTransformPosition(Item->GetActorLocation());
-
-			// Check if within reach area
-			if (ReachArea.IsInside(ObjLocationInCompSpace)) {
-				Object = Item;
-			}
-		}
-	}
-
-	return Object;
-}
 
 // This will choose the biggest cuttable object 
 AActor* UTaskAnimParamLogic::PickOneObject(TArray<AActor*> Cuttables) {
@@ -185,9 +241,9 @@ bool UTaskAnimParamLogic::isInGoodAlignment(CuttableObjectData_t &ItemData) {
 
 // Set parameters for task animation
 #pragma optimize("", off)
-FTaskAnimParameters_t UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemData) {
+void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemData) {
 
-	FTaskAnimParameters_t AnimParams;
+	FTaskAnimParameters_t MyAnimParams;
 	bool orderWidthLenght = false;
 	FVector HoldPoint;
 	FVector StartPoint;
@@ -218,15 +274,14 @@ FTaskAnimParameters_t UTaskAnimParamLogic::calculateCutAnimParameters(CuttableOb
 	if (ItemData.Object->ActorHasTag("Bread")) {
 
 		// Skill
-		AnimParams.RH_Curve = CuttingBreadAnimCurve;
-		AnimParams.RH_Rotation_Curve = CuttingBreadAnimRotCurve;
-		AnimParams.animTime = 8;
+		AnimParams.RH_Loc_Curve = CuttingBreadAnimCurve;
+		AnimParams.RH_Rot_Curve = CuttingBreadAnimRotCurve;
+		AnimParams.animTime = 10;
 		AnimParams.Task = "CutBread";
 		sliceWidth = 2;
 
 		// Right Hand
 		HoldAdjusment = FVector(-5, 0, 2);
-		StartAdjustment = FVector(-18, 0, 5);
 		EndAdjustment = FVector(-18, 0, 5.3);
 		Multiplier = FVector(1, 4, 1);
 
@@ -236,8 +291,8 @@ FTaskAnimParameters_t UTaskAnimParamLogic::calculateCutAnimParameters(CuttableOb
 	else if (ItemData.Object->ActorHasTag("Steak")) {
 		
 		// Skill
-		AnimParams.RH_Curve = CuttingSteakAnimCurve;
-		AnimParams.RH_Rotation_Curve = CuttingSteakAnimRotCurve;
+		AnimParams.RH_Loc_Curve = CuttingSteakAnimCurve;
+		AnimParams.RH_Rot_Curve = CuttingSteakAnimRotCurve;
 		AnimParams.animTime = 2;
 		AnimParams.Task = "CutBread";
 		sliceWidth = 1;
@@ -254,8 +309,8 @@ FTaskAnimParameters_t UTaskAnimParamLogic::calculateCutAnimParameters(CuttableOb
 	else if (ItemData.Object->ActorHasTag("Zucchini")) {
 		
 		// Skill
-		AnimParams.RH_Curve = CuttingZucchiniAnimCurve;
-		AnimParams.RH_Rotation_Curve = CuttingZucchiniAnimRotCurve;
+		AnimParams.RH_Loc_Curve = CuttingZucchiniAnimCurve;
+		AnimParams.RH_Rot_Curve = CuttingZucchiniAnimRotCurve;
 		AnimParams.animTime = 1.6;
 		AnimParams.Task = "CutBread";
 		sliceWidth = 1;
@@ -272,16 +327,11 @@ FTaskAnimParameters_t UTaskAnimParamLogic::calculateCutAnimParameters(CuttableOb
 
 	// local order is (Width, Lenght, Height)
 
-	// Calculate Start Point
-	StartPoint.X = 0;
-	StartPoint.Y = -1 * halfLength + sliceWidth;
-	StartPoint.Z = ItemData.Extent.Z;
-
 	// Calculate End Point
-	EndPoint.X = StartPoint.X;
-	EndPoint.Y = StartPoint.Y;
-	EndPoint.Z = -1 * ItemData.Extent.Z;
-
+	//EndPoint.X = 0;
+	//EndPoint.Y = -1 * halfLength + sliceWidth;
+	//EndPoint.Z = -1 * ItemData.Extent.Z;
+	EndPoint = ItemData.Extent;
 	// Calculate hold point
 	HoldPoint.X = 0;
 	HoldPoint.Y = -1 * halfLength + holdingDistance;
@@ -289,16 +339,11 @@ FTaskAnimParameters_t UTaskAnimParamLogic::calculateCutAnimParameters(CuttableOb
 
 	// Adjust coordinates. The IK used is controling the Avatar's wrist that shouldn't be exactly on
 	// the working points but maybe a bit above and behind.
-	StartPoint += StartAdjustment;
 	EndPoint += EndAdjustment;
 	HoldPoint += HoldAdjusment;
 
 	// Put back to original order
 	if (!orderWidthLenght) {
-
-		tmp = StartPoint.X;
-		StartPoint.X = StartPoint.Y;
-		StartPoint.Y = tmp;
 
 		tmp = EndPoint.X;
 		EndPoint.X = EndPoint.Y;
@@ -311,7 +356,6 @@ FTaskAnimParameters_t UTaskAnimParamLogic::calculateCutAnimParameters(CuttableOb
 
 	// We are always cutting on the right extreme of the object according to Avatar's point of view.
 	if (!(ItemData.angle > 354 || ItemData.angle < -354 || (ItemData.angle < 6 && ItemData.angle > -6))) {
-		StartPoint = StartPoint.RotateAngleAxis(180, FVector(0, 0, 1));
 		EndPoint = EndPoint.RotateAngleAxis(180, FVector(0, 0, 1));
 		HoldPoint = HoldPoint.RotateAngleAxis(180, FVector(0, 0, 1));
 		ItemData.angle -= 180;
@@ -321,39 +365,50 @@ FTaskAnimParameters_t UTaskAnimParamLogic::calculateCutAnimParameters(CuttableOb
 	LocalRot = FRotator(0, ItemData.angle, 0);
 
 	// Convert coordinates relative to world
-	StartPoint = ItemData.Object->GetActorTransform().TransformPosition(StartPoint);
 	EndPoint   = ItemData.Object->GetActorTransform().TransformPosition(EndPoint);
 	HoldPoint  = ItemData.Object->GetActorTransform().TransformPosition(HoldPoint);
 
 	// Convert points relative to Avatar. This is best to adjust points
-	StartPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(StartPoint);
 	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
 	HoldPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(HoldPoint);
 
+	// Start Point is holding position
+	StartPoint = FVector(-15, 15, 105);
+
 	// Motion Depth
-	Multiplier.Z *= -1 * (StartPoint.Z - EndPoint.Z);
+	Multiplier = EndPoint - StartPoint;
 
 	// Put back in world coordinates
-	AnimParams.RH_Curve_Offset = StartPoint;
-	AnimParams.RH_Curve_Multiplier = Multiplier;
+	AnimParams.RH_Loc_Curve_Offset = StartPoint;
+	AnimParams.RH_Loc_Curve_Multiplier = Multiplier;
 	AnimParams.LH_Rotation = HoldRotation;
 	AnimParams.LH_Location  = HoldPoint;
 
-	AnimParams.RH_Curve_Orientation = LocalRot;
+	AnimParams.RH_Loc_Curve_Orientation = LocalRot;
+	AnimParams.Spine_01_rotation = FRotator(0, 0, 20);
 
 	AnimParams.success = true;
 
-	return AnimParams;
+
+	AnimParams.bSet_LH_Loc = true;
+	AnimParams.bSet_LH_Rot = true;
+	// These 2 are active from grasp and hold
+	AnimParams.bSet_RH_Loc = false;
+	AnimParams.bSet_RH_Rot = false;
+	AnimParams.bSet_RF_Rot = false;
+	AnimParams.bSet_LF_Rot = false;
+	AnimParams.bSet_S01_Rot = true;
 }
 #pragma optimize("", on)
 
-FTaskAnimParameters_t UTaskAnimParamLogic::calculatePourAnimParameters(AActor* Target) {
+void UTaskAnimParamLogic::calculateForkAnimParameters(AActor* Target) {
 
-	FTaskAnimParameters_t AnimParams;
 	FVector StartPoint;
 	FVector EndPoint;
 	FVector Multiplier;
 	FVector EndAdjustment = FVector(-15, -5, 18);
+
+	AnimParams.Spine_01_rotation = FRotator(0, 0, 15);
 
 	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Target->GetActorLocation());
 	EndPoint += EndAdjustment;
@@ -364,72 +419,253 @@ FTaskAnimParameters_t UTaskAnimParamLogic::calculatePourAnimParameters(AActor* T
 	Multiplier = (EndPoint - StartPoint);
 
 	//
-	AnimParams.RH_Curve_Offset = StartPoint;
-	AnimParams.RH_Curve_Multiplier = Multiplier;
+	AnimParams.RH_Loc_Curve_Offset = StartPoint;
+	AnimParams.RH_Loc_Curve_Multiplier = Multiplier;
 
 	// Skill
-	AnimParams.RH_Curve = PouringAnimCurve;
-	AnimParams.RH_Rotation_Curve = PouringAnimRotCurve;
+	AnimParams.RH_Loc_Curve = PouringAnimCurve;
+	AnimParams.RH_Rot_Curve = PouringAnimRotCurve;
 
 	AnimParams.animTime = 9;
-	AnimParams.Task = "Pour";
+	AnimParams.Task = "Fork";
 
-	return AnimParams;
+	AnimParams.bSet_LH_Loc = false;
+	AnimParams.bSet_LH_Rot = false;
+	// These 2 are active from grasp and hold
+	AnimParams.bSet_RH_Loc = false;
+	AnimParams.bSet_RH_Rot = false;
+	AnimParams.bSet_RF_Rot = false;
+	AnimParams.bSet_LF_Rot = false;
+	AnimParams.bSet_S01_Rot = true;
 }
 
+void UTaskAnimParamLogic::calculateSpoonAnimParameters(AActor* Target) {
+
+	FVector Origin;
+	FVector Extent;
+	FVector StartPoint;
+	FVector EndPoint;
+	FVector Multiplier;
+
+	FVector EndAdjustment = FVector(-11, -12, 0);
+	FVector StartAdjustment = FVector(0, 0, 0);
+
+	AnimParams.Spine_01_rotation = FRotator(0, 0, 20);
+
+	// Get origin and extension							
+	Target->GetActorBounds(false, Origin, Extent);
+
+	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Origin);
+	EndPoint += EndAdjustment;
+
+	StartPoint = FVector(-15, 15, 105);
+
+	// Motion Depth
+	Multiplier = (EndPoint - StartPoint);
+
+	//
+	AnimParams.RH_Loc_Curve_Offset = StartPoint;
+	AnimParams.RH_Loc_Curve_Multiplier = Multiplier;
+
+	// Skill
+	AnimParams.RH_Loc_Curve = SpooningSoupAnimCurve;
+	AnimParams.RH_Rot_Curve = SpooningSoupAnimRotCurve;
+
+	AnimParams.animTime = 5;
+	AnimParams.Task = "Spoon";
+
+	AnimParams.bSet_LH_Loc = false;
+	AnimParams.bSet_LH_Rot = false;
+	// These 2 are active from grasp and hold
+	AnimParams.bSet_RH_Loc = false;
+	AnimParams.bSet_RH_Rot = false;
+	AnimParams.bSet_RF_Rot = false;
+	AnimParams.bSet_LF_Rot = false;
+	AnimParams.bSet_S01_Rot = true;
+}
+
+void UTaskAnimParamLogic::calculatePourAnimParameters(AActor* Target) {
+
+	FVector StartPoint;
+	FVector EndPoint;
+	FVector Multiplier;
+	FVector EndAdjustment = FVector(-15, -5, 18);
+
+	AnimParams.Spine_01_rotation = FRotator(0, 0, 15);
+
+	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Target->GetActorLocation());
+	EndPoint += EndAdjustment;
+
+	StartPoint = FVector(-15, 15, 105);
+
+	// Motion Depth
+	Multiplier = (EndPoint - StartPoint);
+
+	//
+	AnimParams.RH_Loc_Curve_Offset = StartPoint;
+	AnimParams.RH_Loc_Curve_Multiplier = Multiplier;
+
+	// Skill
+	AnimParams.RH_Loc_Curve = PouringAnimCurve;
+	AnimParams.RH_Rot_Curve = PouringAnimRotCurve;
+
+	AnimParams.animTime = 9;
+	AnimParams.Task = "Fork";
+
+	AnimParams.bSet_LH_Loc = false;
+	AnimParams.bSet_LH_Rot = false;
+	// These 2 are active from grasp and hold
+	AnimParams.bSet_RH_Loc = false;
+	AnimParams.bSet_RH_Rot = false;
+	AnimParams.bSet_RF_Rot = false;
+	AnimParams.bSet_LF_Rot = false;
+	AnimParams.bSet_S01_Rot = true;
+}
+
+// Run cut animation
+void UTaskAnimParamLogic::RunCutAnimation(float time) {
+
+	float handYaw;
+	FVector Hand_r_Location;
+	FRotator Hand_r_Rotation;
+
+	handYaw = AnimParams.RH_Loc_Curve_Orientation.Yaw - 90;
+	Hand_r_Rotation = FRotator(70, handYaw, 0);
+
+	Hand_r_Location = AnimParams.RH_Loc_Curve->GetVectorValue(time);
+	Hand_r_Location *= AnimParams.RH_Loc_Curve_Multiplier;
+	Hand_r_Location += AnimParams.RH_Loc_Curve_Offset;
+
+	Animation->RightHandRotation = Hand_r_Rotation;
+	Animation->RightHandIKTargetPosition = Hand_r_Location;
+
+	Animation->HandRotation = AnimParams.LH_Rotation;
+	Animation->LeftHandIKTargetPosition = AnimParams.LH_Location;
+	
+	Animation->Spine1Rotation = AnimParams.Spine_01_rotation;
+}
+
+// Run fork animation
+void UTaskAnimParamLogic::RunForkAnimation(float time) {
+
+	FVector Temp;
+	FVector Hand_r_Location;
+	FRotator Hand_r_Rotation;
+
+	Temp = AnimParams.RH_Rot_Curve->GetVectorValue(time);
+	Hand_r_Rotation = FRotator(Temp.Y,Temp.Z, Temp.X);
+
+	Hand_r_Location = AnimParams.RH_Loc_Curve->GetVectorValue(time);
+	Hand_r_Location *= AnimParams.RH_Loc_Curve_Multiplier;
+	Hand_r_Location += AnimParams.RH_Loc_Curve_Offset;
+
+	Animation->RightHandRotation = Hand_r_Rotation;
+	Animation->RightHandIKTargetPosition = Hand_r_Location;
+	Animation->Spine1Rotation = AnimParams.Spine_01_rotation;
+}
+
+// Run Spoon animation
+void UTaskAnimParamLogic::RunSpoonAnimation(float time) {
+
+	FVector Temp;
+	FVector Hand_r_Location;
+	FRotator Hand_r_Rotation;
+
+	Temp = AnimParams.RH_Rot_Curve->GetVectorValue(time);
+	Hand_r_Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
+
+	Hand_r_Location = AnimParams.RH_Loc_Curve->GetVectorValue(time);
+	Hand_r_Location *= AnimParams.RH_Loc_Curve_Multiplier;
+	Hand_r_Location += AnimParams.RH_Loc_Curve_Offset;
+
+	Animation->RightHandRotation = Hand_r_Rotation;
+	Animation->RightHandIKTargetPosition = Hand_r_Location;
+	Animation->Spine1Rotation = AnimParams.Spine_01_rotation;
+}
+
+// Run fork animation
+void UTaskAnimParamLogic::RunPourAnimation(float time) {
+
+	FVector Temp;
+	FVector Hand_r_Location;
+	FRotator Hand_r_Rotation;
+
+	Temp = AnimParams.RH_Rot_Curve->GetVectorValue(time);
+	Hand_r_Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
+
+	Hand_r_Location = AnimParams.RH_Loc_Curve->GetVectorValue(time);
+	Hand_r_Location *= AnimParams.RH_Loc_Curve_Multiplier;
+	Hand_r_Location += AnimParams.RH_Loc_Curve_Offset;
+
+	Animation->RightHandRotation = Hand_r_Rotation;
+	Animation->RightHandIKTargetPosition = Hand_r_Location;
+	Animation->Spine1Rotation = AnimParams.Spine_01_rotation;
+}
+
+
 // Process a task request
-FTaskAnimParameters_t UTaskAnimParamLogic::processTask(FString task) {
+FTaskAnimParameters_t UTaskAnimParamLogic::ProcessTask(FString task) {
 
 	AActor* Object;
-	FTaskAnimParameters_t AnimParams;
+	FTaskAnimParameters_t MyAnimParams;
 
-	if (task.Equals("Cut")) {
+	if (task.Equals("cut")) {
 		Object = PickOneObject(CheckForCuttableObjects(Avatar->ListObjects()));
 		if (Object != nullptr) {
-			AnimParams = processTaskOn(task, Object);
+			MyAnimParams = ApplyTaskOnActor(task, Object);
 		}
 		else {
 			UE_LOG(LogAvatarCharacter, Error, TEXT("Error: not able to find any cuttable object."));
-			AnimParams.success = false;
+			MyAnimParams.success = false;
 		}
 	}
 	else if (task.Equals("Spoon")) {
 	}
 
-	return AnimParams;
+	return MyAnimParams;
 }
 
 // Process a task request on specific object
-FTaskAnimParameters_t UTaskAnimParamLogic::processTaskOn(FString task, AActor* Object) {
+FTaskAnimParameters_t UTaskAnimParamLogic::ApplyTaskOnActor(FString task, AActor* Object) {
 
-	CuttableObjectData_t CurrentCutable;
-	FTaskAnimParameters_t AnimParams;
+	FTaskAnimParameters_t MyAnimParams;
 
 	if (Object != NULL) {
-		if (task.Equals("Cut")) {
+		if (task.Equals("cut")) {
+			CuttableObjectData_t CurrentCutable;
 			if (Object->GetRootComponent()->ComponentHasTag("Cuttable")) {
 				CurrentCutable.Object = Object;
 				if (isInGoodAlignment(CurrentCutable)) {
-					AnimParams = calculateCutAnimParameters(CurrentCutable);
-				}
-				else {
-					AnimParams.success = false;
+					calculateCutAnimParameters(CurrentCutable);
+					AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunCutAnimation);
+					bRunAnimation = true;
 				}
 			}
 		}
-		else if (task.Equals("PourOver")) {
-
-			AnimParams = calculatePourAnimParameters(Object);
+		else if (task.Equals("pour")) {
+			calculatePourAnimParameters(Object);
+			AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunPourAnimation);
+			bRunAnimation = true;
 		}
-		else {
-			AnimParams.success = false;
+		else if (task.Equals("fork")) {
+			calculateForkAnimParameters(Object);
+			AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunForkAnimation);
+			bRunAnimation = true;
+		}
+		else if (task.Equals("spoon")) {
+			calculateSpoonAnimParameters(Object);
+			AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunSpoonAnimation);
+			bRunAnimation = true;
 		}
 	}
 	else {
 		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
-		AnimParams.success = false;
 	}
 
-	return AnimParams;
+	return MyAnimParams;
 }
 
+void UTaskAnimParamLogic::ProcessTask_P_ObjectName(FString task, FString ObjectName) {
+	
+	ApplyTaskOnActor(task, CheckForObject(Avatar->ListObjects(), ObjectName));
+}

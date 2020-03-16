@@ -508,11 +508,6 @@ public:
 		void Spoon();
 
 	/*C++ empty event (BP implemented) to be called from C++*/
-	/* This triggers cutting function in BP*/
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-		void Pour(const FString& ObjName);
-
-	/*C++ empty event (BP implemented) to be called from C++*/
 	/* Uses BP's multi trace by channel */
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 		TArray<FHitResult> TraceObjectsWithBP();
