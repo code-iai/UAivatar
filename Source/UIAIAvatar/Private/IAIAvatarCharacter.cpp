@@ -617,7 +617,7 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 		ObjLocationInCompSpace.Y -= 7;
 
 		
-		RetireLocationInCompSpace = ObjLocationInCompSpace + FVector(0, 0, 5);
+		
 		RetireLocationInCompSpace.Y = 14;
 
 		if (object.GetActor()->ActorHasTag("Bowl")) {
@@ -625,26 +625,41 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 				GraspingRotation = FRotator(-10, 70, 180);
 				ObjLocationInCompSpace += FVector(7, -5, -1);
 				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(5, -15, 15);
-
 			}
 			else {
 				GraspingRotation = FRotator(10, -70, 0);
 				ObjLocationInCompSpace += FVector(-7, -5, -1);
 				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(-5, -15, 15);
 			}
+			RetireLocationInCompSpace = ObjLocationInCompSpace + FVector(0, -15, 5);
 		}
 		else if (object.GetActor()->ActorHasTag("SpoonSoup")) {
 			if (use_left) {
 				GraspingRotation = FRotator(9, 100, 25);
-				ObjLocationInCompSpace += FVector(7, -8, -1);
+				ObjLocationInCompSpace += FVector(4, -8, -1);
 				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(5, -15, 15);
 
 			}
 			else {
 				GraspingRotation = FRotator(9, -100, -25);
-				ObjLocationInCompSpace += FVector(-7, -8, -1);
+				ObjLocationInCompSpace += FVector(-4, -8, -1);
 				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(-5, -15, 15);
 			}
+			RetireLocationInCompSpace = ObjLocationInCompSpace + FVector(0, -15, 5);
+		}
+		else if (object.GetActor()->ActorHasTag("DinnerFork")) {
+			if (use_left) {
+				GraspingRotation = FRotator(20, 90, 0);
+				ObjLocationInCompSpace += FVector(4, -8, -1);
+				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(5, -15, 15);
+
+			}
+			else {
+				GraspingRotation = FRotator(20, -90, 0);
+				ObjLocationInCompSpace += FVector(-4, -8, -1);
+				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(-5, -15, 15);
+			}
+			RetireLocationInCompSpace = ObjLocationInCompSpace + FVector(0, -15, 5);
 		}
 		else if (object.GetActor()->ActorHasTag("Jug")) {
 			if (use_left) {
@@ -658,18 +673,21 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 				ObjLocationInCompSpace += FVector(-7, -10, -1);
 				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(-5, -15, 15);
 			}
+			RetireLocationInCompSpace = ObjLocationInCompSpace + FVector(0, -15, 5);
 		}
 		else if (object.GetActor()->ActorHasTag("BreadKnife") || object.GetActor()->ActorHasTag("CookKnife")) {
 			if (use_left) {
 				GraspingRotation = FRotator(70, 100, 0);
-				ObjLocationInCompSpace += FVector(7, -8, 5);
-				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(5, -15, 20);
+				ObjLocationInCompSpace += FVector(4, -8, 5);
+				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(3, -20, 20);
+				RetireLocationInCompSpace = ObjLocationInCompSpace + FVector(3, -20, 15);
 
 			}
 			else {
 				GraspingRotation = FRotator(70, -100, 0);
-				ObjLocationInCompSpace += FVector(-7, -8, 5);
-				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(-5, -15, 20);
+				ObjLocationInCompSpace += FVector(-4, -8, 5);
+				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(-3, -20, 20);
+				RetireLocationInCompSpace = ObjLocationInCompSpace + FVector(-3, -20, 15);
 			}
 		}
 		else {
@@ -680,12 +698,12 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 				GraspingRotation = FRotator(0, -70, 90);
 			}
 			AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(0, -15, 15);
+			RetireLocationInCompSpace = ObjLocationInCompSpace + FVector(0, -15, 5);
 		}
 		UE_LOG(LogAvatarCharacter, Log, TEXT("Grasping Rotation %f %f %f"),GraspingRotation.Pitch,GraspingRotation.Yaw,GraspingRotation.Roll);
 
 		if (use_left) {
 
-			RetireLocationInCompSpace.X = 18;
 			HoldingLocationInCompSpace = FVector(15, 10, 105);
 
 			// 0s) Rotate hand to grasping pose now
@@ -709,7 +727,6 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 		}
 		else {
 
-			RetireLocationInCompSpace.X = -18;
 			HoldingLocationInCompSpace = FVector(-15, 15, 105);
 
 			// 0s) Rotate hand to grasping pose now
@@ -2019,67 +2036,93 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			//ObjectMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Flex, ECollisionResponse::ECR_Block);
 			//#endif
 			 // Object Location		 // ud  lr  bf
-			 NewObjLocation = FVector(-3.27, 5.11, 2);
+			 NewObjLocation = FVector(-1.9, 7.6, 0.3);
 			 // Finger's Rotations
 			 // Thumb
 			 NewFingerRots.thumb_01 = FRotator(-34, -20, 71);
 			 NewFingerRots.thumb_02 = FRotator(0, -46, 0);
 			 NewFingerRots.thumb_03 = FRotator(0, -23, 0);
 			 // Index
-			 NewFingerRots.index_01 = FRotator(0, -30, -12);
+			 NewFingerRots.index_01 = FRotator(0, -50, -12);
 			 NewFingerRots.index_02 = FRotator(0, -62, 0);
 			 NewFingerRots.index_03 = FRotator(0, -50, 0);
 			 // Middle
-			 NewFingerRots.middle_01 = FRotator(0, -40, -10);
+			 NewFingerRots.middle_01 = FRotator(0, -60, -10);
 			 NewFingerRots.middle_02 = FRotator(0, -70, 0);
 			 NewFingerRots.middle_03 = FRotator(0, -60, 0);
 			 // Ring
-			 NewFingerRots.ring_01 = FRotator(0, -50, -10);
+			 NewFingerRots.ring_01 = FRotator(0, -70, -10);
 			 NewFingerRots.ring_02 = FRotator(0, -70, 0);
 			 NewFingerRots.ring_03 = FRotator(0, -60, 0);
 			 // Pinky
-			 NewFingerRots.pinky_01 = FRotator(0, -70, -25);
+			 NewFingerRots.pinky_01 = FRotator(0, -90, -25);
 			 NewFingerRots.pinky_02 = FRotator(0, -60, 0);
 			 NewFingerRots.pinky_03 = FRotator(0, -60, 0);
-			 
+	 
 			 // Object Rotation
 			 if (isGrasping_r) {      // p   y  r
-				 NewObjRotation = FRotator(-30, 117, -20);
+				 NewObjRotation = FRotator(-36, 101, -24);
 			 } else {
 				 NewObjRotation = FRotator(28, -120, 180);
 			 }
 		 }
 		 else if (ObjectToGrasp->ActorHasTag(TEXT("DinnerFork"))) {		// ********* Dinner Fork *********
-
-			 // Object Location		 // ud  lr  bf
-			 NewObjLocation = FVector(-7.85, 3, 1.55);
-			 // Finger's Rotations
-			 // Thumb
-			 NewFingerRots.thumb_01 = FRotator(0, -20, 90);
-			 NewFingerRots.thumb_02 = FRotator(0, -20, 0);
-			 NewFingerRots.thumb_03 = FRotator(0, -10, 0);
-			 // Index
-			 NewFingerRots.index_01 = FRotator(0, -20, 0);
-			 NewFingerRots.index_02 = FRotator(0, 0, 0);
-			 NewFingerRots.index_03 = FRotator(12, 0, 0);
-			 // Middle
-			 NewFingerRots.middle_01 = FRotator(6, -15, 0);
-			 NewFingerRots.middle_02 = FRotator(-5, -85, 0);
-			 NewFingerRots.middle_03 = FRotator(0, -85, 0);
-			 // Ring
-			 NewFingerRots.ring_01 = FRotator(10, -40, 0);
-			 NewFingerRots.ring_02 = FRotator(-5, -100, 0);
-			 NewFingerRots.ring_03 = FRotator(0, -90, 0);
-			 // Pinky
-			 NewFingerRots.pinky_01 = FRotator(10, -80, 0);
-			 NewFingerRots.pinky_02 = FRotator(-5, -100, 0);
-			 NewFingerRots.pinky_03 = FRotator(0, -90, 0);
-
+		 
 			 // Object Rotation
 			 if (isGrasping_r) {      // p   y  r
-				 NewObjRotation = FRotator(-28, 70, 0);
+
+				 // Object Location		 // ud  lr  bf
+				 NewObjLocation = FVector(-1.9,	7.6, 0.3);
+				 // Finger's Rotations
+				 // Thumb
+				 NewFingerRots.thumb_01 = FRotator(-34, -20, 71);
+				 NewFingerRots.thumb_02 = FRotator(0, -46, 0);
+				 NewFingerRots.thumb_03 = FRotator(0, -23, 0);
+				 // Index
+				 NewFingerRots.index_01 = FRotator(0, -50, -12);
+				 NewFingerRots.index_02 = FRotator(0, -62, 0);
+				 NewFingerRots.index_03 = FRotator(0, -50, 0);
+				 // Middle
+				 NewFingerRots.middle_01 = FRotator(0, -60, -10);
+				 NewFingerRots.middle_02 = FRotator(0, -70, 0);
+				 NewFingerRots.middle_03 = FRotator(0, -60, 0);
+				 // Ring
+				 NewFingerRots.ring_01 = FRotator(0, -70, -10);
+				 NewFingerRots.ring_02 = FRotator(0, -70, 0);
+				 NewFingerRots.ring_03 = FRotator(0, -60, 0);
+				 // Pinky
+				 NewFingerRots.pinky_01 = FRotator(0, -90, -25);
+				 NewFingerRots.pinky_02 = FRotator(0, -60, 0);
+				 NewFingerRots.pinky_03 = FRotator(0, -60, 0);
+
+				 NewObjRotation = FRotator(-36, 101, -24);
 			 }
 			 else {
+
+				 // Object Location		 // ud  lr  bf
+				 NewObjLocation = FVector(-7.85, 3, 1.55);
+				 // Finger's Rotations
+				 // Thumb
+				 NewFingerRots.thumb_01 = FRotator(0, -20, 90);
+				 NewFingerRots.thumb_02 = FRotator(0, -20, 0);
+				 NewFingerRots.thumb_03 = FRotator(0, -10, 0);
+				 // Index
+				 NewFingerRots.index_01 = FRotator(0, -20, 0);
+				 NewFingerRots.index_02 = FRotator(0, 0, 0);
+				 NewFingerRots.index_03 = FRotator(12, 0, 0);
+				 // Middle
+				 NewFingerRots.middle_01 = FRotator(6, -15, 0);
+				 NewFingerRots.middle_02 = FRotator(-5, -85, 0);
+				 NewFingerRots.middle_03 = FRotator(0, -85, 0);
+				 // Ring
+				 NewFingerRots.ring_01 = FRotator(10, -40, 0);
+				 NewFingerRots.ring_02 = FRotator(-5, -100, 0);
+				 NewFingerRots.ring_03 = FRotator(0, -90, 0);
+				 // Pinky
+				 NewFingerRots.pinky_01 = FRotator(10, -80, 0);
+				 NewFingerRots.pinky_02 = FRotator(-5, -100, 0);
+				 NewFingerRots.pinky_03 = FRotator(0, -90, 0);
+
 				 NewObjRotation = FRotator(-5, -5, -89);
 			 }
 		 }
@@ -2160,31 +2203,6 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			 }
 		 }
 		 else if (ObjectToGrasp->ActorHasTag(TEXT("Jug"))) {		// ********** Milk Jug *********
-
-			 // Fingers' Rotations
-			 // Thumb
-			 NewFingerRots.thumb_01 = FRotator(-45, -48, 90);
-			 NewFingerRots.thumb_02 = FRotator(25, -55, 0);
-			 NewFingerRots.thumb_03 = FRotator(0, -45, 0);
-			 // Index
-			 NewFingerRots.index_01 = FRotator(-3, -80, 0);
-			 NewFingerRots.index_02 = FRotator(0, -90, 0);
-			 NewFingerRots.index_03 = FRotator(0, -45, 0);
-			 // Middle
-			 NewFingerRots.middle_01 = FRotator(0, -90, 0);
-			 NewFingerRots.middle_02 = FRotator(0, -90, 0);
-			 NewFingerRots.middle_03 = FRotator(0, -45, 0);
-			 // Ring
-			 NewFingerRots.ring_01 = FRotator(3, -90, 0);
-			 NewFingerRots.ring_02 = FRotator(0, -90, 0);
-			 NewFingerRots.ring_03 = FRotator(0, -45, 0);
-			 // Pinky
-			 NewFingerRots.pinky_01 = FRotator(5, -100, 0);
-			 NewFingerRots.pinky_02 = FRotator(0, -80, 10);
-			 NewFingerRots.pinky_03 = FRotator(0, -45, 0);
-
-			 // Object Location
-			 NewObjLocation = FVector(-4.7, 6, -2.4);
 
 			 if (isGrasping_r) {
 				 // Object Rotation

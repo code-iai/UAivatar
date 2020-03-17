@@ -112,6 +112,12 @@ public:
 		UCurveVector* SpooningSoupAnimRotCurve;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* ForkingAnimCurve;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* ForkingAnimRotCurve;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		UCurveVector* PouringAnimCurve;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)

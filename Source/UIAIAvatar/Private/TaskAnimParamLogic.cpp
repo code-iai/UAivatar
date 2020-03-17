@@ -328,10 +328,10 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 	// local order is (Width, Lenght, Height)
 
 	// Calculate End Point
-	//EndPoint.X = 0;
-	//EndPoint.Y = -1 * halfLength + sliceWidth;
-	//EndPoint.Z = -1 * ItemData.Extent.Z;
-	EndPoint = ItemData.Extent;
+	EndPoint.X = 0;
+	EndPoint.Y = -1 * halfLength + sliceWidth;
+	EndPoint.Z = -1 * ItemData.Extent.Z;
+	
 	// Calculate hold point
 	HoldPoint.X = 0;
 	HoldPoint.Y = -1 * halfLength + holdingDistance;
@@ -406,7 +406,7 @@ void UTaskAnimParamLogic::calculateForkAnimParameters(AActor* Target) {
 	FVector StartPoint;
 	FVector EndPoint;
 	FVector Multiplier;
-	FVector EndAdjustment = FVector(-15, -5, 18);
+	FVector EndAdjustment = FVector(-7, -9, 12);
 
 	AnimParams.Spine_01_rotation = FRotator(0, 0, 15);
 
@@ -423,10 +423,10 @@ void UTaskAnimParamLogic::calculateForkAnimParameters(AActor* Target) {
 	AnimParams.RH_Loc_Curve_Multiplier = Multiplier;
 
 	// Skill
-	AnimParams.RH_Loc_Curve = PouringAnimCurve;
-	AnimParams.RH_Rot_Curve = PouringAnimRotCurve;
+	AnimParams.RH_Loc_Curve = ForkingAnimCurve;
+	AnimParams.RH_Rot_Curve = ForkingAnimRotCurve;
 
-	AnimParams.animTime = 9;
+	AnimParams.animTime = 7;
 	AnimParams.Task = "Fork";
 
 	AnimParams.bSet_LH_Loc = false;
@@ -447,7 +447,7 @@ void UTaskAnimParamLogic::calculateSpoonAnimParameters(AActor* Target) {
 	FVector EndPoint;
 	FVector Multiplier;
 
-	FVector EndAdjustment = FVector(-11, -12, 0);
+	FVector EndAdjustment = FVector(-13, -7, 9);
 	FVector StartAdjustment = FVector(0, 0, 0);
 
 	AnimParams.Spine_01_rotation = FRotator(0, 0, 20);
