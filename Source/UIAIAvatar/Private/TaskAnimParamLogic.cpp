@@ -277,7 +277,6 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 		AnimParams.RH_Loc_Curve = CuttingBreadAnimCurve;
 		AnimParams.RH_Rot_Curve = CuttingBreadAnimRotCurve;
 		AnimParams.animTime = 10;
-		AnimParams.Task = "CutBread";
 		sliceWidth = 2;
 
 		// Right Hand
@@ -294,7 +293,6 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 		AnimParams.RH_Loc_Curve = CuttingSteakAnimCurve;
 		AnimParams.RH_Rot_Curve = CuttingSteakAnimRotCurve;
 		AnimParams.animTime = 2;
-		AnimParams.Task = "CutBread";
 		sliceWidth = 1;
 
 		// Right Hand
@@ -312,7 +310,6 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 		AnimParams.RH_Loc_Curve = CuttingZucchiniAnimCurve;
 		AnimParams.RH_Rot_Curve = CuttingZucchiniAnimRotCurve;
 		AnimParams.animTime = 1.6;
-		AnimParams.Task = "CutBread";
 		sliceWidth = 1;
 
 		// Right Hand
@@ -387,9 +384,6 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 	AnimParams.RH_Loc_Curve_Orientation = LocalRot;
 	AnimParams.Spine_01_rotation = FRotator(0, 0, 20);
 
-	AnimParams.success = true;
-
-
 	AnimParams.bSet_LH_Loc = true;
 	AnimParams.bSet_LH_Rot = true;
 	// These 2 are active from grasp and hold
@@ -406,7 +400,7 @@ void UTaskAnimParamLogic::calculateForkAnimParameters(AActor* Target) {
 	FVector StartPoint;
 	FVector EndPoint;
 	FVector Multiplier;
-	FVector EndAdjustment = FVector(-7, -9, 12);
+	FVector EndAdjustment = FVector(-7, -7, 15);
 
 	AnimParams.Spine_01_rotation = FRotator(0, 0, 15);
 
@@ -426,8 +420,7 @@ void UTaskAnimParamLogic::calculateForkAnimParameters(AActor* Target) {
 	AnimParams.RH_Loc_Curve = ForkingAnimCurve;
 	AnimParams.RH_Rot_Curve = ForkingAnimRotCurve;
 
-	AnimParams.animTime = 7;
-	AnimParams.Task = "Fork";
+	AnimParams.animTime = 5;
 
 	AnimParams.bSet_LH_Loc = false;
 	AnimParams.bSet_LH_Rot = false;
@@ -472,7 +465,6 @@ void UTaskAnimParamLogic::calculateSpoonAnimParameters(AActor* Target) {
 	AnimParams.RH_Rot_Curve = SpooningSoupAnimRotCurve;
 
 	AnimParams.animTime = 5;
-	AnimParams.Task = "Spoon";
 
 	AnimParams.bSet_LH_Loc = false;
 	AnimParams.bSet_LH_Rot = false;
@@ -510,7 +502,6 @@ void UTaskAnimParamLogic::calculatePourAnimParameters(AActor* Target) {
 	AnimParams.RH_Rot_Curve = PouringAnimRotCurve;
 
 	AnimParams.animTime = 9;
-	AnimParams.Task = "Fork";
 
 	AnimParams.bSet_LH_Loc = false;
 	AnimParams.bSet_LH_Rot = false;
@@ -551,6 +542,11 @@ void UTaskAnimParamLogic::RunForkAnimation(float time) {
 	FVector Temp;
 	FVector Hand_r_Location;
 	FRotator Hand_r_Rotation;
+	bool static attached = false;
+
+	if (time == 0) {
+		attached = false;
+	}
 
 	Temp = AnimParams.RH_Rot_Curve->GetVectorValue(time);
 	Hand_r_Rotation = FRotator(Temp.Y,Temp.Z, Temp.X);
@@ -562,6 +558,21 @@ void UTaskAnimParamLogic::RunForkAnimation(float time) {
 	Animation->RightHandRotation = Hand_r_Rotation;
 	Animation->RightHandIKTargetPosition = Hand_r_Location;
 	Animation->Spine1Rotation = AnimParams.Spine_01_rotation;
+
+	if (!attached && time > 2) {
+	
+		if (Avatar->graspedObject_r->ActorHasTag("DinnerFork")) {
+			
+			FAttachmentTransformRules attachRules = FAttachmentTransformRules(
+				EAttachmentRule::KeepWorld,
+				EAttachmentRule::KeepWorld,
+				EAttachmentRule::KeepWorld,
+				true);
+
+			AnimParams.Object->AttachToActor(Avatar->graspedObject_r, attachRules);
+		}
+		attached = true;
+	}
 }
 
 // Run Spoon animation
@@ -604,33 +615,28 @@ void UTaskAnimParamLogic::RunPourAnimation(float time) {
 
 
 // Process a task request
-FTaskAnimParameters_t UTaskAnimParamLogic::ProcessTask(FString task) {
+void UTaskAnimParamLogic::ProcessTask(FString task) {
 
 	AActor* Object;
-	FTaskAnimParameters_t MyAnimParams;
 
 	if (task.Equals("cut")) {
 		Object = PickOneObject(CheckForCuttableObjects(Avatar->ListObjects()));
 		if (Object != nullptr) {
-			MyAnimParams = ApplyTaskOnActor(task, Object);
+			ApplyTaskOnActor(task, Object);
 		}
 		else {
 			UE_LOG(LogAvatarCharacter, Error, TEXT("Error: not able to find any cuttable object."));
-			MyAnimParams.success = false;
 		}
 	}
 	else if (task.Equals("Spoon")) {
 	}
-
-	return MyAnimParams;
 }
 
 // Process a task request on specific object
-FTaskAnimParameters_t UTaskAnimParamLogic::ApplyTaskOnActor(FString task, AActor* Object) {
-
-	FTaskAnimParameters_t MyAnimParams;
+void UTaskAnimParamLogic::ApplyTaskOnActor(FString task, AActor* Object) {
 
 	if (Object != NULL) {
+		AnimParams.Object = Object;
 		if (task.Equals("cut")) {
 			CuttableObjectData_t CurrentCutable;
 			if (Object->GetRootComponent()->ComponentHasTag("Cuttable")) {
@@ -661,8 +667,6 @@ FTaskAnimParameters_t UTaskAnimParamLogic::ApplyTaskOnActor(FString task, AActor
 	else {
 		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
 	}
-
-	return MyAnimParams;
 }
 
 void UTaskAnimParamLogic::ProcessTask_P_ObjectName(FString task, FString ObjectName) {

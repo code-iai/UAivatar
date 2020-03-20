@@ -29,49 +29,32 @@ struct FTaskAnimParameters_t
 public:
 
 	// Help Parameters
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		FString Task;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		bool success;
-
+	AActor *Object;
 	FRunAnimDelegate AnimFunctionDelegate;
-	TArray<bool> ActiveActuators;
 
 	// Right Hand
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* RH_Loc_Curve;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		FVector RH_Loc_Curve_Offset;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		FVector RH_Loc_Curve_Multiplier;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		FRotator RH_Loc_Curve_Orientation;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* RH_Rot_Curve;
+	UCurveVector* RH_Loc_Curve;
+	FVector RH_Loc_Curve_Offset;
+	FVector RH_Loc_Curve_Multiplier;
+	FRotator RH_Loc_Curve_Orientation;
+	UCurveVector* RH_Rot_Curve;
 
 	bool bSet_RH_Loc;
 	bool bSet_RH_Rot;
 
 	// Left Hand
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		FVector LH_Location;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		FRotator LH_Rotation;
-
+	FVector LH_Location;
+	FRotator LH_Rotation;
 	bool bSet_LH_Loc;
 	bool bSet_LH_Rot;
 
 	// Fingers
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		FFingerRots_t RH_FingerRots;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		FFingerRots_t LH_FingerRots;
-
+	FFingerRots_t RH_FingerRots;
+	FFingerRots_t LH_FingerRots;
 	bool bSet_LF_Rot;
 	bool bSet_RF_Rot;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		float animTime;
+	float animTime;
 
 	// Spine
 	FRotator Spine_01_rotation;
@@ -147,7 +130,6 @@ public:
 	void SetJointAlphas();
 	void UnSetJointAlphas();
 
-	UFUNCTION(BlueprintCallable)
 	// Check for item within a list of unique hit results and filter out those out of proper reach
 	AActor* CheckForObject(TMap<FString, FHitResult> Objects, FString ObjName);
 
@@ -193,15 +175,12 @@ public:
 	// ****** Processing Task ****** //
 
 	// Process a task request
-	UFUNCTION(BlueprintCallable)
-	FTaskAnimParameters_t ProcessTask(FString task);
+	void ProcessTask(FString task);
 
 	// Process a task request on specific object
-	UFUNCTION(BlueprintCallable)
-	FTaskAnimParameters_t ApplyTaskOnActor(FString task, AActor* Object);
+	void ApplyTaskOnActor(FString task, AActor* Object);
 
 	// Process a task plus oject name
-	UFUNCTION(BlueprintCallable)
-		void ProcessTask_P_ObjectName(FString task, FString ObjectName);
+	void ProcessTask_P_ObjectName(FString task, FString ObjectName);
 
 };
