@@ -46,7 +46,7 @@ void UIAIAvatarROSCommandCut::OnROSSendCommandRequest(FString command) {
 	AActor* Owner = GetOwner();
 	AIAIAvatarCharacter* Avatar = Cast<AIAIAvatarCharacter>(Owner);
 	if (Avatar) {
-		Avatar->Cut();
+		Avatar->ProcessConsoleCommand("cut");
 	}
 
 }

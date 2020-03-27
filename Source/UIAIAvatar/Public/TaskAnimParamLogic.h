@@ -7,10 +7,49 @@
 #include "Components/ActorComponent.h"
 #include "IAIAvatarAnimationInstance.h"
 #include "Curves/CurveVector.h"
+
+#include "Engine/DataTable.h"
+#include "DataTableEditorUtils.h"
+#include "ConstructorHelpers.h"
+
 #include "TaskAnimParamLogic.generated.h"
 
-
 DECLARE_DELEGATE_OneParam(FRunAnimDelegate, float);
+
+
+USTRUCT(BlueprintType)
+struct FMyDataTable : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "GO")
+	float X;
+
+	UPROPERTY(BlueprintReadOnly, Category = "GO")
+	float Y;
+
+	UPROPERTY(BlueprintReadOnly, Category = "GO")
+	float Z;
+};
+
+class DataTableHandler
+{
+public:
+
+	TArray<TArray<float>> ATable;
+	int32 index1;
+	int32 index2;
+
+	// Constructors
+	DataTableHandler() {};
+	DataTableHandler(FString DTPath);
+
+	// Returns total duration time of this table
+	float GetDuration();
+
+	// Returns Vector value at specified time
+	FVector GetVectorValue(float time);
+};
 
 struct CuttableObjectData_t
 {
@@ -34,31 +73,45 @@ public:
 
 	// Right Hand
 	UCurveVector* RH_Loc_Curve;
-	FVector RH_Loc_Curve_Offset;
-	FVector RH_Loc_Curve_Multiplier;
+	DataTableHandler* RH_Loc_Table;
+	FVector RH_Loc_Multiplier;
+	FVector RH_Loc_Offset;
 	FRotator RH_Loc_Curve_Orientation;
+
 	UCurveVector* RH_Rot_Curve;
+	DataTableHandler* RH_Rot_Table;
 
 	bool bSet_RH_Loc;
 	bool bSet_RH_Rot;
 
 	// Left Hand
-	FVector LH_Location;
+	UCurveVector* LH_Loc_Curve;
+	DataTableHandler* LH_Loc_Table;
+	FVector LH_Loc_Multiplier;
+	FVector LH_Loc_Offset;
+
 	FRotator LH_Rotation;
+	UCurveVector* LH_Rot_Curve;
+	DataTableHandler* LH_Rot_Table;
+
 	bool bSet_LH_Loc;
 	bool bSet_LH_Rot;
 
 	// Fingers
 	FFingerRots_t RH_FingerRots;
 	FFingerRots_t LH_FingerRots;
+
 	bool bSet_LF_Rot;
 	bool bSet_RF_Rot;
 
-	float animTime;
-
 	// Spine
 	FRotator Spine_01_rotation;
+	UCurveVector* Spine01_Rot_Curve;
+	DataTableHandler* Spine01_Rot_Table;
+
 	bool bSet_S01_Rot;
+
+	float animTime;
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -75,6 +128,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		UCurveVector* CuttingBreadAnimRotCurve;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* CuttingBreadAnimCurve_LH;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* CuttingBreadAnimRotCurve_LH;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* CuttingBreadAnimSpineRotCurve;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		UCurveVector* CuttingSteakAnimCurve;
@@ -101,10 +163,22 @@ public:
 		UCurveVector* ForkingAnimRotCurve;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* ForkingAnimSpineRotCurve;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		UCurveVector* PouringAnimCurve;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		UCurveVector* PouringAnimRotCurve;
+	
+	UDataTable *RH_Table;
+	UDataTable *RH_Rot_Table;
+	UDataTable *LH_Table;
+	UDataTable *LH_Rot_Table;
+	UDataTable *S1_Rot_Table;
+
+	float writeTime;
+	bool recorded;
 
 protected:
 
@@ -183,4 +257,5 @@ public:
 	// Process a task plus oject name
 	void ProcessTask_P_ObjectName(FString task, FString ObjectName);
 
+	void WriteCSV(float time);
 };

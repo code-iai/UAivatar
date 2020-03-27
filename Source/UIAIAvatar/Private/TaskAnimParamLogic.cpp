@@ -2,12 +2,140 @@
 
 #include "TaskAnimParamLogic.h"
 
+// *************************   DataTableHanlder Class  ************************* //
+DataTableHandler::DataTableHandler(FString DTPath) {
+
+	TArray<FString> lines;
+	FFileHelper::LoadFileToStringArray(lines, *DTPath);
+
+	for (int i = 0; i < lines.Num(); i++)
+	{
+		FString aString = lines[i];
+
+		TArray<FString> stringArray = {};
+
+		aString.ParseIntoArray(stringArray, TEXT(","), false);
+		TArray<float> row;
+
+		if (stringArray[0].IsNumeric() && stringArray[1].IsNumeric() && stringArray[2].IsNumeric() && stringArray[3].IsNumeric()) {
+
+			row.Add(FCString::Atof(*stringArray[0]));
+			row.Add(FCString::Atof(*stringArray[1]));
+			row.Add(FCString::Atof(*stringArray[2]));
+			row.Add(FCString::Atof(*stringArray[3]));
+
+			ATable.Add(row);
+		}
+	}
+
+	if (ATable.Num() >= 2) {
+		index1 = 0;
+		index2 = 1;
+	}
+	else {
+		index1 = 0;
+		index2 = index1;
+	}
+}
+
+float DataTableHandler::GetDuration() {
+
+	if (ATable.Num() != 0) {
+		return ATable.Last()[0];
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: Not able to get a Duration. The Data Table is empty."));
+		return 0;
+	}
+}
+
+FVector DataTableHandler::GetVectorValue(float time) {
+
+	FVector Result = FVector(0,0,0);
+
+	float time1 = ATable[index1][0];
+	float time2 = ATable[index2][0];
+
+	if (time < time1) {
+
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: Time %f s is behind current Data Table's time %f s."), time, time1);
+
+		// Return default
+		return Result;
+	}
+
+	while (time > time2) {
+
+		index1++;
+		index2++;
+
+		if (index2 >= ATable.Num()) {
+
+			UE_LOG(LogAvatarCharacter, Error, TEXT("Error: Time %f s is over max value of %f s."), time, time2);
+
+			// Return default
+			return Result;
+		}
+
+		time1 = ATable[index1][0];
+		time2 = ATable[index2][0];
+	}
+
+	// ***** Interpolation *****
+	// Get values from table
+	FVector Vector1 = FVector(ATable[index1][1], ATable[index1][2], ATable[index1][3]);
+	FVector Vector2 = FVector(ATable[index2][1], ATable[index2][2], ATable[index2][3]);
+
+	// Get deltas
+	FVector DeltaVector = Vector2 - Vector1;
+	FVector OffsetVector = FVector(0,0,0);
+	float deltaTime = time2 - time1;
+	float offsetTime = time - time1;
+	
+	// Interpolate
+	if (deltaTime > 0) {
+		OffsetVector = DeltaVector * offsetTime / deltaTime;
+	}
+	
+	// Get value
+	Result = Vector1 + OffsetVector;
+
+	return Result;
+}
+
+// ************************* UTaskAnimParamLogic Class ************************* //
+
 // Sets default values for this component's properties
 UTaskAnimParamLogic::UTaskAnimParamLogic()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
+
+	ConstructorHelpers::FObjectFinder<UDataTable>
+		RH_DataTable(TEXT("DataTable'/UIAIAvatar/Animation_Assets/AnimDataTables/CuttingBread/RH_Curve.RH_Curve'"));
+	RH_Table = RH_DataTable.Object;
+	RH_Table->EmptyTable();
+
+	ConstructorHelpers::FObjectFinder<UDataTable>
+		RH_Rot_DataTable(TEXT("DataTable'/UIAIAvatar/Animation_Assets/AnimDataTables/CuttingBread/RH_Rot_Curve.RH_Rot_Curve'"));
+	RH_Rot_Table = RH_Rot_DataTable.Object;
+	RH_Rot_Table->EmptyTable();
+
+	ConstructorHelpers::FObjectFinder<UDataTable>
+		LH_DataTable(TEXT("DataTable'/UIAIAvatar/Animation_Assets/AnimDataTables/CuttingBread/LH_Curve.LH_Curve'"));
+	LH_Table = LH_DataTable.Object;
+	LH_Table->EmptyTable();
+
+	ConstructorHelpers::FObjectFinder<UDataTable>
+		LH_Rot_DataTable(TEXT("DataTable'/UIAIAvatar/Animation_Assets/AnimDataTables/CuttingBread/LH_Rot_Curve.LH_Rot_Curve'"));
+	LH_Rot_Table = LH_Rot_DataTable.Object;
+	LH_Rot_Table->EmptyTable();
+
+	ConstructorHelpers::FObjectFinder<UDataTable>
+		Spine1_DataTable(TEXT("DataTable'/UIAIAvatar/Animation_Assets/AnimDataTables/CuttingBread/Spine1_Rot_Curve.Spine1_Rot_Curve'"));
+	S1_Rot_Table = Spine1_DataTable.Object;
+	S1_Rot_Table->EmptyTable();
 
 	// ...
 }
@@ -29,12 +157,16 @@ void UTaskAnimParamLogic::BeginPlay()
 	bRunAnimation = false;
 
 	currentAnimTime = 0;
+
+	writeTime = 0;
+	recorded = false;
 }
 
 
 // Called every frame
 void UTaskAnimParamLogic::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
+	float static delay = 0;
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
@@ -52,6 +184,15 @@ void UTaskAnimParamLogic::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	else {
 		currentAnimTime = 0;
 	}
+
+	/*
+	if (delay > 10) {
+		WriteCSV(writeTime);
+		writeTime += DeltaTime;
+	}
+
+	delay += DeltaTime;
+	*/
 }
 
 
@@ -249,7 +390,7 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 	FVector StartPoint;
 	FVector EndPoint;
 	FVector Multiplier = FVector(0, 0, 0);
-	FVector HoldAdjusment = FVector(0,0,0);
+	FVector HoldAdjusment = FVector(0, 0, 0);
 	FVector StartAdjustment = FVector(0, 0, 0);
 	FVector EndAdjustment = FVector(0, 0, 0);
 	FRotator HoldRotation = FRotator(0, 0, 0);
@@ -276,7 +417,17 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 		// Skill
 		AnimParams.RH_Loc_Curve = CuttingBreadAnimCurve;
 		AnimParams.RH_Rot_Curve = CuttingBreadAnimRotCurve;
-		AnimParams.animTime = 10;
+		AnimParams.LH_Loc_Curve = CuttingBreadAnimCurve_LH;
+		AnimParams.LH_Rot_Curve = CuttingBreadAnimRotCurve_LH;
+		AnimParams.Spine01_Rot_Curve = CuttingBreadAnimSpineRotCurve;
+
+		AnimParams.RH_Loc_Table = new DataTableHandler(FPaths::ProjectDir() + FString("Datatables/RH_Curve.csv"));
+		AnimParams.RH_Rot_Table = new DataTableHandler(FPaths::ProjectDir() + FString("Datatables/RH_Rot_Curve.csv"));
+		AnimParams.LH_Loc_Table = new DataTableHandler(FPaths::ProjectDir() + FString("Datatables/LH_Curve.csv"));
+		AnimParams.LH_Rot_Table = new DataTableHandler(FPaths::ProjectDir() + FString("Datatables/LH_Rot_Curve.csv"));
+		AnimParams.Spine01_Rot_Table = new DataTableHandler(FPaths::ProjectDir() + FString("Datatables/Spine01_Rot_Curve.csv"));
+	
+		AnimParams.animTime = AnimParams.RH_Rot_Table->GetDuration();
 		sliceWidth = 2;
 
 		// Right Hand
@@ -288,7 +439,7 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 		HoldRotation = FRotator(0, 90, -80);
 	}
 	else if (ItemData.Object->ActorHasTag("Steak")) {
-		
+
 		// Skill
 		AnimParams.RH_Loc_Curve = CuttingSteakAnimCurve;
 		AnimParams.RH_Rot_Curve = CuttingSteakAnimRotCurve;
@@ -305,7 +456,7 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 		HoldRotation = FRotator(-30, 160, -87);
 	}
 	else if (ItemData.Object->ActorHasTag("Zucchini")) {
-		
+
 		// Skill
 		AnimParams.RH_Loc_Curve = CuttingZucchiniAnimCurve;
 		AnimParams.RH_Rot_Curve = CuttingZucchiniAnimRotCurve;
@@ -328,7 +479,7 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 	EndPoint.X = 0;
 	EndPoint.Y = -1 * halfLength + sliceWidth;
 	EndPoint.Z = -1 * ItemData.Extent.Z;
-	
+
 	// Calculate hold point
 	HoldPoint.X = 0;
 	HoldPoint.Y = -1 * halfLength + holdingDistance;
@@ -362,8 +513,8 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 	LocalRot = FRotator(0, ItemData.angle, 0);
 
 	// Convert coordinates relative to world
-	EndPoint   = ItemData.Object->GetActorTransform().TransformPosition(EndPoint);
-	HoldPoint  = ItemData.Object->GetActorTransform().TransformPosition(HoldPoint);
+	EndPoint = ItemData.Object->GetActorTransform().TransformPosition(EndPoint);
+	HoldPoint = ItemData.Object->GetActorTransform().TransformPosition(HoldPoint);
 
 	// Convert points relative to Avatar. This is best to adjust points
 	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
@@ -375,14 +526,14 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 	// Motion Depth
 	Multiplier = EndPoint - StartPoint;
 
-	// Put back in world coordinates
-	AnimParams.RH_Loc_Curve_Offset = StartPoint;
-	AnimParams.RH_Loc_Curve_Multiplier = Multiplier;
+	// Set animation parameters
+	AnimParams.RH_Loc_Offset = StartPoint;
+	AnimParams.RH_Loc_Multiplier = Multiplier;
 	AnimParams.LH_Rotation = HoldRotation;
-	AnimParams.LH_Location  = HoldPoint;
+	AnimParams.LH_Loc_Offset = Avatar->GetMesh()->GetBoneLocation("hand_l", EBoneSpaces::ComponentSpace);
+	AnimParams.LH_Loc_Multiplier = HoldPoint - AnimParams.LH_Loc_Offset;
 
 	AnimParams.RH_Loc_Curve_Orientation = LocalRot;
-	AnimParams.Spine_01_rotation = FRotator(0, 0, 20);
 
 	AnimParams.bSet_LH_Loc = true;
 	AnimParams.bSet_LH_Rot = true;
@@ -392,6 +543,8 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 	AnimParams.bSet_RF_Rot = false;
 	AnimParams.bSet_LF_Rot = false;
 	AnimParams.bSet_S01_Rot = true;
+
+	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunCutAnimation);
 }
 #pragma optimize("", on)
 
@@ -403,6 +556,7 @@ void UTaskAnimParamLogic::calculateForkAnimParameters(AActor* Target) {
 	FVector EndAdjustment = FVector(-7, -7, 15);
 
 	AnimParams.Spine_01_rotation = FRotator(0, 0, 15);
+	AnimParams.Spine01_Rot_Curve = ForkingAnimSpineRotCurve;
 
 	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Target->GetActorLocation());
 	EndPoint += EndAdjustment;
@@ -413,14 +567,14 @@ void UTaskAnimParamLogic::calculateForkAnimParameters(AActor* Target) {
 	Multiplier = (EndPoint - StartPoint);
 
 	//
-	AnimParams.RH_Loc_Curve_Offset = StartPoint;
-	AnimParams.RH_Loc_Curve_Multiplier = Multiplier;
+	AnimParams.RH_Loc_Offset = StartPoint;
+	AnimParams.RH_Loc_Multiplier = Multiplier;
 
 	// Skill
 	AnimParams.RH_Loc_Curve = ForkingAnimCurve;
 	AnimParams.RH_Rot_Curve = ForkingAnimRotCurve;
 
-	AnimParams.animTime = 5;
+	AnimParams.animTime = 4.5;
 
 	AnimParams.bSet_LH_Loc = false;
 	AnimParams.bSet_LH_Rot = false;
@@ -457,8 +611,8 @@ void UTaskAnimParamLogic::calculateSpoonAnimParameters(AActor* Target) {
 	Multiplier = (EndPoint - StartPoint);
 
 	//
-	AnimParams.RH_Loc_Curve_Offset = StartPoint;
-	AnimParams.RH_Loc_Curve_Multiplier = Multiplier;
+	AnimParams.RH_Loc_Offset = StartPoint;
+	AnimParams.RH_Loc_Multiplier = Multiplier;
 
 	// Skill
 	AnimParams.RH_Loc_Curve = SpooningSoupAnimCurve;
@@ -494,8 +648,8 @@ void UTaskAnimParamLogic::calculatePourAnimParameters(AActor* Target) {
 	Multiplier = (EndPoint - StartPoint);
 
 	//
-	AnimParams.RH_Loc_Curve_Offset = StartPoint;
-	AnimParams.RH_Loc_Curve_Multiplier = Multiplier;
+	AnimParams.RH_Loc_Offset = StartPoint;
+	AnimParams.RH_Loc_Multiplier = Multiplier;
 
 	// Skill
 	AnimParams.RH_Loc_Curve = PouringAnimCurve;
@@ -513,27 +667,54 @@ void UTaskAnimParamLogic::calculatePourAnimParameters(AActor* Target) {
 	AnimParams.bSet_S01_Rot = true;
 }
 
+// TODO: Separate slicing animation from reaching animation. Reach in terms to right before cutting. 
 // Run cut animation
 void UTaskAnimParamLogic::RunCutAnimation(float time) {
 
-	float handYaw;
+	FVector Temp;
 	FVector Hand_r_Location;
+	FVector Hand_l_Location;
 	FRotator Hand_r_Rotation;
+	FRotator Hand_l_Rotation;
 
-	handYaw = AnimParams.RH_Loc_Curve_Orientation.Yaw - 90;
-	Hand_r_Rotation = FRotator(70, handYaw, 0);
+	// Right hand rotation
+	//Temp = AnimParams.RH_Rot_Curve->GetVectorValue(time);
+	Temp = AnimParams.RH_Rot_Table->GetVectorValue(time);
+	Hand_r_Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
+	Hand_r_Rotation += AnimParams.RH_Loc_Curve_Orientation;
 
-	Hand_r_Location = AnimParams.RH_Loc_Curve->GetVectorValue(time);
-	Hand_r_Location *= AnimParams.RH_Loc_Curve_Multiplier;
-	Hand_r_Location += AnimParams.RH_Loc_Curve_Offset;
+	// Right hand location
+	//Hand_r_Location = AnimParams.RH_Loc_Curve->GetVectorValue(time);
+	Hand_r_Location = AnimParams.RH_Loc_Table->GetVectorValue(time);
+	Hand_r_Location *= AnimParams.RH_Loc_Multiplier;
+	//Hand_r_Location = AnimParams.RH_Loc_Curve_Orientation.RotateVector(Hand_r_Location);
+	Hand_r_Location += AnimParams.RH_Loc_Offset;
 
+	// Left hand rotation
+	//Temp = AnimParams.LH_Rot_Curve->GetVectorValue(time);
+	Temp = AnimParams.LH_Rot_Table->GetVectorValue(time);
+	Hand_l_Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
+
+	// Left hand location
+	//Hand_l_Location = AnimParams.LH_Loc_Curve->GetVectorValue(time);
+	Hand_l_Location = AnimParams.LH_Loc_Table->GetVectorValue(time);
+	Hand_l_Location *= AnimParams.LH_Loc_Multiplier;
+	Hand_l_Location += AnimParams.LH_Loc_Offset;
+
+	// Assigning on animation
+
+	// Right hand
 	Animation->RightHandRotation = Hand_r_Rotation;
 	Animation->RightHandIKTargetPosition = Hand_r_Location;
 
-	Animation->HandRotation = AnimParams.LH_Rotation;
-	Animation->LeftHandIKTargetPosition = AnimParams.LH_Location;
+	// Left hand
+	Animation->HandRotation = Hand_l_Rotation;
+	Animation->LeftHandIKTargetPosition = Hand_l_Location;
 	
-	Animation->Spine1Rotation = AnimParams.Spine_01_rotation;
+	// Spine
+	//Temp = AnimParams.Spine01_Rot_Curve->GetVectorValue(time);
+	Temp = AnimParams.Spine01_Rot_Table->GetVectorValue(time);
+	Animation->Spine1Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
 }
 
 // Run fork animation
@@ -552,12 +733,13 @@ void UTaskAnimParamLogic::RunForkAnimation(float time) {
 	Hand_r_Rotation = FRotator(Temp.Y,Temp.Z, Temp.X);
 
 	Hand_r_Location = AnimParams.RH_Loc_Curve->GetVectorValue(time);
-	Hand_r_Location *= AnimParams.RH_Loc_Curve_Multiplier;
-	Hand_r_Location += AnimParams.RH_Loc_Curve_Offset;
+	Hand_r_Location *= AnimParams.RH_Loc_Multiplier;
+	Hand_r_Location += AnimParams.RH_Loc_Offset;
 
 	Animation->RightHandRotation = Hand_r_Rotation;
 	Animation->RightHandIKTargetPosition = Hand_r_Location;
-	Animation->Spine1Rotation = AnimParams.Spine_01_rotation;
+	Temp = AnimParams.Spine01_Rot_Curve->GetVectorValue(time);
+	Animation->Spine1Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
 
 	if (!attached && time > 2) {
 	
@@ -586,8 +768,8 @@ void UTaskAnimParamLogic::RunSpoonAnimation(float time) {
 	Hand_r_Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
 
 	Hand_r_Location = AnimParams.RH_Loc_Curve->GetVectorValue(time);
-	Hand_r_Location *= AnimParams.RH_Loc_Curve_Multiplier;
-	Hand_r_Location += AnimParams.RH_Loc_Curve_Offset;
+	Hand_r_Location *= AnimParams.RH_Loc_Multiplier;
+	Hand_r_Location += AnimParams.RH_Loc_Offset;
 
 	Animation->RightHandRotation = Hand_r_Rotation;
 	Animation->RightHandIKTargetPosition = Hand_r_Location;
@@ -605,8 +787,8 @@ void UTaskAnimParamLogic::RunPourAnimation(float time) {
 	Hand_r_Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
 
 	Hand_r_Location = AnimParams.RH_Loc_Curve->GetVectorValue(time);
-	Hand_r_Location *= AnimParams.RH_Loc_Curve_Multiplier;
-	Hand_r_Location += AnimParams.RH_Loc_Curve_Offset;
+	Hand_r_Location *= AnimParams.RH_Loc_Multiplier;
+	Hand_r_Location += AnimParams.RH_Loc_Offset;
 
 	Animation->RightHandRotation = Hand_r_Rotation;
 	Animation->RightHandIKTargetPosition = Hand_r_Location;
@@ -643,7 +825,6 @@ void UTaskAnimParamLogic::ApplyTaskOnActor(FString task, AActor* Object) {
 				CurrentCutable.Object = Object;
 				if (isInGoodAlignment(CurrentCutable)) {
 					calculateCutAnimParameters(CurrentCutable);
-					AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunCutAnimation);
 					bRunAnimation = true;
 				}
 			}
@@ -672,4 +853,78 @@ void UTaskAnimParamLogic::ApplyTaskOnActor(FString task, AActor* Object) {
 void UTaskAnimParamLogic::ProcessTask_P_ObjectName(FString task, FString ObjectName) {
 	
 	ApplyTaskOnActor(task, CheckForObject(Avatar->ListObjects(), ObjectName));
+}
+
+
+void UTaskAnimParamLogic::WriteCSV(float time) {
+
+	if (!recorded) {
+
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Time: %f"), time);
+
+		FMyDataTable Row;
+		FVector ToBeChangeVector = CuttingBreadAnimCurve->GetVectorValue(time);
+		Row.X = ToBeChangeVector.X;
+		Row.Y = ToBeChangeVector.Y;
+		Row.Z = ToBeChangeVector.Z;
+
+		RH_Table->AddRow(FName(*FString::SanitizeFloat(time)), Row);
+
+		ToBeChangeVector = CuttingBreadAnimRotCurve->GetVectorValue(time);
+		Row.X = ToBeChangeVector.X;
+		Row.Y = ToBeChangeVector.Y;
+		Row.Z = ToBeChangeVector.Z;
+
+		RH_Rot_Table->AddRow(FName(*FString::SanitizeFloat(time)), Row);
+
+		ToBeChangeVector = CuttingBreadAnimCurve_LH->GetVectorValue(time);
+		Row.X = ToBeChangeVector.X;
+		Row.Y = ToBeChangeVector.Y;
+		Row.Z = ToBeChangeVector.Z;
+
+		LH_Table->AddRow(FName(*FString::SanitizeFloat(time)), Row);
+
+		ToBeChangeVector = CuttingBreadAnimRotCurve_LH->GetVectorValue(time);
+		Row.X = ToBeChangeVector.X;
+		Row.Y = ToBeChangeVector.Y;
+		Row.Z = ToBeChangeVector.Z;
+
+		LH_Rot_Table->AddRow(FName(*FString::SanitizeFloat(time)), Row);
+
+		ToBeChangeVector = CuttingBreadAnimSpineRotCurve->GetVectorValue(time);
+		Row.X = ToBeChangeVector.X;
+		Row.Y = ToBeChangeVector.Y;
+		Row.Z = ToBeChangeVector.Z;
+
+		S1_Rot_Table->AddRow(FName(*FString::SanitizeFloat(time)), Row);
+
+		if (time >= 10) {
+
+			recorded = true;
+			FString ExportingData = RH_Table->GetTableAsCSV();
+			FString FileName = "RH_Curve";
+			FFileHelper::SaveStringToFile(ExportingData, *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
+			UE_LOG(LogTemp, Warning, TEXT("Done! Output: %s"), *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
+
+			ExportingData = RH_Rot_Table->GetTableAsCSV();
+			FileName = "RH_Rot_Curve";
+			FFileHelper::SaveStringToFile(ExportingData, *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
+			UE_LOG(LogTemp, Warning, TEXT("Done! Output: %s"), *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
+			
+			ExportingData = LH_Rot_Table->GetTableAsCSV();
+			FileName = "LH_Rot_Curve";
+			FFileHelper::SaveStringToFile(ExportingData, *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
+			UE_LOG(LogTemp, Warning, TEXT("Done! Output: %s"), *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
+
+			ExportingData = LH_Table->GetTableAsCSV();
+			FileName = "LH_Curve";
+			FFileHelper::SaveStringToFile(ExportingData, *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
+			UE_LOG(LogTemp, Warning, TEXT("Done! Output: %s"), *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
+
+			ExportingData = S1_Rot_Table->GetTableAsCSV();
+			FileName = "Spine01_Rot_Curve";
+			FFileHelper::SaveStringToFile(ExportingData, *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
+			UE_LOG(LogTemp, Warning, TEXT("Done! Output: %s"), *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
+		}
+	}
 }

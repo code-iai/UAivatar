@@ -203,9 +203,9 @@ void AIAIAvatarCharacter::TurnCam(float Axis)
 	HeadRotation += FRotator(0, -90, 0);
 
 	if (HeadRotation.Yaw > 90 || HeadRotation.Yaw < -180)
-		HeadRotation.Yaw = 90;
+		HeadRotation = FRotator(0, 0, 0);
 	if (HeadRotation.Yaw < -90)
-		HeadRotation.Yaw = -90;
+		HeadRotation = FRotator(0, 0, 0);
 
 	Cast<UIAIAvatarAnimationInstance>(this->GetMesh()->GetAnimInstance())->SkelControl_Head = HeadRotation;
 
@@ -228,9 +228,9 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 	HeadRotation += FRotator(0,-90,0);
 
 	if (HeadRotation.Yaw > 90 || HeadRotation.Yaw < -180)
-		HeadRotation.Yaw = 90;
+		HeadRotation = FRotator(0,0,0);
 	if (HeadRotation.Yaw < -90)
-		HeadRotation.Yaw = -90;
+		HeadRotation = FRotator(0, 0, 0);
 
 	Cast<UIAIAvatarAnimationInstance>(this->GetMesh()->GetAnimInstance())->SkelControl_Head = HeadRotation;
 
@@ -677,14 +677,14 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 		}
 		else if (object.GetActor()->ActorHasTag("BreadKnife") || object.GetActor()->ActorHasTag("CookKnife")) {
 			if (use_left) {
-				GraspingRotation = FRotator(70, 100, 0);
+				GraspingRotation = FRotator(50, 170, -10);
 				ObjLocationInCompSpace += FVector(4, -8, 5);
 				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(3, -20, 20);
 				RetireLocationInCompSpace = ObjLocationInCompSpace + FVector(3, -20, 15);
 
 			}
 			else {
-				GraspingRotation = FRotator(70, -100, 0);
+				GraspingRotation = FRotator(50, -170, -10);
 				ObjLocationInCompSpace += FVector(-4, -8, 5);
 				AproachLocationInCompSpace = ObjLocationInCompSpace + FVector(-3, -20, 20);
 				RetireLocationInCompSpace = ObjLocationInCompSpace + FVector(-3, -20, 15);
@@ -1248,16 +1248,12 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 		TArray<FString> tokens;
 		inLine.ParseIntoArrayWS(tokens, NULL, true);
 
-		if (tokens.Num() == 1) {
-			// Spoon
-			if (tokens[0].Equals("spoon")) {
-				Spoon();
-			}
-			// Cut
-			else if (tokens[0].Equals("cut")) {
-				UTaskAnimParamLogic* AnimLogic = Cast<UTaskAnimParamLogic>(GetComponentByClass(UTaskAnimParamLogic::StaticClass()));
-				check(AnimLogic);
+		UTaskAnimParamLogic* AnimLogic = Cast<UTaskAnimParamLogic>(GetComponentByClass(UTaskAnimParamLogic::StaticClass()));
+		check(AnimLogic);
 
+		if (tokens.Num() == 1) {
+			// Cut
+			if (tokens[0].Equals("cut")) {
 				AnimLogic->ProcessTask("cut");
 			}
 			// Listing objects
@@ -1308,6 +1304,10 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			// Grasp specified object
 			if (tokens[0].Equals("grasp")) {
 				GraspTargetObject_ROS(tokens[1]);
+			}
+			// Feed Person
+			else if (tokens[0].Equals("feed")) {
+				Feed(tokens[1]);
 			}
 			// Raise Hand
 			else if (tokens[0].Equals("raise")) {
@@ -1398,16 +1398,10 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			}
 			// Forking
 			else if (tokens[0].Equals("fork")) {
-				UTaskAnimParamLogic* AnimLogic = Cast<UTaskAnimParamLogic>(GetComponentByClass(UTaskAnimParamLogic::StaticClass()));
-				check(AnimLogic);
-
-				AnimLogic->ProcessTask_P_ObjectName("fork",tokens[1]);
+				AnimLogic->ProcessTask_P_ObjectName("fork", tokens[1]);
 			}
 			// Spooning
 			else if (tokens[0].Equals("spoon")) {
-				UTaskAnimParamLogic* AnimLogic = Cast<UTaskAnimParamLogic>(GetComponentByClass(UTaskAnimParamLogic::StaticClass()));
-				check(AnimLogic);
-
 				AnimLogic->ProcessTask_P_ObjectName("spoon", tokens[1]);
 			}
 			// Wrong amount of tagerts
@@ -1477,10 +1471,6 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			}
 			// Pouring
 			else if (tokens[0].Equals("pour") && tokens[1].Equals("over")) {
-
-				UTaskAnimParamLogic* AnimLogic = Cast<UTaskAnimParamLogic>(GetComponentByClass(UTaskAnimParamLogic::StaticClass()));
-				check(AnimLogic);
-
 				AnimLogic->ProcessTask_P_ObjectName("pour", tokens[2]);
 			}
 			// None
@@ -2662,6 +2652,85 @@ void AIAIAvatarCharacter::SetAbsoluteActorRotationWithTimeline(FRotator rot) {
 
 }
 
+void AIAIAvatarCharacter::Feed(FString PersonName) {
+
+	// Local variables
+	TMap<FString, FHitResult> MyUniqueHits;
+	FVector TargetLocation;
+	FVector MidPoint;
+	FRotator PersonRotation;
+
+	FTimerHandle HandIKTimeHandle_target;
+	FTimerHandle HandIKTimeHandle_mid;
+	FTimerHandle HandIKTimeHandle_end;
+	FTimerHandle SpineTimeHandle_end;
+	FTimerHandle HandRotTimeHandle_end;
+
+	FTimerDelegate HandIKSetDelegate_target;
+	FTimerDelegate HandIKSetDelegate_mid;
+	FTimerDelegate HandIKSetDelegate_end;
+	FTimerDelegate SpineDelegate_end;
+	FTimerDelegate HandRotDelegate_end;
+
+	MyUniqueHits = ListObjects();
+
+	// Verify list hasn't changed
+	if (MyUniqueHits.FindRef(PersonName).GetActor() == NULL) {
+		UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Character \"%s\" not found!"), *PersonName);
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Character \"%s\" not found!"), *PersonName), true, FVector2D(1.7, 1.7));
+	}
+	else {
+		
+		ACharacter *Person = Cast<ACharacter>(MyUniqueHits.FindRef(PersonName).GetActor());
+
+		if (Person == NULL) {
+			UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Actor \"%s\" is not a character!"), *PersonName);
+			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Actor \"%s\" is not a character!"), *PersonName), true, FVector2D(1.7, 1.7));
+		}
+		else {
+
+			UE_LOG(LogAvatarCharacter, Log, TEXT("Feeding: %s "), *PersonName);
+			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Green, FString::Printf(TEXT("Feeding: %s"), *PersonName), true, FVector2D(1.2, 1.2));
+
+			// Person's Local Space
+			TargetLocation = Person->GetMesh()->GetBoneLocation(TEXT("jaw_end"), EBoneSpaces::ComponentSpace);
+			TargetLocation += FVector(-6, 19, 0);
+			MidPoint = TargetLocation + FVector(0,20,0);
+
+			// World Space
+			TargetLocation = Person->GetMesh()->GetComponentTransform().TransformPosition(TargetLocation);
+			MidPoint = Person->GetMesh()->GetComponentTransform().TransformPosition(MidPoint);
+
+			// My Character's Local Space
+			TargetLocation = GetMesh()->GetComponentTransform().InverseTransformPosition(TargetLocation);
+			MidPoint = GetMesh()->GetComponentTransform().InverseTransformPosition(MidPoint);
+			PersonRotation = Person->GetViewRotation();
+
+			HandIKSetDelegate_target = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::InterpolateRightHandIKTo, TargetLocation);
+			HandIKSetDelegate_mid = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::InterpolateRightHandIKTo, MidPoint);
+			HandIKSetDelegate_end = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::InterpolateRightHandIKTo, FVector(-15,15,105));
+			SpineDelegate_end = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::StartSpineDisablement);
+
+			// 0s) Move hand to approach location
+			InterpolateRightHandIKTo(MidPoint);
+
+			// 0s) Star spine rotation
+			StartSpineEnablement(FRotator(0,0,25));
+
+			// 1s) Move hand to target location
+			GetWorldTimerManager().SetTimer(HandIKTimeHandle_target, HandIKSetDelegate_target, 5, false, 1);
+
+			// 3.5s) Move hand back to mid point
+			GetWorldTimerManager().SetTimer(HandIKTimeHandle_mid, HandIKSetDelegate_mid, 5, false, 3.5);
+
+			// 4s) Move hand to holding position
+			GetWorldTimerManager().SetTimer(HandIKTimeHandle_end, HandIKSetDelegate_end, 5, false, 4.5);
+
+			// 4s) Stop Spine rotation
+			GetWorldTimerManager().SetTimer(SpineTimeHandle_end, SpineDelegate_end, 5, false, 4.5);
+		}
+	}
+}
 
 void AIAIAvatarCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
