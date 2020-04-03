@@ -17,6 +17,8 @@ void UAvatarQnAController::Init(AActor* InAgent)
 UAvatarQnAController::UAvatarQnAController()
 {
 	bAnswering = false;
+	CSVLine= "";
+	FileName = "Preferences." + FDateTime::Now().ToString() + ".csv";
 }
 
 void UAvatarQnAController::Tick(float InDeltaTime)
@@ -56,6 +58,8 @@ void UAvatarQnAController::NotifyQuestion()
 	GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Green, FString::Printf(TEXT("* %s"), *Question), true, FVector2D(4, 4));
 	Avatar->enableDTW = true;
 	bActive = true;
+
+	CSVLine += Question + ",";
 }
 
 void UAvatarQnAController::CheckAnswer()
@@ -92,6 +96,13 @@ void UAvatarQnAController::GiveAnswer(FString InAnswer)
 	bPublishResult = true;
 	bAnswering = false;
 	Answer = InAnswer;
+
+	CSVLine += Answer + "\n" ;
+
+	FString FileString;
+	FFileHelper::LoadFileToString(FileString, *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
+	FileString += CSVLine;
+	FFileHelper::SaveStringToFile(FileString, *(FPaths::ProjectDir() + FString("Datatables/") + FileName));	
 }
 
 void UAvatarQnAController::TimeOut()

@@ -34,5 +34,8 @@ public:
 	FString Question;
 	FString Answer;
 
+	FString CSVLine;
+	FString FileName;
+
 	bool bAnswering;
 };

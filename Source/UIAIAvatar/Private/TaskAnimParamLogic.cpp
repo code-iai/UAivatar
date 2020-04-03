@@ -421,11 +421,16 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 		AnimParams.LH_Rot_Curve = CuttingBreadAnimRotCurve_LH;
 		AnimParams.Spine01_Rot_Curve = CuttingBreadAnimSpineRotCurve;
 
-		AnimParams.RH_Loc_Table = new DataTableHandler(FPaths::ProjectDir() + FString("Datatables/RH_Curve.csv"));
-		AnimParams.RH_Rot_Table = new DataTableHandler(FPaths::ProjectDir() + FString("Datatables/RH_Rot_Curve.csv"));
-		AnimParams.LH_Loc_Table = new DataTableHandler(FPaths::ProjectDir() + FString("Datatables/LH_Curve.csv"));
-		AnimParams.LH_Rot_Table = new DataTableHandler(FPaths::ProjectDir() + FString("Datatables/LH_Rot_Curve.csv"));
-		AnimParams.Spine01_Rot_Table = new DataTableHandler(FPaths::ProjectDir() + FString("Datatables/Spine01_Rot_Curve.csv"));
+		AnimParams.RH_Loc_Table = new DataTableHandler(
+			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/RH_Curve.csv"));
+		AnimParams.RH_Rot_Table = new DataTableHandler(
+			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/RH_Rot_Curve.csv"));
+		AnimParams.LH_Loc_Table = new DataTableHandler(
+			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/LH_Curve.csv"));
+		AnimParams.LH_Rot_Table = new DataTableHandler(
+			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/LH_Rot_Curve.csv"));
+		AnimParams.Spine01_Rot_Table = new DataTableHandler(
+			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/Spine01_Rot_Curve.csv"));
 	
 		AnimParams.animTime = AnimParams.RH_Rot_Table->GetDuration();
 		sliceWidth = 2;

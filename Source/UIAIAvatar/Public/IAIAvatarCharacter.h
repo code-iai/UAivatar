@@ -514,6 +514,8 @@ public:
 	/** Close Door */
 	void CloseDoor(FString door);
 
+	void HighLightObject(FString Object_Name, bool OnOff);
+
 	/** Reset Camera Rotation*/
 	void ResetFollowCamera();
 

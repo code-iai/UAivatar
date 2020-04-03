@@ -15,6 +15,7 @@
 #include "Runtime/NavigationSystem/Public/NavigationSystem.h"
 #include "Runtime/Core/Public/Misc/OutputDeviceNull.h"
 #include "Runtime/AIModule/Classes/DetourCrowdAIController.h"
+#include "Kismet/GameplayStatics.h"
 #include "TaskAnimParamLogic.h"
 #include "Engine.h"
 
@@ -1240,6 +1241,19 @@ void AIAIAvatarCharacter::CloseDoor(FString door) {
 
 }
 
+void AIAIAvatarCharacter::HighLightObject(FString Object_Name, bool OnOff) {
+
+	TArray<AActor*> OutActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), OutActors);
+	for (int32 Index = 0; Index < OutActors.Num(); ++Index) {
+		AActor* Comp = OutActors[Index];
+		if (Comp->GetName().Equals(Object_Name)) {
+			UStaticMeshComponent *temp = Cast<UStaticMeshComponent>(Comp->GetComponentByClass(UStaticMeshComponent::StaticClass()));
+			temp->SetRenderCustomDepth(OnOff);
+		}
+	}
+}
+
 // Process Console Command to call respective avatar function
 void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 	 
@@ -1427,6 +1441,15 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 					GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT(	\
 						"ERROR: Can't process argument \"%s\".\n Try an <angle value> or \"camera\""),	\
 						*tokens[1]), true, FVector2D(1.7, 1.7));
+				}
+			}
+			// Highlight object
+			else if (tokens[0].Equals("highlight")) {
+				if (tokens[2].Equals("on")) {
+					HighLightObject(tokens[1], true);
+				}
+				else {
+					HighLightObject(tokens[1], false);
 				}
 			}
 			// Interpolation off spine
