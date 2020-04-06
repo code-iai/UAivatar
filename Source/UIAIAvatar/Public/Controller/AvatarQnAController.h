@@ -37,5 +37,8 @@ public:
 	FString CSVLine;
 	FString FileName;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bSaveCSV;
+
 	bool bAnswering;
 };

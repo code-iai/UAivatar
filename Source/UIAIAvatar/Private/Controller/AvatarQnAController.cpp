@@ -58,8 +58,10 @@ void UAvatarQnAController::NotifyQuestion()
 	GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Green, FString::Printf(TEXT("* %s"), *Question), true, FVector2D(4, 4));
 	Avatar->enableDTW = true;
 	bActive = true;
-
-	CSVLine += Question + ",";
+	if (bSaveCSV) {
+		CSVLine = Avatar->GetName() + ",";
+		CSVLine += Question + ",";
+	}
 }
 
 void UAvatarQnAController::CheckAnswer()
@@ -97,12 +99,14 @@ void UAvatarQnAController::GiveAnswer(FString InAnswer)
 	bAnswering = false;
 	Answer = InAnswer;
 
-	CSVLine += Answer + "\n" ;
+	if (bSaveCSV) {
+		CSVLine += Answer + "\n";
 
-	FString FileString;
-	FFileHelper::LoadFileToString(FileString, *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
-	FileString += CSVLine;
-	FFileHelper::SaveStringToFile(FileString, *(FPaths::ProjectDir() + FString("Datatables/") + FileName));	
+		FString FileString;
+		FFileHelper::LoadFileToString(FileString, *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
+		FileString += CSVLine;
+		FFileHelper::SaveStringToFile(FileString, *(FPaths::ProjectDir() + FString("Datatables/") + FileName));
+	}
 }
 
 void UAvatarQnAController::TimeOut()
