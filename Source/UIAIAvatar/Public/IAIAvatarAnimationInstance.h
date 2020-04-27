@@ -45,6 +45,123 @@ public:
 		FRotator ring_03;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		FRotator pinky_03;
+
+	FFingerRots_t operator *=(float B) {
+		index_01 *= B;
+		index_02 *= B;
+		index_03 *= B;
+		pinky_01 *= B;
+		pinky_02 *= B;
+		pinky_03 *= B;
+		ring_01 *= B;
+		ring_02 *= B;
+		ring_03 *= B;
+		middle_01 *= B;
+		middle_02 *= B;
+		middle_03 *= B;
+		thumb_01 *= B;
+		thumb_02 *= B;
+		thumb_03 *= B;
+		return *this;
+	};
+
+	FFingerRots_t operator +=(const FFingerRots_t &B) {
+		index_01 += B.index_01;
+		index_02 += B.index_02;
+		index_03 += B.index_03;
+		pinky_01 += B.pinky_01;
+		pinky_02 += B.pinky_02;
+		pinky_03 += B.pinky_03;
+		ring_01 += B.ring_01;
+		ring_02 += B.ring_02;
+		ring_03 += B.ring_03;
+		middle_01 += B.middle_01;
+		middle_02 += B.middle_02;
+		middle_03 += B.middle_03;
+		thumb_01 += B.thumb_01;
+		thumb_02 += B.thumb_02;
+		thumb_03 += B.thumb_03;
+		return *this;
+	};
+
+	FFingerRots_t operator -=(const FFingerRots_t &B) {
+		index_01 -= B.index_01;
+		index_02 -= B.index_02;
+		index_03 -= B.index_03;
+		pinky_01 -= B.pinky_01;
+		pinky_02 -= B.pinky_02;
+		pinky_03 -= B.pinky_03;
+		ring_01 -= B.ring_01;
+		ring_02 -= B.ring_02;
+		ring_03 -= B.ring_03;
+		middle_01 -= B.middle_01;
+		middle_02 -= B.middle_02;
+		middle_03 -= B.middle_03;
+		thumb_01 -= B.thumb_01;
+		thumb_02 -= B.thumb_02;
+		thumb_03 -= B.thumb_03;
+		return *this;
+	};
+
+	FFingerRots_t operator -(const FFingerRots_t &B) {
+		FFingerRots_t Res;
+		Res.index_01 = index_01 - B.index_01;
+		Res.index_02 = index_02 - B.index_02;
+		Res.index_03 = index_03 - B.index_03;
+		Res.pinky_01 = pinky_01 - B.pinky_01;
+		Res.pinky_02 = pinky_02 - B.pinky_02;
+		Res.pinky_03 = pinky_03 - B.pinky_03;
+		Res.ring_01 = ring_01 - B.ring_01;
+		Res.ring_02 = ring_02 - B.ring_02;
+		Res.ring_03 = ring_03 - B.ring_03;
+		Res.middle_01 = middle_01 - B.middle_01;
+		Res.middle_02 = middle_02 - B.middle_02;
+		Res.middle_03 = middle_03 - B.middle_03;
+		Res.thumb_01 = thumb_01 - B.thumb_01;
+		Res.thumb_02 = thumb_02 - B.thumb_02;
+		Res.thumb_03 = thumb_03 - B.thumb_03;
+		return Res;
+	};
+
+	FFingerRots_t operator +(const FFingerRots_t &B) {
+		FFingerRots_t Res;
+		Res.index_01 = index_01 + B.index_01;
+		Res.index_02 = index_02 + B.index_02;
+		Res.index_03 = index_03 + B.index_03;
+		Res.pinky_01 = pinky_01 + B.pinky_01;
+		Res.pinky_02 = pinky_02 + B.pinky_02;
+		Res.pinky_03 = pinky_03 + B.pinky_03;
+		Res.ring_01 = ring_01 + B.ring_01;
+		Res.ring_02 = ring_02 + B.ring_02;
+		Res.ring_03 = ring_03 + B.ring_03;
+		Res.middle_01 = middle_01 + B.middle_01;
+		Res.middle_02 = middle_02 + B.middle_02;
+		Res.middle_03 = middle_03 + B.middle_03;
+		Res.thumb_01 = thumb_01 + B.thumb_01;
+		Res.thumb_02 = thumb_02 + B.thumb_02;
+		Res.thumb_03 = thumb_03 + B.thumb_03;
+		return Res;
+	};
+
+	FFingerRots_t operator *(float B) {
+		FFingerRots_t Res;
+		Res.index_01 = index_01 * B;
+		Res.index_02 = index_02 * B;
+		Res.index_03 = index_03 * B;
+		Res.pinky_01 = pinky_01 * B;
+		Res.pinky_02 = pinky_02 * B;
+		Res.pinky_03 = pinky_03 * B;
+		Res.ring_01 = ring_01 * B;
+		Res.ring_02 = ring_02 * B;
+		Res.ring_03 = ring_03 * B;
+		Res.middle_01 = middle_01 * B;
+		Res.middle_02 = middle_02 * B;
+		Res.middle_03 = middle_03 * B;
+		Res.thumb_01 = thumb_01 * B;
+		Res.thumb_02 = thumb_02 * B;
+		Res.thumb_03 = thumb_03 * B;
+		return Res;
+	};
 };
 
 UCLASS()

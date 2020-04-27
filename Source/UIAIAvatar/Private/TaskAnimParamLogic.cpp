@@ -1,6 +1,8 @@
 // Copyright 2018, Institute for Artificial Intelligence - University of Bremen
 
 #include "TaskAnimParamLogic.h"
+#include "Engine.h"
+
 
 // *************************   DataTableHanlder Class  ************************* //
 DataTableHandler::DataTableHandler(FString DTPath) {
@@ -146,7 +148,7 @@ void UTaskAnimParamLogic::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ...
+	// ...	
 
 	Avatar = Cast<AIAIAvatarCharacter>(GetOwner());
 	check(Avatar != nullptr);
@@ -172,13 +174,22 @@ void UTaskAnimParamLogic::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	// ...
 	if (bRunAnimation) {
 
-		SetJointAlphas();
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Tiempo:  %f."), currentAnimTime);
+
+		if(currentAnimTime == 0) 
+			SetJointAlphas();
+
 		AnimParams.AnimFunctionDelegate.ExecuteIfBound(currentAnimTime);
 
 		currentAnimTime += DeltaTime;
 		if (currentAnimTime > AnimParams.animTime) {
 			bRunAnimation = false;
+			currentAnimTime = 0;
 			UnSetJointAlphas();
+
+			if (pendingStates > 0) {
+				AnimChain.ExecuteIfBound(pendingStates);
+			}
 		}
 	}
 	else {
@@ -203,7 +214,7 @@ AActor* UTaskAnimParamLogic::CheckForObject(TMap<FString, FHitResult> Objects, F
 	FVector ObjLocationInCompSpace = FVector(0, 0, 0);
 
 	// Defining area of proper reach
-	ReachArea = FBox::BuildAABB(FVector(45, 0, -10), FVector(25, 20, 5));
+	ReachArea = FBox::BuildAABB(FVector(45, 0, -20), FVector(25, 20, 5));
 
 	// Filtering objects
 	for (auto& It : Objects)
@@ -241,23 +252,149 @@ void UTaskAnimParamLogic::SetJointAlphas() {
 		Animation->rightHandGraspingAlpha = 1;
 	if (AnimParams.bSet_S01_Rot)
 		Animation->SpineRotationAlpha = 1;
+	if (AnimParams.bSet_Head_Rot)
+		Animation->HeadRotationAlpha = 1;
 }
 
 void UTaskAnimParamLogic::UnSetJointAlphas() {
-	if (AnimParams.bSet_LH_Loc)
+	if (AnimParams.bUnSet_LH_Loc)
 		Animation->LeftHandIKAlpha = 0;
-	if (AnimParams.bSet_RH_Loc)
+	if (AnimParams.bUnSet_RH_Loc)
 		Animation->RightHandIKAlpha = 0;
-	if (AnimParams.bSet_LH_Rot)
+	if (AnimParams.bUnSet_LH_Rot)
 		Animation->HandRotationAlpha = 0;
-	if (AnimParams.bSet_RH_Rot)
+	if (AnimParams.bUnSet_RH_Rot)
 		Animation->RightHandRotationAlpha = 0;
-	if (AnimParams.bSet_LF_Rot)
+	if (AnimParams.bUnSet_LF_Rot)
 		Animation->leftHandGraspingAlpha = 0;
-	if (AnimParams.bSet_RF_Rot)
+	if (AnimParams.bUnSet_RF_Rot)
 		Animation->rightHandGraspingAlpha = 0;
-	if (AnimParams.bSet_S01_Rot)
+	if (AnimParams.bUnSet_S01_Rot)
 		Animation->SpineRotationAlpha = 0;
+	if (AnimParams.bUnSet_Head_Rot)
+		Animation->HeadRotationAlpha = 0;
+}
+
+FFingerRots_t UTaskAnimParamLogic::GetCurrentFingersRots(bool isRightHand) {
+
+	FFingerRots_t FingersRots;
+	FRotator TempRotIn;
+	FRotator TempRotOut;
+	FVector TempVecIn;
+	FVector TempVecOut;
+
+	if (isRightHand) {
+		
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("index_01_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("hand_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.index_01 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("index_02_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("index_01_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.index_02 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("index_03_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("index_02_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.index_03 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("middle_01_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("hand_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.middle_01 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("middle_02_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("middle_01_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.middle_02 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("middle_03_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("middle_02_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.middle_03 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("ring_01_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("hand_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.ring_01 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("ring_02_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("ring_01_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.ring_02 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("ring_03_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("ring_02_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.ring_03 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("pinky_01_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("hand_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.pinky_01 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("pinky_02_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("pinky_01_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.pinky_02 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("pinky_03_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("pinky_02_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.pinky_03 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("thumb_01_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("hand_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.thumb_01 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("thumb_02_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("thumb_01_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.thumb_02 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("thumb_03_r", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("thumb_02_r", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.thumb_03 = TempRotOut;
+	}
+	else {
+		
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("index_01_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("hand_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.index_01 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("index_02_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("index_01_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.index_02 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("index_03_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("index_02_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.index_03 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("middle_01_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("hand_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.middle_01 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("middle_02_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("middle_01_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.middle_02 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("middle_03_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("middle_02_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.middle_03 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("ring_01_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("hand_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.ring_01 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("ring_02_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("ring_01_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.ring_02 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("ring_03_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("ring_02_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.ring_03 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("pinky_01_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("hand_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.pinky_01 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("pinky_02_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("pinky_01_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.pinky_02 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("pinky_03_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("pinky_02_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.pinky_03 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("thumb_01_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("hand_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.thumb_01 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("thumb_02_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("thumb_01_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.thumb_02 = TempRotOut;
+		TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("thumb_03_l", EBoneSpaces::ComponentSpace).Rotator();
+		Avatar->GetMesh()->TransformToBoneSpace("thumb_02_l", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+		FingersRots.thumb_03 = TempRotOut;
+	}
+
+	return FingersRots;
+}
+
+void UTaskAnimParamLogic::SaveOriginalPose() {
+
+	AnimParams.Spine_01_Rot_Original = Avatar->GetMesh()->GetBoneQuaternion("spine_01", EBoneSpaces::ComponentSpace);
+
+	AnimParams.RH_FingerRots_Original = GetCurrentFingersRots(true);
+	AnimParams.LH_FingerRots_Original = GetCurrentFingersRots(false);
+
+	AnimParams.RH_Loc_Original = Avatar->GetMesh()->GetBoneLocation("hand_r", EBoneSpaces::ComponentSpace);
+	AnimParams.RH_Rot_Original = Avatar->GetMesh()->GetBoneQuaternion("hand_r", EBoneSpaces::ComponentSpace).Rotator();
+
+	AnimParams.LH_Loc_Original = Avatar->GetMesh()->GetBoneLocation("hand_l", EBoneSpaces::ComponentSpace);
+	AnimParams.LH_Rot_Original = Avatar->GetMesh()->GetBoneQuaternion("hand_l", EBoneSpaces::ComponentSpace).Rotator();
 }
 
 // Check for cuttable items within a list of unique hit results and filter out those out of proper reach
@@ -313,7 +450,7 @@ AActor* UTaskAnimParamLogic::PickOneObject(TArray<AActor*> Cuttables) {
 }
 
 // Check if item is in good position for cutting
-bool UTaskAnimParamLogic::isInGoodAlignment(CuttableObjectData_t &ItemData) {
+bool UTaskAnimParamLogic::isInGoodAlignment(ObjectData_t &ItemData) {
 
 	AActor* Item = ItemData.Object;
 	FRotator OriginalRot;
@@ -321,7 +458,6 @@ bool UTaskAnimParamLogic::isInGoodAlignment(CuttableObjectData_t &ItemData) {
 	float shortestAxisLength;
 	float smallestAngleToVec = 90;
 	float tempAngle;
-
 
 	// Save Original rotation
 	ItemData.OriginalRotation = Item->GetActorRotation();
@@ -380,11 +516,464 @@ bool UTaskAnimParamLogic::isInGoodAlignment(CuttableObjectData_t &ItemData) {
 	return true;
 }
 
-// Set parameters for task animation
-#pragma optimize("", off)
-void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemData) {
+// Setting animation chains
+void UTaskAnimParamLogic::StartPassPageAnimChain(AActor *Target) {
 
-	FTaskAnimParameters_t MyAnimParams;
+	pendingStates = 2;
+	AnimChain.BindUObject(this, &UTaskAnimParamLogic::RunPassPageAnimChain);
+	AnimParams.ActionContext = "TurnPageBox";
+	FVector EndPoint = CalculateReachBookLocation(Target, *AnimParams.ActionContext);
+	SaveOriginalPose();
+
+	StartReachAnimation("reach_grasp", Target, "right", EndPoint);
+}
+
+void UTaskAnimParamLogic::StartCloseBookAnimChain(AActor *Target) {
+
+	pendingStates = 2;
+	AnimChain.BindUObject(this, &UTaskAnimParamLogic::RunPassPageAnimChain);
+	AnimParams.ActionContext = "ClosingPageBox";
+	FVector EndPoint = CalculateReachBookLocation(Target, *AnimParams.ActionContext);
+	SaveOriginalPose();
+
+	StartReachAnimation("reach_grasp", Target, "right", EndPoint);
+}
+
+// Run animation Chains
+void UTaskAnimParamLogic::RunPassPageAnimChain(int state) {
+
+	if (pendingStates == 2) {
+		StartPassPageAnimation();
+	}
+	else if (pendingStates == 1) {
+		StartReleaseAnimation("drop_grasp","right");
+	}
+
+	pendingStates--;
+	
+}
+
+// Set parameters for task animation
+FVector UTaskAnimParamLogic::CalculateReachBookLocation(AActor *Book, FName Tag) {
+
+	TArray<UActorComponent*> boxes = Book->GetComponentsByTag(UBoxComponent::StaticClass(), Tag);
+	USceneComponent *box = Cast<USceneComponent>(boxes[0]);
+	FVector EndPoint = box->GetComponentLocation();
+	
+	// Convert points relative to Avatar. This is best to adjust points
+	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
+
+	return EndPoint;
+}
+
+void UTaskAnimParamLogic::StartReachAnimation(FString Type, AActor *Target, FString Hand, FVector Point) {
+
+	// Hand
+	FVector LocStartPoint;
+	FVector LocEndPoint;
+	FVector LocMultiplier;
+
+	FRotator RotStartPoint;
+	FRotator RotEndPoint;
+	FRotator RotMultiplier;
+	
+	// Finger
+	FFingerRots_t FingersRotsStartPoint;
+	FFingerRots_t FingersRotsEndPoint;
+	FFingerRots_t FingersRotsMultiplier;
+
+	// Spine
+	FRotator SpineRotStartPoint;
+	FRotator SpineRotEndPoint;
+	FRotator SpineRotMultiplier;
+
+	FVector LocEndAdjustment = FVector(-7, -7, 15);
+	
+	AnimParams.ClearJointFlags();
+
+	AnimParams.Object = Target;
+	if (Hand.Equals("right"))
+		AnimParams.bUsingRightHand = true;
+
+	if (Hand.Equals("left"))
+		AnimParams.bUsingLeftHand = true;
+
+	// Start points
+	FQuat Temp = Avatar->GetMesh()->GetBoneQuaternion("spine_01", EBoneSpaces::ComponentSpace);
+	SpineRotStartPoint = FRotator(Temp - AnimParams.Spine_01_Rot_Original);
+	
+	FingersRotsStartPoint = GetCurrentFingersRots(AnimParams.bUsingRightHand);
+
+	if (AnimParams.bUsingRightHand) {
+		LocStartPoint = Avatar->GetMesh()->GetBoneLocation("hand_r", EBoneSpaces::ComponentSpace);
+		RotStartPoint = Avatar->GetMesh()->GetBoneQuaternion("hand_r", EBoneSpaces::ComponentSpace).Rotator();
+	}
+	if (AnimParams.bUsingLeftHand) {
+		LocStartPoint = Avatar->GetMesh()->GetBoneLocation("hand_l", EBoneSpaces::ComponentSpace);
+		RotStartPoint = Avatar->GetMesh()->GetBoneQuaternion("hand_l", EBoneSpaces::ComponentSpace).Rotator();
+	}
+
+	// End Points
+	SpineRotEndPoint = FRotator(0, 0, 25);
+	FingersRotsEndPoint = FingersRotsStartPoint;
+
+	if (Target->ActorHasTag("book")) {
+		if (AnimParams.bUsingRightHand) {
+
+			LocEndAdjustment = FVector(-5, 0, 5);
+			RotEndPoint = FRotator(60, 0, 120);
+			FingersRotsEndPoint.thumb_01 = FRotator(10, -50, 140);
+			FingersRotsEndPoint.thumb_02 = FRotator(0, -0, 0);
+			FingersRotsEndPoint.thumb_03 = FRotator(0, -0, 0);
+
+			FingersRotsEndPoint.index_01 = FRotator(-10,-65,0);
+			FingersRotsEndPoint.index_02 = FRotator(-0, -45, 0);
+			FingersRotsEndPoint.index_03 = FRotator(-0, -45, 0);
+			
+			FingersRotsEndPoint.middle_01 = FRotator(-15, -65, 0);
+			FingersRotsEndPoint.middle_02 = FRotator(-0, -45, 0);
+			FingersRotsEndPoint.middle_03 = FRotator(-0, -45, 0);
+
+			FingersRotsEndPoint.ring_01 = FRotator(-10, -45, 0);
+			FingersRotsEndPoint.pinky_01 = FRotator(-10, -45, 0);
+
+		}
+	}
+
+	if (Point != FVector(0, 0, 0)) {
+		LocEndPoint = Point;
+	}
+	else {
+		LocEndPoint = Target->GetActorLocation();
+	}
+	
+	// Apply Adjusments
+	LocEndPoint += LocEndAdjustment;
+
+	// Multiplier
+	LocMultiplier = LocEndPoint - LocStartPoint;
+	RotMultiplier = RotEndPoint - RotStartPoint;
+	SpineRotMultiplier = SpineRotEndPoint - SpineRotStartPoint;
+	FingersRotsMultiplier = FingersRotsEndPoint - FingersRotsStartPoint;
+
+	// Update AnimParams
+	if (AnimParams.bUsingRightHand) {
+
+		AnimParams.RH_Loc_Offset = LocStartPoint;
+		AnimParams.RH_Loc_Multiplier = LocMultiplier;
+		AnimParams.RH_Loc_Curve = ReachingAnimLocCurve_Hand;
+
+		AnimParams.RH_Rot_Offset = RotStartPoint;
+		AnimParams.RH_Rot_Multiplier = RotMultiplier;
+		AnimParams.RH_Rot_Curve = ReachingAnimRotCurve_Hand;
+
+		AnimParams.RH_FingerRots_Offset = FingersRotsStartPoint;
+		AnimParams.RH_FingerRots_Multiplier = FingersRotsMultiplier;
+		AnimParams.RH_FingerRots_Curve = ReachingAnimRotCurve_Fingers;
+	}
+	if (AnimParams.bUsingLeftHand) {
+
+		AnimParams.LH_Loc_Offset = LocStartPoint;
+		AnimParams.LH_Loc_Multiplier = LocMultiplier;
+		AnimParams.LH_Loc_Curve = ReachingAnimLocCurve_Hand;
+
+		AnimParams.LH_Rot_Offset = RotStartPoint;
+		AnimParams.LH_Rot_Multiplier = RotMultiplier;
+		AnimParams.LH_Rot_Curve = ReachingAnimRotCurve_Hand;
+
+		AnimParams.LH_FingerRots_Offset = FingersRotsStartPoint;
+		AnimParams.LH_FingerRots_Multiplier = FingersRotsMultiplier;
+		AnimParams.LH_FingerRots_Curve = ReachingAnimRotCurve_Fingers;
+	}
+
+	AnimParams.Spine_01_Rot_Offset = SpineRotStartPoint;
+	AnimParams.Spine_01_Rot_Multiplier = SpineRotMultiplier;
+	AnimParams.Spine_01_Rot_Curve = ReachingAnimRotCurve_Spine01;
+
+	AnimParams.Head_Rot_Curve = ReachingAnimRotCurve_Head;
+
+	if (Type.Equals("reach_grasp") || Type.Equals("reach_grasp_take")) {
+		if (AnimParams.bUsingRightHand) {
+			AnimParams.bSet_RH_Loc = true;
+			AnimParams.bSet_RH_Rot = true;
+			AnimParams.bSet_RF_Rot = true;
+		}
+		if (AnimParams.bUsingLeftHand) {
+			AnimParams.bSet_LH_Loc = true;
+			AnimParams.bSet_LH_Rot = true;
+			AnimParams.bSet_LF_Rot = true;
+		}
+	}
+	else if (Type.Equals("reach")){
+		if (AnimParams.bUsingRightHand) {
+			AnimParams.bSet_RH_Loc = true;
+			AnimParams.bSet_RH_Rot = true;
+		}
+		if (AnimParams.bUsingLeftHand) {
+			AnimParams.bSet_LH_Loc = true;
+			AnimParams.bSet_LH_Rot = true;
+		}
+	}
+
+	AnimParams.bSet_S01_Rot = true;
+	AnimParams.bSet_Head_Rot = true;
+
+	AnimParams.animTime = 1.25;
+	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunReachAnimation);
+	bRunAnimation = true;
+}
+
+void UTaskAnimParamLogic::StartPassPageAnimation() {
+
+	// Hand
+	FVector LocStartPoint;
+	FVector LocEndPoint;
+	FVector LocMultiplier;
+
+	FRotator RotStartPoint;
+	FRotator RotEndPoint;
+	FRotator RotMultiplier;
+
+	// Fingers
+	FFingerRots_t FingersRotsStartPoint;
+	FFingerRots_t FingersRotsEndPoint;
+	FFingerRots_t FingersRotsMultiplier;
+
+	// Spine
+	FRotator SpineRotStartPoint;
+	FRotator SpineRotEndPoint;
+	FRotator SpineRotMultiplier;
+
+	// StarPoints
+	if (AnimParams.bUsingRightHand) {
+		LocStartPoint = Avatar->GetMesh()->GetBoneLocation("hand_r", EBoneSpaces::ComponentSpace);
+		RotStartPoint = Avatar->GetMesh()->GetBoneQuaternion("hand_r", EBoneSpaces::ComponentSpace).Rotator();
+	}
+	else if (AnimParams.bUsingLeftHand) {
+		LocStartPoint = Avatar->GetMesh()->GetBoneLocation("hand_l", EBoneSpaces::ComponentSpace);
+		RotStartPoint = Avatar->GetMesh()->GetBoneQuaternion("hand_l", EBoneSpaces::ComponentSpace).Rotator();
+	}
+
+	SpineRotStartPoint = FRotator(0,0,25);
+
+	FingersRotsStartPoint = GetCurrentFingersRots(AnimParams.bUsingRightHand);
+
+	// EndPoints
+	SpineRotEndPoint = FRotator(-15, -40, 40);
+	FingersRotsEndPoint = FingersRotsStartPoint;
+
+	// Pass Page Box Location 
+	// Relative to Object
+	TArray<UActorComponent*> boxes = AnimParams.Object->GetComponentsByTag(UBoxComponent::StaticClass(), *AnimParams.ActionContext);
+	USceneComponent *box = Cast<USceneComponent>(boxes[0]);
+	FVector EndPoint = box->RelativeLocation;
+
+	EndPoint.Y *= -1;
+	EndPoint.Y += 10;
+	EndPoint.Z += EndPoint.Y;
+	
+	// Relative to world
+	EndPoint = AnimParams.Object->GetActorTransform().TransformPosition(EndPoint);
+
+	// Relative to Avatar
+	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
+
+	LocEndPoint = EndPoint;
+	LocEndPoint += FVector(0, 0, 7);
+
+						 // Hand Rotation trajectory
+	                     // Pitch Yaw  Roll
+						 //  Y     Z     X
+	                     // 60      0   120 
+						 //  0    -90    90
+	                     // 60   -150   120 
+	RotEndPoint = FRotator(0, -150, 90);
+
+	// Multipliers
+	LocMultiplier = LocEndPoint - LocStartPoint;
+	RotMultiplier = RotEndPoint - RotStartPoint;
+	SpineRotMultiplier = SpineRotEndPoint - SpineRotStartPoint;
+	FingersRotsMultiplier = FingersRotsEndPoint - FingersRotsStartPoint;
+
+	// Update AnimParams
+	if (AnimParams.bUsingRightHand) {
+
+		AnimParams.RH_Loc_Offset = LocStartPoint;
+		AnimParams.RH_Loc_Multiplier = LocMultiplier;
+		AnimParams.RH_Loc_Curve = PassingPageAnimLocCurve_Hand;
+
+		AnimParams.RH_Rot_Offset = RotStartPoint;
+		AnimParams.RH_Rot_Multiplier = RotMultiplier;
+		AnimParams.RH_Rot_Curve = PassingPageAnimRotCurve_Hand;
+
+		AnimParams.RH_FingerRots_Offset = FingersRotsStartPoint;
+		AnimParams.RH_FingerRots_Multiplier = FingersRotsMultiplier;
+		AnimParams.RH_FingerRots_Curve = PassingPageAnimRotCurve_Fingers;
+	}
+	if (AnimParams.bUsingLeftHand) {
+
+		AnimParams.LH_Loc_Offset = LocStartPoint;
+		AnimParams.LH_Loc_Multiplier = LocMultiplier;
+		AnimParams.LH_Loc_Curve = PassingPageAnimLocCurve_Hand;
+
+		AnimParams.LH_Rot_Offset = RotStartPoint;
+		AnimParams.LH_Rot_Multiplier = RotMultiplier;
+		AnimParams.LH_Rot_Curve = PassingPageAnimRotCurve_Hand;
+
+		AnimParams.LH_FingerRots_Offset = FingersRotsStartPoint;
+		AnimParams.LH_FingerRots_Multiplier = FingersRotsMultiplier;
+		AnimParams.LH_FingerRots_Curve = PassingPageAnimRotCurve_Fingers;
+	}
+
+	AnimParams.Spine_01_Rot_Offset = SpineRotStartPoint;
+	AnimParams.Spine_01_Rot_Multiplier = SpineRotMultiplier;
+	AnimParams.Spine_01_Rot_Curve = PassingPageAnimRotCurve_Spine01;
+
+	AnimParams.Head_Rot_Curve = ReachingAnimRotCurve_Head;
+
+	if (AnimParams.bUsingRightHand) {
+		AnimParams.bSet_RF_Rot = false;
+	}
+	if (AnimParams.bUsingLeftHand) {
+		AnimParams.bSet_LF_Rot = false;
+	}
+
+	AnimParams.animTime = 2.5;
+	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunReachAnimation);
+	bRunAnimation = true;
+}
+
+void UTaskAnimParamLogic::StartReleaseAnimation(FString Type, FString Hand) {
+
+	// Hand
+	FVector LocStartPoint;
+	FVector LocEndPoint;
+	FVector LocMultiplier;
+
+	FRotator RotStartPoint;
+	FRotator RotEndPoint;
+	FRotator RotMultiplier;
+
+	// Fingers
+	FFingerRots_t FingersRotsStartPoint;
+	FFingerRots_t FingersRotsEndPoint;
+	FFingerRots_t FingersRotsMultiplier;
+
+	// Spine
+	FRotator SpineRotStartPoint;
+	FRotator SpineRotEndPoint;
+	FRotator SpineRotMultiplier;
+
+	// StartPoints & EndPoints
+	SpineRotStartPoint = FRotator(-15,-40,40);
+
+	SpineRotEndPoint = FRotator(0,0,0);
+
+	if (Hand.Equals("right")) {
+		LocStartPoint = Avatar->GetMesh()->GetBoneLocation("hand_r", EBoneSpaces::ComponentSpace);
+		RotStartPoint = Avatar->GetMesh()->GetBoneQuaternion("hand_r", EBoneSpaces::ComponentSpace).Rotator();
+		FingersRotsStartPoint = GetCurrentFingersRots(true);
+
+		LocEndPoint = AnimParams.RH_Loc_Original;
+		RotEndPoint = AnimParams.RH_Rot_Original;
+		FingersRotsEndPoint = AnimParams.RH_FingerRots_Original;
+	}
+	else if (Hand.Equals("left")) {
+		LocStartPoint = Avatar->GetMesh()->GetBoneLocation("hand_l", EBoneSpaces::ComponentSpace);
+		RotStartPoint = Avatar->GetMesh()->GetBoneQuaternion("hand_l", EBoneSpaces::ComponentSpace).Rotator();
+		FingersRotsStartPoint = GetCurrentFingersRots(false);
+
+		LocEndPoint = AnimParams.LH_Loc_Original;
+		RotEndPoint = AnimParams.LH_Rot_Original;
+		FingersRotsEndPoint = AnimParams.LH_FingerRots_Original;
+	}
+
+	// Multipliers
+	LocMultiplier = LocEndPoint - LocStartPoint;
+	RotMultiplier = RotEndPoint - RotStartPoint;
+	SpineRotMultiplier = SpineRotEndPoint - SpineRotStartPoint;
+	FingersRotsMultiplier = FingersRotsEndPoint - FingersRotsStartPoint;
+
+	// Update AnimParams
+	if (Hand.Equals("right")) {
+
+		AnimParams.RH_Loc_Offset = LocStartPoint;
+		AnimParams.RH_Loc_Multiplier = LocMultiplier;
+		AnimParams.RH_Loc_Curve = DroppingAnimLocCurve_Hand;
+
+		AnimParams.RH_Rot_Offset = RotStartPoint;
+		AnimParams.RH_Rot_Multiplier = RotMultiplier;
+		AnimParams.RH_Rot_Curve = DroppingAnimRotCurve_Hand;
+
+		AnimParams.RH_FingerRots_Offset = FingersRotsStartPoint;
+		AnimParams.RH_FingerRots_Multiplier = FingersRotsMultiplier;
+		AnimParams.RH_FingerRots_Curve = DroppingAnimRotCurve_Fingers;
+	}
+	if (Hand.Equals("left")) {
+
+		AnimParams.LH_Loc_Offset = LocStartPoint;
+		AnimParams.LH_Loc_Multiplier = LocMultiplier;
+		AnimParams.LH_Loc_Curve = DroppingAnimLocCurve_Hand;
+
+		AnimParams.LH_Rot_Offset = RotStartPoint;
+		AnimParams.LH_Rot_Multiplier = RotMultiplier;
+		AnimParams.LH_Rot_Curve = DroppingAnimRotCurve_Hand;
+
+		AnimParams.LH_FingerRots_Offset = FingersRotsStartPoint;
+		AnimParams.LH_FingerRots_Multiplier = FingersRotsMultiplier;
+		AnimParams.LH_FingerRots_Curve = DroppingAnimRotCurve_Fingers;
+	}
+
+	AnimParams.Spine_01_Rot_Offset = SpineRotStartPoint;
+	AnimParams.Spine_01_Rot_Multiplier = SpineRotMultiplier;
+	AnimParams.Spine_01_Rot_Curve = DroppingAnimRotCurve_Spine01;
+
+	AnimParams.Head_Rot_Curve = DroppingAnimRotCurve_Head;
+
+	if (Type.Equals("drop_grasp") || Type.Equals("drop_grasp_take")) {
+		if (Hand.Equals("right")) {
+			AnimParams.bSet_RH_Loc = true;
+			AnimParams.bSet_RH_Rot = true;
+			AnimParams.bSet_RF_Rot = true;
+			AnimParams.bUnSet_RH_Loc = true;
+			AnimParams.bUnSet_RH_Rot = true;
+			AnimParams.bUnSet_RF_Rot = true;
+		} else if (Hand.Equals("left")) {
+			AnimParams.bSet_LH_Loc = true;
+			AnimParams.bSet_LH_Rot = true;
+			AnimParams.bSet_LF_Rot = true;
+			AnimParams.bUnSet_LH_Loc = true;
+			AnimParams.bUnSet_LH_Rot = true;
+			AnimParams.bUnSet_LF_Rot = true;
+		}
+	}
+	else if (Type.Equals("drop")) {
+		if (Hand.Equals("right")) {
+			AnimParams.bSet_RH_Loc = true;
+			AnimParams.bSet_RH_Rot = true;
+			AnimParams.bUnSet_RH_Loc = true;
+			AnimParams.bUnSet_RH_Rot = true;
+		} else if (Hand.Equals("left")) {
+			AnimParams.bSet_LH_Loc = true;
+			AnimParams.bSet_LH_Rot = true;
+			AnimParams.bUnSet_LH_Loc = true;
+			AnimParams.bUnSet_LH_Rot = true;
+		}
+	}
+
+	AnimParams.bSet_S01_Rot = true;
+	AnimParams.bSet_Head_Rot = true;
+	AnimParams.bUnSet_S01_Rot = true;
+	AnimParams.bUnSet_Head_Rot = true;
+
+	AnimParams.animTime = 1.25;
+	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunReachAnimation);
+	bRunAnimation = true;
+}
+
+#pragma optimize("", off)
+void UTaskAnimParamLogic::StartCutAnimation(ObjectData_t &ItemData) {
+
 	bool orderWidthLenght = false;
 	FVector HoldPoint;
 	FVector StartPoint;
@@ -419,7 +1008,7 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 		AnimParams.RH_Rot_Curve = CuttingBreadAnimRotCurve;
 		AnimParams.LH_Loc_Curve = CuttingBreadAnimCurve_LH;
 		AnimParams.LH_Rot_Curve = CuttingBreadAnimRotCurve_LH;
-		AnimParams.Spine01_Rot_Curve = CuttingBreadAnimSpineRotCurve;
+		AnimParams.Spine_01_Rot_Curve = CuttingBreadAnimRotCurve_Spine01;
 
 		AnimParams.RH_Loc_Table = new DataTableHandler(
 			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/RH_Curve.csv"));
@@ -429,7 +1018,7 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/LH_Curve.csv"));
 		AnimParams.LH_Rot_Table = new DataTableHandler(
 			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/LH_Rot_Curve.csv"));
-		AnimParams.Spine01_Rot_Table = new DataTableHandler(
+		AnimParams.Spine_01_Rot_Table = new DataTableHandler(
 			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/Spine01_Rot_Curve.csv"));
 	
 		AnimParams.animTime = AnimParams.RH_Rot_Table->GetDuration();
@@ -526,7 +1115,7 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 	HoldPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(HoldPoint);
 
 	// Start Point is holding position
-	StartPoint = FVector(-15, 15, 105);
+	StartPoint = Avatar->GetMesh()->GetBoneLocation("hand_r", EBoneSpaces::ComponentSpace); 
 
 	// Motion Depth
 	Multiplier = EndPoint - StartPoint;
@@ -534,7 +1123,7 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 	// Set animation parameters
 	AnimParams.RH_Loc_Offset = StartPoint;
 	AnimParams.RH_Loc_Multiplier = Multiplier;
-	AnimParams.LH_Rotation = HoldRotation;
+	AnimParams.LH_Rot_Multiplier = HoldRotation;
 	AnimParams.LH_Loc_Offset = Avatar->GetMesh()->GetBoneLocation("hand_l", EBoneSpaces::ComponentSpace);
 	AnimParams.LH_Loc_Multiplier = HoldPoint - AnimParams.LH_Loc_Offset;
 
@@ -550,18 +1139,20 @@ void UTaskAnimParamLogic::calculateCutAnimParameters(CuttableObjectData_t &ItemD
 	AnimParams.bSet_S01_Rot = true;
 
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunCutAnimation);
+	bRunAnimation = true;
+
 }
 #pragma optimize("", on)
 
-void UTaskAnimParamLogic::calculateForkAnimParameters(AActor* Target) {
+void UTaskAnimParamLogic::StartForkAnimation(AActor* Target) {
 
 	FVector StartPoint;
 	FVector EndPoint;
 	FVector Multiplier;
 	FVector EndAdjustment = FVector(-7, -7, 15);
 
-	AnimParams.Spine_01_rotation = FRotator(0, 0, 15);
-	AnimParams.Spine01_Rot_Curve = ForkingAnimSpineRotCurve;
+	AnimParams.Spine_01_Rot_Multiplier = FRotator(0, 0, 15);
+	AnimParams.Spine_01_Rot_Curve = ForkingAnimSpineRotCurve;
 
 	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Target->GetActorLocation());
 	EndPoint += EndAdjustment;
@@ -589,9 +1180,13 @@ void UTaskAnimParamLogic::calculateForkAnimParameters(AActor* Target) {
 	AnimParams.bSet_RF_Rot = false;
 	AnimParams.bSet_LF_Rot = false;
 	AnimParams.bSet_S01_Rot = true;
+
+	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunForkAnimation);
+	bRunAnimation = true;
+
 }
 
-void UTaskAnimParamLogic::calculateSpoonAnimParameters(AActor* Target) {
+void UTaskAnimParamLogic::StartSpoonAnimation(AActor* Target) {
 
 	FVector Origin;
 	FVector Extent;
@@ -602,7 +1197,7 @@ void UTaskAnimParamLogic::calculateSpoonAnimParameters(AActor* Target) {
 	FVector EndAdjustment = FVector(-13, -7, 9);
 	FVector StartAdjustment = FVector(0, 0, 0);
 
-	AnimParams.Spine_01_rotation = FRotator(0, 0, 20);
+	AnimParams.Spine_01_Rot_Multiplier = FRotator(0, 0, 20);
 
 	// Get origin and extension							
 	Target->GetActorBounds(false, Origin, Extent);
@@ -633,16 +1228,20 @@ void UTaskAnimParamLogic::calculateSpoonAnimParameters(AActor* Target) {
 	AnimParams.bSet_RF_Rot = false;
 	AnimParams.bSet_LF_Rot = false;
 	AnimParams.bSet_S01_Rot = true;
+
+	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunSpoonAnimation);
+	bRunAnimation = true;
+
 }
 
-void UTaskAnimParamLogic::calculatePourAnimParameters(AActor* Target) {
+void UTaskAnimParamLogic::StartPourAnimation(AActor* Target) {
 
 	FVector StartPoint;
 	FVector EndPoint;
 	FVector Multiplier;
 	FVector EndAdjustment = FVector(-15, -5, 18);
 
-	AnimParams.Spine_01_rotation = FRotator(0, 0, 15);
+	AnimParams.Spine_01_Rot_Multiplier = FRotator(0, 0, 15);
 
 	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Target->GetActorLocation());
 	EndPoint += EndAdjustment;
@@ -670,6 +1269,9 @@ void UTaskAnimParamLogic::calculatePourAnimParameters(AActor* Target) {
 	AnimParams.bSet_RF_Rot = false;
 	AnimParams.bSet_LF_Rot = false;
 	AnimParams.bSet_S01_Rot = true;
+
+	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunPourAnimation);
+	bRunAnimation = true;
 }
 
 // TODO: Separate slicing animation from reaching animation. Reach in terms to right before cutting. 
@@ -718,7 +1320,7 @@ void UTaskAnimParamLogic::RunCutAnimation(float time) {
 	
 	// Spine
 	//Temp = AnimParams.Spine01_Rot_Curve->GetVectorValue(time);
-	Temp = AnimParams.Spine01_Rot_Table->GetVectorValue(time);
+	Temp = AnimParams.Spine_01_Rot_Table->GetVectorValue(time);
 	Animation->Spine1Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
 }
 
@@ -743,7 +1345,7 @@ void UTaskAnimParamLogic::RunForkAnimation(float time) {
 
 	Animation->RightHandRotation = Hand_r_Rotation;
 	Animation->RightHandIKTargetPosition = Hand_r_Location;
-	Temp = AnimParams.Spine01_Rot_Curve->GetVectorValue(time);
+	Temp = AnimParams.Spine_01_Rot_Curve->GetVectorValue(time);
 	Animation->Spine1Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
 
 	if (!attached && time > 2) {
@@ -778,7 +1380,7 @@ void UTaskAnimParamLogic::RunSpoonAnimation(float time) {
 
 	Animation->RightHandRotation = Hand_r_Rotation;
 	Animation->RightHandIKTargetPosition = Hand_r_Location;
-	Animation->Spine1Rotation = AnimParams.Spine_01_rotation;
+	Animation->Spine1Rotation = AnimParams.Spine_01_Rot_Multiplier;
 }
 
 // Run fork animation
@@ -797,7 +1399,87 @@ void UTaskAnimParamLogic::RunPourAnimation(float time) {
 
 	Animation->RightHandRotation = Hand_r_Rotation;
 	Animation->RightHandIKTargetPosition = Hand_r_Location;
-	Animation->Spine1Rotation = AnimParams.Spine_01_rotation;
+	Animation->Spine1Rotation = AnimParams.Spine_01_Rot_Multiplier;
+}
+
+// Run fork animation
+void UTaskAnimParamLogic::RunReachAnimation(float time) {
+
+	FVector TempVec;
+	FRotator TempRot;
+	FFingerRots_t TempFingerRots;
+
+	// Right Hand Rotation
+	if (AnimParams.bSet_RH_Rot) {
+		TempVec = AnimParams.RH_Rot_Curve->GetVectorValue(time);
+		TempRot = AnimParams.RH_Rot_Multiplier;
+		TempRot.Pitch *= TempVec.Y;
+		TempRot.Yaw *= TempVec.Z;
+		TempRot.Roll *= TempVec.X;
+		TempRot += AnimParams.RH_Rot_Offset;
+		Animation->RightHandRotation = TempRot;
+	}
+
+	// Right Hand Location
+	if (AnimParams.bSet_RH_Loc) {
+		TempVec = AnimParams.RH_Loc_Curve->GetVectorValue(time);
+		TempVec *= AnimParams.RH_Loc_Multiplier;
+		TempVec += AnimParams.RH_Loc_Offset;
+		Animation->RightHandIKTargetPosition = TempVec;
+	}
+
+	// Right Hand Finger Rotations
+	if (AnimParams.bSet_RF_Rot) {
+		TempFingerRots = AnimParams.RH_FingerRots_Multiplier;
+		TempFingerRots *= AnimParams.RH_FingerRots_Curve->GetFloatValue(time);
+		TempFingerRots += AnimParams.RH_FingerRots_Offset;
+		Animation->RightHandFingerRots = TempFingerRots;
+	}
+
+	// Left Hand Rotation
+	if (AnimParams.bSet_LH_Rot) {
+		TempVec = AnimParams.LH_Rot_Curve->GetVectorValue(time);
+		TempRot = AnimParams.LH_Rot_Multiplier;
+		TempRot.Pitch *= TempVec.Y;
+		TempRot.Yaw *= TempVec.Z;
+		TempRot.Roll *= TempVec.X;
+		TempRot += AnimParams.LH_Rot_Offset;
+		Animation->HandRotation = TempRot;
+	}
+
+	// Left Hand Location
+	if (AnimParams.bSet_LH_Loc) {
+		TempVec = AnimParams.LH_Loc_Curve->GetVectorValue(time);
+		TempVec *= AnimParams.LH_Loc_Multiplier;
+		TempVec += AnimParams.LH_Loc_Offset;
+		Animation->LeftHandIKTargetPosition = TempVec;
+	}
+
+	// Left Hand Finger Rotations
+	if (AnimParams.bSet_LF_Rot) {
+		TempFingerRots = AnimParams.LH_FingerRots_Multiplier;
+		TempFingerRots *= AnimParams.LH_FingerRots_Curve->GetFloatValue(time);
+		TempFingerRots += AnimParams.LH_FingerRots_Offset;
+		Animation->LeftHandFingerRots = TempFingerRots;
+	}
+
+	// Spine Rotation
+	if (AnimParams.bSet_S01_Rot) {
+		TempVec = AnimParams.Spine_01_Rot_Curve->GetVectorValue(time);
+		TempRot = FRotator(TempVec.Y, TempVec.Z, TempVec.X);
+		TempRot.Pitch *= AnimParams.Spine_01_Rot_Multiplier.Pitch;
+		TempRot.Yaw *= AnimParams.Spine_01_Rot_Multiplier.Yaw;
+		TempRot.Roll *= AnimParams.Spine_01_Rot_Multiplier.Roll;
+		TempRot += AnimParams.Spine_01_Rot_Offset;
+		Animation->Spine1Rotation = TempRot;
+	}
+
+	// Head Rotation
+	if (AnimParams.bSet_Head_Rot) {
+		TempVec = AnimParams.Head_Rot_Curve->GetVectorValue(time);
+		TempRot = FRotator(TempVec.Y, TempVec.Z, TempVec.X);
+		Animation->HeadRotation = TempRot;
+	}
 }
 
 
@@ -825,32 +1507,34 @@ void UTaskAnimParamLogic::ApplyTaskOnActor(FString task, AActor* Object) {
 	if (Object != NULL) {
 		AnimParams.Object = Object;
 		if (task.Equals("cut")) {
-			CuttableObjectData_t CurrentCutable;
+			ObjectData_t CurrentCutable;
 			if (Object->GetRootComponent()->ComponentHasTag("Cuttable")) {
 				CurrentCutable.Object = Object;
 				if (isInGoodAlignment(CurrentCutable)) {
-					calculateCutAnimParameters(CurrentCutable);
-					bRunAnimation = true;
+					StartCutAnimation(CurrentCutable);
 				}
 			}
 		}
 		else if (task.Equals("pour")) {
-			calculatePourAnimParameters(Object);
-			AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunPourAnimation);
-			bRunAnimation = true;
+			StartPourAnimation(Object);
 		}
 		else if (task.Equals("fork")) {
-			calculateForkAnimParameters(Object);
-			AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunForkAnimation);
-			bRunAnimation = true;
+			StartForkAnimation(Object);
 		}
 		else if (task.Equals("spoon")) {
-			calculateSpoonAnimParameters(Object);
-			AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunSpoonAnimation);
-			bRunAnimation = true;
+			StartSpoonAnimation(Object);
 		}
-	}
-	else {
+		else if (task.Equals("pass page")) {
+			if (Object->ActorHasTag("book")) {
+				StartPassPageAnimChain(Object);
+			}
+		}
+		else if (task.Equals("close book")) {
+			if (Object->ActorHasTag("book")) {
+				StartCloseBookAnimChain(Object);
+			}
+		}
+	} else {
 		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
 	}
 }
@@ -896,7 +1580,7 @@ void UTaskAnimParamLogic::WriteCSV(float time) {
 
 		LH_Rot_Table->AddRow(FName(*FString::SanitizeFloat(time)), Row);
 
-		ToBeChangeVector = CuttingBreadAnimSpineRotCurve->GetVectorValue(time);
+		ToBeChangeVector = CuttingBreadAnimRotCurve_Spine01->GetVectorValue(time);
 		Row.X = ToBeChangeVector.X;
 		Row.Y = ToBeChangeVector.Y;
 		Row.Z = ToBeChangeVector.Z;

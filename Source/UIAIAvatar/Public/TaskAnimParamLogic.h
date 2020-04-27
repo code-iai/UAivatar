@@ -15,7 +15,7 @@
 #include "TaskAnimParamLogic.generated.h"
 
 DECLARE_DELEGATE_OneParam(FRunAnimDelegate, float);
-
+DECLARE_DELEGATE_OneParam(FRunAnimChainDelegate, int);
 
 USTRUCT(BlueprintType)
 struct FMyDataTable : public FTableRowBase
@@ -51,7 +51,7 @@ public:
 	FVector GetVectorValue(float time);
 };
 
-struct CuttableObjectData_t
+struct ObjectData_t
 {
 public:
 	AActor* Object;
@@ -70,6 +70,8 @@ public:
 	// Help Parameters
 	AActor *Object;
 	FRunAnimDelegate AnimFunctionDelegate;
+	FString ActionContext;
+	float animTime;
 
 	// Right Hand
 	UCurveVector* RH_Loc_Curve;
@@ -80,9 +82,14 @@ public:
 
 	UCurveVector* RH_Rot_Curve;
 	DataTableHandler* RH_Rot_Table;
+	FRotator RH_Rot_Multiplier;
+	FRotator RH_Rot_Offset;
 
+	bool bUsingRightHand;
 	bool bSet_RH_Loc;
 	bool bSet_RH_Rot;
+	bool bUnSet_RH_Loc;
+	bool bUnSet_RH_Rot;
 
 	// Left Hand
 	UCurveVector* LH_Loc_Curve;
@@ -90,28 +97,78 @@ public:
 	FVector LH_Loc_Multiplier;
 	FVector LH_Loc_Offset;
 
-	FRotator LH_Rotation;
 	UCurveVector* LH_Rot_Curve;
 	DataTableHandler* LH_Rot_Table;
+	FRotator LH_Rot_Multiplier;
+	FRotator LH_Rot_Offset;
 
+	bool bUsingLeftHand;
 	bool bSet_LH_Loc;
 	bool bSet_LH_Rot;
+	bool bUnSet_LH_Loc;
+	bool bUnSet_LH_Rot;
 
 	// Fingers
-	FFingerRots_t RH_FingerRots;
-	FFingerRots_t LH_FingerRots;
+	UCurveFloat* RH_FingerRots_Curve;
+	FFingerRots_t RH_FingerRots_Offset;
+	FFingerRots_t RH_FingerRots_Multiplier;
+
+	UCurveFloat* LH_FingerRots_Curve;
+	FFingerRots_t LH_FingerRots_Offset;
+	FFingerRots_t LH_FingerRots_Multiplier;
 
 	bool bSet_LF_Rot;
 	bool bSet_RF_Rot;
+	bool bUnSet_LF_Rot;
+	bool bUnSet_RF_Rot;
 
 	// Spine
-	FRotator Spine_01_rotation;
-	UCurveVector* Spine01_Rot_Curve;
-	DataTableHandler* Spine01_Rot_Table;
+	UCurveVector* Spine_01_Rot_Curve;
+	DataTableHandler* Spine_01_Rot_Table;
+	FRotator Spine_01_Rot_Offset;
+	FRotator Spine_01_Rot_Multiplier;
 
 	bool bSet_S01_Rot;
+	bool bUnSet_S01_Rot;
 
-	float animTime;
+	// Head
+	UCurveVector* Head_Rot_Curve;
+	DataTableHandler* Head_Rot_Table;
+
+	bool bSet_Head_Rot;
+	bool bUnSet_Head_Rot;
+
+	// Original positions
+	FVector RH_Loc_Original;
+	FVector LH_Loc_Original;
+	FRotator RH_Rot_Original;
+	FRotator LH_Rot_Original;
+	FFingerRots_t RH_FingerRots_Original;
+	FFingerRots_t LH_FingerRots_Original;
+	FQuat Spine_01_Rot_Original;
+
+	void ClearJointFlags() {
+
+		bSet_RH_Loc     = false;
+		bSet_RH_Rot     = false;
+		bUnSet_RH_Loc   = false;
+		bUnSet_RH_Rot   = false;
+		bSet_LH_Loc     = false;
+		bSet_LH_Rot     = false;
+		bUnSet_LH_Loc   = false;
+		bUnSet_LH_Rot   = false;
+		bSet_LF_Rot     = false;
+		bSet_RF_Rot     = false;
+		bUnSet_LF_Rot   = false;
+		bUnSet_RF_Rot   = false;
+		bSet_S01_Rot    = false;
+		bUnSet_S01_Rot  = false;
+		bSet_Head_Rot   = false;
+		bUnSet_Head_Rot = false;
+
+		bUsingRightHand = false;
+		bUsingLeftHand  = false;
+	};
 };
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -136,7 +193,7 @@ public:
 		UCurveVector* CuttingBreadAnimRotCurve_LH;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* CuttingBreadAnimSpineRotCurve;
+		UCurveVector* CuttingBreadAnimRotCurve_Spine01;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		UCurveVector* CuttingSteakAnimCurve;
@@ -170,12 +227,56 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		UCurveVector* PouringAnimRotCurve;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* PassingPageAnimLocCurve_Hand;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* PassingPageAnimRotCurve_Hand;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveFloat* PassingPageAnimRotCurve_Fingers;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* PassingPageAnimRotCurve_Spine01;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* ReachingAnimLocCurve_Hand;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* ReachingAnimRotCurve_Hand;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveFloat* ReachingAnimRotCurve_Fingers;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* ReachingAnimRotCurve_Head;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* ReachingAnimRotCurve_Spine01;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* DroppingAnimLocCurve_Hand;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* DroppingAnimRotCurve_Hand;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveFloat* DroppingAnimRotCurve_Fingers;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* DroppingAnimRotCurve_Head;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* DroppingAnimRotCurve_Spine01;
+
 	UDataTable *RH_Table;
 	UDataTable *RH_Rot_Table;
 	UDataTable *LH_Table;
 	UDataTable *LH_Rot_Table;
 	UDataTable *S1_Rot_Table;
+
+	FRunAnimChainDelegate AnimChain;
 
 	float writeTime;
 	bool recorded;
@@ -195,7 +296,10 @@ protected:
 
 	float currentAnimTime;
 	
+	int pendingStates;
+
 public:	
+
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
@@ -207,6 +311,14 @@ public:
 	// Check for item within a list of unique hit results and filter out those out of proper reach
 	AActor* CheckForObject(TMap<FString, FHitResult> Objects, FString ObjName);
 
+	// News paper help function for holding locations
+	FVector CalculateReachBookLocation(AActor* Book, FName Tag);
+
+	// Getting current finger Rotations
+	FFingerRots_t GetCurrentFingersRots(bool isRightHand);
+
+	void SaveOriginalPose();
+
 	// ****** Cutting Help Functions ****** //
 
 	// Check for cuttable items within a list of unique hit results and filter out those out of proper reach
@@ -216,23 +328,76 @@ public:
 	AActor* PickOneObject(TArray<AActor*> Cuttables);
 
 	// Check if item is in good position for cutting
-	bool isInGoodAlignment(CuttableObjectData_t &ItemData);
+	bool isInGoodAlignment(ObjectData_t &ItemData);
+
+
+	// ****** Setting Chain Animations ****** //
+
+	// Passing Page
+	void StartPassPageAnimChain(AActor *Target);
+
+	// Closing book
+	void StartCloseBookAnimChain(AActor * Target);
+
+	// Slicing
+	void StartSlicingAnimChain(AActor* Target);
+
+	// Grasping Object
+	void StartGraspingAnimChain(FString Type, AActor *Target, FString Hand);
+
+	// Placing Object
+	void StartPlacingAnimChain(FString Type, FString Hand, FVector Point = FVector(0, 0, 0));
+
+	// ****** Running Chains ****** //
+
+		// Passing Page
+	void RunPassPageAnimChain(int stage);
+
+	// Closing book
+	void RunCloseBookAnimChain(int stage);
+
+	// Slicing
+	void RunSlicingAnimChain(int stage);
+
+	// Grasping Object
+	void RunGraspingAnimChain(int stage);
+
+	// Placing Object
+	void RunPlacingAnimChain(int stage);
 
 	// ****** Setting Parameters ****** //
 
+	// Set parameters for reach animation
+	void StartReachAnimation(FString Type, AActor *Target, FString Hand, FVector Point = FVector(0,0,0));
+
+	// Set aprameters for pass page animation. Assumes hand is already in position and Reach Animation have been run
+	void StartPassPageAnimation();
+
+	// Set parameters for drop animation
+	void StartReleaseAnimation(FString Type, FString Hand);
+
 	// Set parameters for cut animation
-	void calculateCutAnimParameters(CuttableObjectData_t &ItemData);
+	void StartCutAnimation(ObjectData_t &ItemData);
 
 	// Set parameters for pour animation
-	void calculatePourAnimParameters(AActor* Target);
+	void StartPourAnimation(AActor* Target);
 
 	// Set parameters for fork animation
-	void calculateForkAnimParameters(AActor* Target);
+	void StartForkAnimation(AActor* Target);
 
 	// Set parameters for Spoon animation
-	void calculateSpoonAnimParameters(AActor* Target);
+	void StartSpoonAnimation(AActor* Target);
 
 	// ****** Running Animations ****** //
+
+	// Running reach animation
+	void RunReachAnimation(float time);
+
+	// Run Pass Page Animation
+	void RunPassPageAnimation(float time);
+
+	// Running drop animation
+	void RunReleaseAnimation(float time);
 
 	// Running Pour Animation
 	void RunPourAnimation(float time);

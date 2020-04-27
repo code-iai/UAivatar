@@ -1452,6 +1452,14 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 					HighLightObject(tokens[1], false);
 				}
 			}
+			// Pass Page
+			else if (tokens[0].Equals("pass") && tokens[1].Equals("page")) {
+				AnimLogic->ProcessTask_P_ObjectName("pass page", tokens[2]);
+			}
+			// Pass Page
+			else if (tokens[0].Equals("close") && tokens[1].Equals("book")) {
+				AnimLogic->ProcessTask_P_ObjectName("close book", tokens[2]);
+			}
 			// Interpolation off spine
 			else if	(tokens[0].Equals("interpolation") && tokens[1].Equals("off") && tokens[2].Equals("spine")) {
 				StartSpineDisablement();
