@@ -199,16 +199,19 @@ void AIAIAvatarCharacter::TurnCam(float Axis)
 	FRotator HeadRotation;
 	FQuat CameraRotation;
 
-	CameraRotation = FollowCamera->GetComponentRotation().Quaternion();
-	HeadRotation = this->GetMesh()->GetComponentTransform().InverseTransformRotation(CameraRotation).Rotator();
-	HeadRotation += FRotator(0, -90, 0);
+	if (HeadFollowCamera) {
 
-	if (HeadRotation.Yaw > 90 || HeadRotation.Yaw < -180)
-		HeadRotation = FRotator(0, 0, 0);
-	if (HeadRotation.Yaw < -90)
-		HeadRotation = FRotator(0, 0, 0);
+		CameraRotation = FollowCamera->GetComponentRotation().Quaternion();
+		HeadRotation = this->GetMesh()->GetComponentTransform().InverseTransformRotation(CameraRotation).Rotator();
+		HeadRotation += FRotator(0, -90, 0);
 
-	Cast<UIAIAvatarAnimationInstance>(this->GetMesh()->GetAnimInstance())->SkelControl_Head = HeadRotation;
+		if (HeadRotation.Yaw > 90 || HeadRotation.Yaw < -180)
+			HeadRotation = FRotator(0, 0, 0);
+		if (HeadRotation.Yaw < -90)
+			HeadRotation = FRotator(0, 0, 0);
+
+		Cast<UIAIAvatarAnimationInstance>(this->GetMesh()->GetAnimInstance())->SkelControl_Head = HeadRotation;
+	}
 
 	if (Axis != 0.f && Controller && Controller->IsLocalPlayerController())
 	{
@@ -223,17 +226,19 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 
 	FRotator HeadRotation;
 	FQuat CameraRotation;
+	if (HeadFollowCamera) {
 
-	CameraRotation = FollowCamera->GetComponentRotation().Quaternion();
-	HeadRotation = this->GetMesh()->GetComponentTransform().InverseTransformRotation(CameraRotation).Rotator();
-	HeadRotation += FRotator(0,-90,0);
+		CameraRotation = FollowCamera->GetComponentRotation().Quaternion();
+		HeadRotation = this->GetMesh()->GetComponentTransform().InverseTransformRotation(CameraRotation).Rotator();
+		HeadRotation += FRotator(0, -90, 0);
 
-	if (HeadRotation.Yaw > 90 || HeadRotation.Yaw < -180)
-		HeadRotation = FRotator(0,0,0);
-	if (HeadRotation.Yaw < -90)
-		HeadRotation = FRotator(0, 0, 0);
+		if (HeadRotation.Yaw > 90 || HeadRotation.Yaw < -180)
+			HeadRotation = FRotator(0, 0, 0);
+		if (HeadRotation.Yaw < -90)
+			HeadRotation = FRotator(0, 0, 0);
 
-	Cast<UIAIAvatarAnimationInstance>(this->GetMesh()->GetAnimInstance())->SkelControl_Head = HeadRotation;
+		Cast<UIAIAvatarAnimationInstance>(this->GetMesh()->GetAnimInstance())->SkelControl_Head = HeadRotation;
+	}
 
 	if (Axis != 0.f && Controller && Controller->IsLocalPlayerController())
 	{
@@ -347,7 +352,7 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 		 // Alternatively you can also set the IK coord space to "World space"
 		 FVector GraspObjectLocationInComponentSpace = MyMesh->GetComponentTransform().InverseTransformPosition(graspObjectTransform.GetLocation());
 
-		 AnimationInstance->Spine1Rotation = FRotator(0, 0, 20);
+		 AnimationInstance->Spine1Rotation = FRotator(0, 20, 0);
 		 AnimationInstance->Spine2Rotation = FRotator(0, 0, 0);
 		 AnimationInstance->HipRotation    = FRotator(0, 0, 0);
 
@@ -383,7 +388,7 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 		 // Alternatively you can also set the IK coord space to "World space"
 		 FVector GraspObjectLocationInComponentSpace = MyMesh->GetComponentTransform().InverseTransformPosition(graspObjectTransform.GetLocation());
 
-		 AnimationInstance->Spine1Rotation  = FRotator(20, -40, 20);
+		 AnimationInstance->Spine1Rotation = FRotator(20, 20, -40);
 		 AnimationInstance->Spine2Rotation  = FRotator(0, 0, 0);
 		 AnimationInstance->HipRotation     = FRotator(0, 0, 0);
 
@@ -569,31 +574,31 @@ void AIAIAvatarCharacter::StartGrasp(FHitResult object, bool hold) {
 	// Calculate "usual" rotation to pickup an object. 
 	float angle = Direction.Rotation().Yaw - 90;
 	if (angle > 40){
-		AnimationInstance->Spine1Rotation.Yaw = angle - 40;
+		AnimationInstance->Spine1Rotation.Roll = angle - 40;
 	}
 	else if (angle < -20 ){
-		AnimationInstance->Spine1Rotation.Yaw = angle + 20;
+		AnimationInstance->Spine1Rotation.Roll = angle + 20;
 	}
 	else {
-		AnimationInstance->Spine1Rotation.Yaw = 0;
+		AnimationInstance->Spine1Rotation.Roll = 0;
 	}
 
 	// Calculate Bowing
 	if ((distance > 55) && (distance <= 120)) {
 		AnimationInstance->HipRotation.Roll = 0;
-		AnimationInstance->Spine1Rotation.Roll = (distance - 55) / 70 * 65;
+		AnimationInstance->Spine1Rotation.Yaw = (distance - 55) / 70 * 65;
 	}
 	else if ((distance > 120) && (distance <= 150)) {
 		AnimationInstance->HipRotation.Roll = 90;
-		AnimationInstance->Spine1Rotation.Roll = (distance - 120) / 50 * 45;
+		AnimationInstance->Spine1Rotation.Yaw = (distance - 120) / 50 * 45;
 	}
 	else if (distance > 150) {
 		AnimationInstance->HipRotation.Roll = 90;
-		AnimationInstance->Spine1Rotation.Roll = 45;
+		AnimationInstance->Spine1Rotation.Yaw = 45;
 	}
 	else {
 		AnimationInstance->HipRotation.Roll = 0;
-		AnimationInstance->Spine1Rotation.Roll = 0;
+		AnimationInstance->Spine1Rotation.Yaw = 0;
 	}
 
 	// Reset previous rotation for grasping
@@ -849,10 +854,10 @@ void AIAIAvatarCharacter::PlaceObject(FString targetPlace, FString Hand, FVector
 
 	// Defining Spine Rotation
 	AnimationInstance->HipRotation.Roll = 0;
-	AnimationInstance->Spine1Rotation.Roll = 40;
+	AnimationInstance->Spine1Rotation.Yaw = 40;
 
 	// Reset previous rotation for grasping
-	AnimationInstance->Spine1Rotation.Yaw = 0;
+	AnimationInstance->Spine1Rotation.Roll = 0;
 	AnimationInstance->Spine2Rotation.Roll = 0;
 
 	// Define middle point locations and default location.
@@ -918,7 +923,7 @@ void AIAIAvatarCharacter::PlaceObject(FString targetPlace, FString Hand, FVector
 			TargetLocation = MyUniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor()->GetActorLocation();
 			TargetRotation = MyUniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor()->GetActorRotation();
 			TargetLocation += TargetRotation.RotateVector(FVector(0, -5, -10));
-			AnimationInstance->Spine1Rotation.Roll = 47;
+			AnimationInstance->Spine1Rotation.Yaw = 47;
 			TargetLocation = GetMesh()->GetComponentTransform().InverseTransformPosition(TargetLocation);
 		}
 	}
@@ -929,7 +934,7 @@ void AIAIAvatarCharacter::PlaceObject(FString targetPlace, FString Hand, FVector
 		UE_LOG(LogAvatarCharacter, Warning, TEXT("Warning: Unrecognized place \"%s\". Just placing here."), *targetPlace);
 		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Yellow, FString::Printf(TEXT("Warning: Unrecognized place \"%s\". Just placing here."), *targetPlace), true, FVector2D(1.5, 1.5));
 		AnimationInstance->HipRotation.Roll = 90;
-		AnimationInstance->Spine1Rotation.Roll = 45;
+		AnimationInstance->Spine1Rotation.Yaw = 45;
 		TargetLocation.Z -= 90;
 	}
 
@@ -1088,10 +1093,10 @@ void AIAIAvatarCharacter::PressMicrowaveButton(FString button) {
 
 		// Defining Spine Rotation
 		AnimationInstance->HipRotation.Roll = 0;
-		AnimationInstance->Spine1Rotation.Roll = 38; // changed for demo/yasmin
+		AnimationInstance->Spine1Rotation.Yaw = 38; // changed for demo/yasmin
 
 		// Reset previous rotation for grasping
-		AnimationInstance->Spine1Rotation.Yaw = 0;
+		AnimationInstance->Spine1Rotation.Roll = 0;
 		AnimationInstance->Spine2Rotation.Roll = 0;
 
 		// Define mid location
@@ -1410,13 +1415,9 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			} else if (tokens[0].Equals("follow")) {
 				StartPathFollowing(tokens[1]);
 			}
-			// Forking
-			else if (tokens[0].Equals("fork")) {
-				AnimLogic->ProcessTask_P_ObjectName("fork", tokens[1]);
-			}
-			// Spooning
-			else if (tokens[0].Equals("spoon")) {
-				AnimLogic->ProcessTask_P_ObjectName("spoon", tokens[1]);
+			// Forking & Spooning
+			else if (tokens[0].Equals("fork") || tokens[0].Equals("spoon")) {
+				AnimLogic->ProcessTask_P_ObjectName(tokens[0], tokens[1]);
 			}
 			// Wrong amount of tagerts
 			else {
@@ -1452,13 +1453,11 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 					HighLightObject(tokens[1], false);
 				}
 			}
-			// Pass Page
-			else if (tokens[0].Equals("pass") && tokens[1].Equals("page")) {
-				AnimLogic->ProcessTask_P_ObjectName("pass page", tokens[2]);
-			}
-			// Pass Page
-			else if (tokens[0].Equals("close") && tokens[1].Equals("book")) {
-				AnimLogic->ProcessTask_P_ObjectName("close book", tokens[2]);
+			// Pass Page, Close Book, Point Book
+			else if ((tokens[0].Equals("pass") && tokens[1].Equals("page")) 
+					|| (tokens[0].Equals("close") && tokens[1].Equals("book"))
+				    || (tokens[0].Equals("point") && tokens[1].Equals("book"))) {
+				AnimLogic->ProcessTask_P_ObjectName(tokens[0], tokens[2]);
 			}
 			// Interpolation off spine
 			else if	(tokens[0].Equals("interpolation") && tokens[1].Equals("off") && tokens[2].Equals("spine")) {
@@ -1496,7 +1495,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 						GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Object \"%s\" not found!"), *tokens[2]), true, FVector2D(1.7, 1.7));
 					}
 					else {
-						LookTo(MyUniqueHits.FindRef(tokens[2]).GetActor()->GetActorLocation());
+						MoveHead(LookingRotationTo(MyUniqueHits.FindRef(tokens[2]).GetActor()->GetActorLocation()));
 					}
 				}
 			}
@@ -1629,7 +1628,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 					target.Y = FCString::Atof(*tokens[3]);
 					target.Z = FCString::Atof(*tokens[4]);
 
-					LookTo(target);
+					MoveHead(LookingRotationTo(target));
 				}
 				// No numeric vector
 				else {
@@ -2459,71 +2458,85 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 
  void AIAIAvatarCharacter::StartMoveHeadUp() {
 	 check(CurrentAnimationInstance != nullptr);
-	 GoalHeadRotation = FRotator(0, 0, -30);}
+	 GoalHeadRotation = FRotator(0, 0, -30);
+	 IKEnableTickDirection_head = 1.0f;
+ }
 
  void AIAIAvatarCharacter::StopMoveHeadUp() {
 	 check(CurrentAnimationInstance != nullptr);
 	 GoalHeadRotation = FRotator(0, 0, 0);
+	 IKEnableTickDirection_head = -1.0f;
  }
 
  void AIAIAvatarCharacter::StartMoveHeadDown() {
 	 check(CurrentAnimationInstance != nullptr);
 	 GoalHeadRotation = FRotator(0, 0, 30);
+	 IKEnableTickDirection_head = 1.0f;
  }
 
  void AIAIAvatarCharacter::StopMoveHeadDown() {
 	 check(CurrentAnimationInstance != nullptr);
 	 GoalHeadRotation = FRotator(0, 0, 0);
-
+	 IKEnableTickDirection_head = -1.0f;
  }
 
  void AIAIAvatarCharacter::StartMoveHeadLeft() {
 	 check(CurrentAnimationInstance != nullptr);
 	 GoalHeadRotation = FRotator(0, -30, 0);
+	 IKEnableTickDirection_head = 1.0f;
  }
 
  void AIAIAvatarCharacter::StopMoveHeadLeft() {
 	 check(CurrentAnimationInstance != nullptr);
 	 GoalHeadRotation = FRotator(0, 0, 0);
+	 IKEnableTickDirection_head = -1.0f;
  }
 
  void AIAIAvatarCharacter::StartMoveHeadRight() {
 	 check(CurrentAnimationInstance != nullptr);
 	 GoalHeadRotation = FRotator(0, 30, 0);
+	 IKEnableTickDirection_head = 1.0f;
  }
 
 
  void AIAIAvatarCharacter::StopMoveHeadRight() {
 	 check(CurrentAnimationInstance != nullptr);
 	 GoalHeadRotation = FRotator(0, 0, 0);
+	 IKEnableTickDirection_head = -1.0f;
  }
 
  void AIAIAvatarCharacter::MoveHead(FRotator rot) {
 	 check(CurrentAnimationInstance != nullptr);
 	 GoalHeadRotation = rot;
+	 IKEnableTickDirection_head = 1.0f;
  }
 
- void AIAIAvatarCharacter::LookTo(FVector Point) {
+ FRotator AIAIAvatarCharacter::LookingRotationTo(FVector Point) {
 	 check(CurrentAnimationInstance != nullptr);
 
 	 UE_LOG(LogAvatarCharacter, Log, TEXT("Processing Command 'look to %f %f %f' ."), Point.X, Point.Y, Point.Z);
 
-	 FVector HeadLoc = GetMesh()->GetBoneLocation(TEXT("neck_01"), EBoneSpaces::ComponentSpace);
-	 FVector PointLoc = GetMesh()->GetComponentTransform().InverseTransformPosition(Point);
-	 FVector DirVec = HeadLoc - PointLoc;
-	 FRotator Rot = DirVec.ToOrientationRotator();
-	 Rot.Yaw += 90;
-	 Rot.Roll = Rot.Pitch;
-	 Rot.Pitch = 0;
+	 FRotator TempRotIn, TempRotOut;
+	 FVector TempVecIn, TempVecOut;
+	 FVector HeadLoc = GetMesh()->GetBoneLocation(TEXT("neck_01"), EBoneSpaces::WorldSpace);
+	 FVector DirVec = HeadLoc - Point;
+	 TempRotIn = DirVec.ToOrientationRotator();
+
+	 GetMesh()->TransformToBoneSpace("spine_03", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+
+	 float temp = TempRotOut.Roll;
+	 TempRotOut.Roll = TempRotOut.Pitch;
+	 TempRotOut.Yaw += 90;
+	 TempRotOut.Pitch = 0; // = temp - 90; // Or = 0
 
 	 // Limit rotation so Avatar doesn't look wierd
-	 if (Rot.Roll > 35) {
-		 Rot.Roll = 35;
+	 if (TempRotOut.Yaw > 35) {
+		 TempRotOut.Yaw = 35;
 	 }
 
-	 UE_LOG(LogAvatarCharacter, Log, TEXT("Rotator: %f %f %f' ."), Rot.Yaw, Rot.Roll, Rot.Pitch);
+	 UE_LOG(LogAvatarCharacter, Log, TEXT("Rotator: %f %f %f' ."), TempRotOut.Roll, TempRotOut.Pitch, TempRotOut.Yaw);
 
-	 MoveHead(Rot);
+	 return TempRotOut;
  }
 
  void AIAIAvatarCharacter::SimpleMoveToTargetPoint() {
@@ -2638,7 +2651,6 @@ void AIAIAvatarCharacter::BeginPlay() {
 	 check(AnimationInstance != nullptr);
 
 	 CurrentAnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
-	 CurrentAnimationInstance->HeadRotationAlpha = 1; 
 
 	 AnimationInstance->LeftHandIKTargetPosition = HandTargetPosition;
 	 AnimationInstance->RightHandIKTargetPosition = RightHandTargetPosition;
@@ -2746,7 +2758,7 @@ void AIAIAvatarCharacter::Feed(FString PersonName) {
 			InterpolateRightHandIKTo(MidPoint);
 
 			// 0s) Star spine rotation
-			StartSpineEnablement(FRotator(0,0,25));
+			StartSpineEnablement(FRotator(0,25,0));
 
 			// 1s) Move hand to target location
 			GetWorldTimerManager().SetTimer(HandIKTimeHandle_target, HandIKSetDelegate_target, 5, false, 1);
@@ -2800,6 +2812,11 @@ void AIAIAvatarCharacter::Tick(float DeltaTime) {
 	 {
 		 FRotator CurrentHeadRotation = CurrentAnimationInstance->HeadRotation;
 
+		 if (IKEnableTickDirection_head == 1.0) {
+			 CurrentAnimationInstance->HeadRotationAlpha = 1;
+			 IKEnableTickDirection_head = 0.0f;
+		 }
+
 		 const FRotator HeadRotationError = GoalHeadRotation - CurrentHeadRotation;
 		 //UE_LOG(LogTemp, Error, TEXT("Rotation State. Anim %s , Current %s , Goal %s, Error: %s"),
 		 //	*CurrentAnimationInstance->HeadRotation.ToString(),
@@ -2813,6 +2830,12 @@ void AIAIAvatarCharacter::Tick(float DeltaTime) {
 
 		 // Get the magnitude of the Vector and decide if we're close enough to the desired Head Pose
 		 if ( HeadRotationErrorVector.Size() <= HeadRotationErrorThreshold) {
+
+			 if (IKEnableTickDirection_head == -1.0f) {
+				 CurrentAnimationInstance->HeadRotationAlpha = 0;
+				 IKEnableTickDirection_head = 0.0f;
+			 }
+
 			 return;
 		 }
 

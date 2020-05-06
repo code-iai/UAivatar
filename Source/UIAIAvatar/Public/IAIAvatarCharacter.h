@@ -38,8 +38,7 @@ class AIAIAvatarCharacter : public ACharacter
 protected:
 
 	// **************************** Protected Parameters ***************************
-	
-	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
+    /** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		float BaseTurnRate;
 
@@ -235,6 +234,11 @@ public:
 
 	// ******** For Head ********
 	FRotator GoalHeadRotation;
+	float IKEnableTickDirection_head = 0.0f;
+
+	// Head Controller
+	UPROPERTY(EditAnywhere, Category = "IAI Avatar Configuration")
+		bool HeadFollowCamera;
 
 	// Head Controller
 	UPROPERTY(EditAnywhere, Category = "IAI Avatar Configuration|Head PID Controller")
@@ -455,7 +459,7 @@ public:
 	// The movement will be interpolated by using this->HeadAlphaInterpolation
 	void MoveHead(FRotator rot);
 
-	void LookTo(FVector point);
+	FRotator LookingRotationTo(FVector point);
 
 	void StartMoveHeadUp();
 	void StopMoveHeadUp();

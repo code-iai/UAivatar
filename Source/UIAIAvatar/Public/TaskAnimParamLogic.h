@@ -108,19 +108,33 @@ public:
 	bool bUnSet_LH_Loc;
 	bool bUnSet_LH_Rot;
 
-	// Fingers
+	// Right Fingers
+	UCurveVector* RH_IndexLoc_Curve;
+	FVector RH_IndexLoc_Multiplier;
+	FVector RH_IndexLoc_Offset;
+
 	UCurveFloat* RH_FingerRots_Curve;
 	FFingerRots_t RH_FingerRots_Offset;
 	FFingerRots_t RH_FingerRots_Multiplier;
 
+	bool bSet_RF_Rot;
+	bool bSet_RI_Loc;
+	bool bUnSet_RI_Loc;
+	bool bUnSet_RF_Rot;
+
+	// Left Fingers
+	UCurveVector* LH_IndexLoc_Curve;
+	FVector LH_IndexLoc_Multiplier;
+	FVector LH_IndexLoc_Offset;
+
 	UCurveFloat* LH_FingerRots_Curve;
 	FFingerRots_t LH_FingerRots_Offset;
 	FFingerRots_t LH_FingerRots_Multiplier;
-
+	
+	bool bSet_LI_Loc;
 	bool bSet_LF_Rot;
-	bool bSet_RF_Rot;
+	bool bUnSet_LI_Loc;
 	bool bUnSet_LF_Rot;
-	bool bUnSet_RF_Rot;
 
 	// Spine
 	UCurveVector* Spine_01_Rot_Curve;
@@ -134,6 +148,8 @@ public:
 	// Head
 	UCurveVector* Head_Rot_Curve;
 	DataTableHandler* Head_Rot_Table;
+	FRotator Head_Rot_Offset;
+	FRotator Head_Rot_Multiplier;
 
 	bool bSet_Head_Rot;
 	bool bUnSet_Head_Rot;
@@ -143,11 +159,14 @@ public:
 	FVector LH_Loc_Original;
 	FRotator RH_Rot_Original;
 	FRotator LH_Rot_Original;
+	FVector RH_IndexLoc_Original;
+	FVector LH_IndexLoc_Original;
 	FFingerRots_t RH_FingerRots_Original;
 	FFingerRots_t LH_FingerRots_Original;
-	FQuat Spine_01_Rot_Original;
+	FRotator Spine_01_Rot_Original;
+	FRotator Head_Rot_Original;
 
-	void ClearJointFlags() {
+	void ClearJointFlags() {	
 
 		bSet_RH_Loc     = false;
 		bSet_RH_Rot     = false;
@@ -157,9 +176,13 @@ public:
 		bSet_LH_Rot     = false;
 		bUnSet_LH_Loc   = false;
 		bUnSet_LH_Rot   = false;
+		bSet_LI_Loc     = false;
 		bSet_LF_Rot     = false;
+		bSet_RI_Loc     = false;
 		bSet_RF_Rot     = false;
+		bUnSet_LI_Loc   = false;
 		bUnSet_LF_Rot   = false;
+		bUnSet_RI_Loc   = false;
 		bUnSet_RF_Rot   = false;
 		bSet_S01_Rot    = false;
 		bUnSet_S01_Rot  = false;
@@ -270,6 +293,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		UCurveVector* DroppingAnimRotCurve_Spine01;
 
+	// This tables are intended for the use of real human motion curves
 	UDataTable *RH_Table;
 	UDataTable *RH_Rot_Table;
 	UDataTable *LH_Table;
@@ -295,7 +319,8 @@ protected:
 	bool bRunAnimation;
 
 	float currentAnimTime;
-	
+	float speedFactor;
+
 	int pendingStates;
 
 public:	
@@ -312,7 +337,7 @@ public:
 	AActor* CheckForObject(TMap<FString, FHitResult> Objects, FString ObjName);
 
 	// News paper help function for holding locations
-	FVector CalculateReachBookLocation(AActor* Book, FName Tag);
+	FVector CalculateReachBookLocation(AActor* Book, FName Tag, bool bWorldRelative);
 
 	// Getting current finger Rotations
 	FFingerRots_t GetCurrentFingersRots(bool isRightHand);
@@ -333,6 +358,9 @@ public:
 
 	// ****** Setting Chain Animations ****** //
 
+	// Pointing Book
+	void StartPointBookAnimChain(AActor *Target);
+
 	// Passing Page
 	void StartPassPageAnimChain(AActor *Target);
 
@@ -350,7 +378,10 @@ public:
 
 	// ****** Running Chains ****** //
 
-		// Passing Page
+	// Poiting Book
+	void RunPointBookAnimChain(int stage);
+
+	// Passing Page
 	void RunPassPageAnimChain(int stage);
 
 	// Closing book
@@ -367,11 +398,17 @@ public:
 
 	// ****** Setting Parameters ****** //
 
+	// Set parameters for finger reach animation
+	void StartFingerReachAnimation(AActor *Target, FString Hand, FVector Point = FVector(0, 0, 0));
+
 	// Set parameters for reach animation
 	void StartReachAnimation(FString Type, AActor *Target, FString Hand, FVector Point = FVector(0,0,0));
 
 	// Set aprameters for pass page animation. Assumes hand is already in position and Reach Animation have been run
 	void StartPassPageAnimation();
+
+	// Set parameters for drop animation
+	void StartFingerReleaseAnimation(FString Hand);
 
 	// Set parameters for drop animation
 	void StartReleaseAnimation(FString Type, FString Hand);
@@ -392,12 +429,6 @@ public:
 
 	// Running reach animation
 	void RunReachAnimation(float time);
-
-	// Run Pass Page Animation
-	void RunPassPageAnimation(float time);
-
-	// Running drop animation
-	void RunReleaseAnimation(float time);
 
 	// Running Pour Animation
 	void RunPourAnimation(float time);
