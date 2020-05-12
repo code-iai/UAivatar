@@ -12,26 +12,27 @@
 #include "ROSCommunication/ROSClient.h"
 #include "ROSCommunication/ROSService.h"
 #include "ROSCommunication/ROSActionServer.h"
+#include "ROSUtilities.h"
 #include "ROSCommunicationContainer.generated.h"
 
 class UAControllerComponent;
 
-USTRUCT()
-struct FROSTopic
-{
-	GENERATED_BODY()
+// USTRUCT()
+// struct FROSTopic
+// {
+// 	GENERATED_BODY()
 
-		UPROPERTY(EditAnywhere)
-		FString Topic;
+// 		UPROPERTY(EditAnywhere)
+// 		FString Topic;
 
-	UPROPERTY(EditAnywhere)
-		FString Type;
+// 	UPROPERTY(EditAnywhere)
+// 		FString Type;
 
-	int32 ID;
+// 	int32 ID;
 
-	FROSTopic(FString InTopic = "", FString InType = "") : Topic(InTopic), Type(InType) {};
+// 	FROSTopic(FString InTopic = "", FString InType = "") : Topic(InTopic), Type(InType) {};
 
-};
+// };
 
 
 USTRUCT(Blueprintable)
