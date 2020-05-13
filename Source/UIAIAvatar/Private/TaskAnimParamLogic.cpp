@@ -142,7 +142,6 @@ UTaskAnimParamLogic::UTaskAnimParamLogic()
 	// ...
 }
 
-
 // Called when the game starts
 void UTaskAnimParamLogic::BeginPlay()
 {
@@ -165,7 +164,6 @@ void UTaskAnimParamLogic::BeginPlay()
 	recorded = false;
 }
 
-
 // Called every frame
 void UTaskAnimParamLogic::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -175,15 +173,13 @@ void UTaskAnimParamLogic::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	// ...
 	if (bRunAnimation) {
 
-		UE_LOG(LogAvatarCharacter, Error, TEXT("Tiempo:  %f."), currentAnimTime);
-
 		if(currentAnimTime == 0) 
 			SetJointAlphas();
 
 		AnimParams.AnimFunctionDelegate.ExecuteIfBound(currentAnimTime);
 
 		currentAnimTime += DeltaTime * speedFactor;
-		if (currentAnimTime > AnimParams.animTime) {
+		if (currentAnimTime >= AnimParams.animTime) {
 			bRunAnimation = false;
 			currentAnimTime = 0;
 			UnSetJointAlphas();
@@ -207,6 +203,7 @@ void UTaskAnimParamLogic::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	*/
 }
 
+// ****************** Help Functions ******************** //
 
 AActor* UTaskAnimParamLogic::CheckForObject(TMap<FString, FHitResult> Objects, FString ObjName) {
 
@@ -215,7 +212,7 @@ AActor* UTaskAnimParamLogic::CheckForObject(TMap<FString, FHitResult> Objects, F
 	FVector ObjLocationInCompSpace = FVector(0, 0, 0);
 
 	// Defining area of proper reach
-	ReachArea = FBox::BuildAABB(FVector(45, 0, -20), FVector(25, 20, 5));
+	ReachArea = FBox::BuildAABB(FVector(45, 0, -20), FVector(25, 25, 5));
 
 	// Filtering objects
 	for (auto& It : Objects)
@@ -537,6 +534,253 @@ bool UTaskAnimParamLogic::isInGoodAlignment(ObjectData_t &ItemData) {
 	return true;
 }
 
+void UTaskAnimParamLogic::AttachObject() {
+
+	// Attachment variables
+	FVector  NewObjLocation = FVector(0, 0, 0);
+	FRotator NewObjRotation = FRotator(0, 0, 0);
+	UStaticMeshComponent *ObjectMesh;
+	FFingerRots_t NewFingerRots;
+	FName    socket;
+	bool keepWorldRot = false;
+	bool keepWorldLoc = false;
+
+	FAttachmentTransformRules attachRules = FAttachmentTransformRules(
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::KeepWorld,
+		true);
+
+	// Default Fingers' Rotations
+	NewFingerRots = GetCurrentFingersRots(AnimParams.bUsingRightHand);
+
+	// Get Animation
+	UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(Avatar->GetMesh()->GetAnimInstance());
+	check(AnimationInstance != nullptr);
+
+	// Get Static Meshes
+	auto AvatarMesh = Avatar->GetMesh();
+
+	ObjectMesh = Cast<UStaticMeshComponent>(AnimParams.Object->GetComponentByClass(UStaticMeshComponent::StaticClass()));
+
+	// Object specific settings
+	if (AnimParams.Object->ActorHasTag(TEXT("MilkBox"))) {				// ** Milk Box **
+
+		// Attaching Rule
+		attachRules.RotationRule = EAttachmentRule::KeepRelative;
+
+		// Object Location
+		NewObjLocation = FVector(-3, 5.5, 0);
+
+		// Object Rotation
+		if (AnimParams.bUsingRightHand) {
+			NewObjRotation = FRotator(-10, 180, 0);
+		}
+		else {
+			NewObjRotation = FRotator(10, 0, -180);
+		}
+	}
+	else if (AnimParams.Object->ActorHasTag(TEXT("BreadKnife"))) {		// ********** Bread Knife *********
+
+		// Object Location
+		NewObjLocation = FVector(-2, 2, 9);
+
+		// Object Rotation
+		if (AnimParams.bUsingRightHand) {
+			NewObjRotation = FRotator(70, -180, -90);
+		}
+		else {
+			NewObjRotation = FRotator(288, 0, -255);
+		}
+	}
+	else if (AnimParams.Object->ActorHasTag(TEXT("CookKnife"))) {		// ********** Cook Knife *********
+
+		// Object Location
+		NewObjLocation = FVector(-4, 2, 10);
+
+		if (AnimParams.bUsingRightHand) {
+			// Object Rotation
+			NewObjRotation = FRotator(110.5, 0, 90);
+		}
+		else {
+			NewObjRotation = FRotator(-69.5, 0, 90);
+		}
+	}
+	else if (AnimParams.Object->ActorHasTag(TEXT("SpoonSoup"))) {		// ********* Spoon Soup *********
+
+	   // Collision
+	   //#if WITH_FLEX
+	   //ObjectMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Flex, ECollisionResponse::ECR_Block);
+	   //#endif
+		// Object Location		 // ud  lr  bf
+		NewObjLocation = FVector(-1.9, 7.6, 0.3);
+
+		// Object Rotation
+		if (AnimParams.bUsingRightHand) {      // p   y  r
+			NewObjRotation = FRotator(-36, 101, -24);
+		}
+		else {
+			NewObjRotation = FRotator(28, -120, 180);
+		}
+	}
+	else if (AnimParams.Object->ActorHasTag(TEXT("DinnerFork"))) {		// ********* Dinner Fork *********
+
+		// Object Rotation
+		if (AnimParams.bUsingRightHand) {      // p   y  r
+
+			// Object Location		 // ud  lr  bf
+			NewObjLocation = FVector(-1.9, 7.6, 0.3);
+			NewObjRotation = FRotator(-36, 101, -24);
+		}
+		else {
+
+			// Object Location		 // ud  lr  bf
+			NewObjLocation = FVector(-7.85, 3, 1.55);
+			NewObjRotation = FRotator(-5, -5, -89);
+		}
+	}
+	else if (AnimParams.Object->ActorHasTag(TEXT("Slice"))
+		&& AnimParams.Object->ActorHasTag(TEXT("Bread"))) {		// ********* Bread Slice *********
+
+		UE_LOG(LogAvatarCharacter, Log, TEXT("Bread Slice Grasping"));
+
+		// Object Location		 // ud  lr  bf
+		NewObjLocation = FVector(-1, 4, 0);
+
+		// Object Rotation
+		if (AnimParams.bUsingRightHand) {      // p   y  r
+			NewObjRotation = FRotator(90, 0, 0);
+		}
+		else {
+			NewObjRotation = FRotator(90, 0, 0);
+		}
+	}
+	else if (AnimParams.Object->ActorHasTag(TEXT("Bowl"))) {			// ********* Bowl *********
+
+		// Attaching Rule
+		attachRules.RotationRule = EAttachmentRule::KeepRelative;
+
+		// Object Location
+		NewObjLocation = FVector(-3.5, 9.9, -0.5); // original
+
+		// Object Rotation
+		if (AnimParams.bUsingRightHand) {	
+			NewObjRotation = FRotator(-10, 0, 0);
+		}
+		else {
+			NewObjRotation = FRotator(170, 0, 0);
+		}
+	}
+	else if (AnimParams.Object->ActorHasTag(TEXT("Jug"))) {		// ********** Milk Jug *********
+
+		if (AnimParams.bUsingRightHand) {
+			// Object Rotation
+			NewObjRotation = FRotator(0, -30, 0);
+		}
+		else {
+			NewObjRotation = FRotator(-69.5, 0, 90);
+		}
+	}
+	else if (AnimParams.Object->ActorHasTag(TEXT("Plate"))) {		// ********** Plate *********
+		// Attaching Rule
+		attachRules.RotationRule = EAttachmentRule::KeepWorld;
+		attachRules.LocationRule = EAttachmentRule::KeepWorld;
+		keepWorldLoc = true;
+		keepWorldRot = true;
+	}
+	else {		// ********** In General ***********
+
+		FVector BoxExtent;
+		UE_LOG(LogAvatarCharacter, Log, TEXT("Default Grasping"));
+
+		ObjectMesh->SetRelativeRotation(FRotator(0, 0, 0));
+		BoxExtent = ObjectMesh->Bounds.BoxExtent;
+		UE_LOG(LogAvatarCharacter, Log, TEXT("BoxExtent %f %f %f"), BoxExtent.X, BoxExtent.Y, BoxExtent.Z);
+		// Attaching Rule
+		attachRules.LocationRule = EAttachmentRule::KeepRelative;
+
+		// Put shortest axis along X and longest axis along Z
+		if ((BoxExtent.Y < BoxExtent.X) && (BoxExtent.Y < BoxExtent.Z)) {	// If Y is min
+			if (BoxExtent.X > BoxExtent.Z) {								  // If X is max
+				NewObjRotation.Pitch += 90;									    //    X'  = Z ; Y'  = Y ; Z'  = X ; 
+				NewObjRotation.Yaw += 90;										    //    X'' = Y'; Y'' = X'; Z'' = Z';  
+				NewObjLocation = FVector(0, BoxExtent.Z, 0);					    // => X'' = Y ; Y'' = Z ; Z'' = X ;
+			}
+			else {															  // If Z is max
+				NewObjRotation.Yaw += 90;										   // X' = Y; Y' = X; Z' = Z;
+				NewObjLocation = FVector(0, BoxExtent.X, 0);
+			}
+		}
+		else if ((BoxExtent.Z < BoxExtent.Y) && (BoxExtent.Z < BoxExtent.X)) {	// If Z is min
+			if (BoxExtent.Y > BoxExtent.X) {									  // If Y is max
+				NewObjRotation.Roll += 90;										    //    X'  = X ; Y'  = Z ; Z'  = Y ;
+				NewObjRotation.Yaw += 90;											    //    X'' = Y'; Y'' = X'; Z'' = Z';
+				NewObjLocation = FVector(0, BoxExtent.X, 0);						    // => X'' = Z ; Y'' = X ; Z'' = Y ;
+			}
+			else {																  // If X is max
+				NewObjRotation.Pitch += 90;										    // X' = Z; Y' = Y; Z' = X;
+				NewObjLocation = FVector(0, BoxExtent.Y, 0);
+			}
+		}
+		else if (BoxExtent.Y > BoxExtent.Z) {		// If X is min and Y is max
+			NewObjRotation.Roll += 90;					  // X' = X; Y' = Z; Z' = Y;
+			NewObjLocation = FVector(0, BoxExtent.Z, 0);
+
+		}
+		else { // If X in min and Z is max
+			NewObjLocation = FVector(0, BoxExtent.Y, 0);
+		}
+		NewObjLocation.Y += 2;
+	}
+
+	// Right or left Settings
+	if (AnimParams.bUsingRightHand) {
+		socket = TEXT("hand_rSocket");
+		Avatar->isGrasped_r = true;
+		Avatar->graspedObject_r = AnimParams.Object;
+	}
+	else {
+		socket = TEXT("hand_lSocket");
+		Avatar->isGrasped_l = true;
+		Avatar->graspedObject_l = AnimParams.Object;
+		NewObjLocation *= -1;
+	}
+
+	// Attach Object to hand socket
+	AnimParams.Object->AttachToComponent(AvatarMesh, attachRules, socket);
+
+	//ObjectMesh->BodyInstance.SetResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	if (!keepWorldLoc)
+		ObjectMesh->SetRelativeLocation(NewObjLocation);
+	if (!keepWorldRot)
+		ObjectMesh->SetRelativeRotation(NewObjRotation);
+
+	ObjectMesh->SetSimulatePhysics(false);
+}
+
+FRotator UTaskAnimParamLogic::GetSpineRot(FVector LocalEndPoint) {
+
+	FRotator SpineRotEndPoint = FRotator(0, 0, 0);
+	FVector tmp1, Direction;
+	FVector ShoulderVector;
+	FVector ShoulderVectorO = FVector(0, 0, 43);
+	FVector SpineHeight = FVector(0, 0, 110);
+	FVector ShouldersLocation;
+	float distance, spineAngle = 0;
+	do {
+		SpineRotEndPoint.Yaw = spineAngle;
+		ShoulderVector = ShoulderVectorO.RotateAngleAxis(spineAngle, FVector(-1, 0, 0));
+		ShouldersLocation = ShoulderVector + SpineHeight;
+		Direction = LocalEndPoint - ShouldersLocation;
+		Direction.ToDirectionAndLength(tmp1, distance);
+		spineAngle += 5;
+	} while (distance > 65 && spineAngle <= 90);
+
+	return SpineRotEndPoint;
+}
+
+// ************************* Animation Functions ************************* //
+
 // Setting animation chains
 void UTaskAnimParamLogic::StartPassPageAnimChain(AActor *Target) {
 
@@ -577,6 +821,151 @@ void UTaskAnimParamLogic::StartPointBookAnimChain(AActor *Target) {
 	StartFingerReachAnimation(Target, "right", EndPoint);
 }
 
+void UTaskAnimParamLogic::StartGraspingAnimChain(AActor *Target, FString Hand, bool bHold) {
+
+	pendingStates = 1;
+	SaveOriginalPose();
+	
+	if (bHold) {
+		AnimParams.ActionContext = "grasp_and_hold";
+	}
+	else {
+		AnimParams.ActionContext = "grasp_and_drop";
+	}
+
+	AnimChain.BindUObject(this, &UTaskAnimParamLogic::RunGraspingAnimChain);
+
+	// Getting location relative to component
+	FVector ObjLocationInCompSpace = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Target->GetActorLocation());
+
+	if ((Hand.Equals("left") && !Avatar->isGrasped_l) 
+		|| (Hand.Equals("right") && !Avatar->isGrasped_r)) {
+		StartReachAnimation("reach_grasp", Target, Hand);
+	}
+	else if (Hand.Equals("any")) {
+
+		// Verify my hands are not busy
+		if (Avatar->isGrasped_l && Avatar->isGrasped_r) {
+			UE_LOG(LogAvatarCharacter, Log, TEXT("Both my hands are busy! I'm not an octopus!!"));
+			return;
+		}
+		else {
+			
+			if (Avatar->isGrasped_r) {	// Use left hand if right hand is busy,
+				Hand = "left";			// no matter where the object is.
+			}
+			else if (ObjLocationInCompSpace.X > 0 && !Avatar->isGrasped_l) {
+				Hand = "left";          // If right hand is free, then only use left hand 
+			}							// as loong as it is also free and object is on left side.
+			else {
+				Hand = "right";
+			}
+		}
+		StartReachAnimation("reach_grasp", Target, Hand);
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Log, TEXT("The intended hand is already being used!!"));
+		return;
+	}
+	speedFactor = 1;
+}
+
+void UTaskAnimParamLogic::StartPlacingAnimChain(FString targetPlace, FString Hand, FVector Point) 
+{
+
+	// Local variables
+	TMap<FString, FHitResult> MyUniqueHits;
+	FVector TargetLocation;
+
+	// Check hands and if they have any object
+	if (Hand.Equals("right")) {
+		if (!Avatar->isGrasped_r) {
+			UE_LOG(LogAvatarCharacter, Error, TEXT("ERROR: There is nothing to place from right hand."));
+			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, TEXT("ERROR: There is nothing to place from right hand."), true, FVector2D(1.5, 1.5));
+			return;
+		}
+	}
+	else if (Hand.Equals("left")) {
+		if (!Avatar->isGrasped_l) {
+			UE_LOG(LogAvatarCharacter, Error, TEXT("ERROR: There is nothing to place from left hand."));
+			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, TEXT("ERROR: There is nothing to place from left hand."), true, FVector2D(1.5, 1.5));
+			return;
+		}
+	}
+	else if (Hand.Equals("any")) {
+		if (Avatar->isGrasped_r) {
+			Hand = "right";
+		}
+		else if (!Avatar->isGrasped_l) {
+			UE_LOG(LogAvatarCharacter, Error, TEXT("ERROR: There is nothing to place from any hand."));
+			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, TEXT("ERROR: There is nothing to place from any hand."), true, FVector2D(1.5, 1.5));
+			return;
+		}
+		else {
+			Hand = "left";
+		}
+	}
+
+	if (targetPlace.Equals("VECTOR")) {
+
+		FVector socketAbsLoc;
+		FVector loc;
+		FVector offset;
+
+		if (Hand.Equals("right")) {
+			socketAbsLoc = Avatar->GetMesh()->GetBoneLocation(TEXT("hand_r"));
+			loc = Avatar->graspedObject_r->GetActorLocation();
+			offset = Avatar->graspedObject_r->GetActorLocation() - socketAbsLoc;
+		}
+		else {
+			socketAbsLoc = Avatar->GetMesh()->GetBoneLocation(TEXT("hand_l"));
+			loc = Avatar->graspedObject_l->GetActorLocation();
+			offset = Avatar->graspedObject_l->GetActorLocation() - socketAbsLoc;
+		}
+		Point -= offset;
+
+		TargetLocation = Point;
+	}
+	else if (targetPlace.Equals("microwave")) {
+		MyUniqueHits = Avatar->ListObjects();
+
+		// Verify microwave is near
+		if (MyUniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor() == NULL) {
+			UE_LOG(LogAvatarCharacter, Error, TEXT("ERROR: Microwave is not near you."));
+			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: The Microwave is not near you.")), true, FVector2D(1.7, 1.7));
+			return;
+		}
+		else {
+			// Getting location relative to component
+			TargetLocation = MyUniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor()->GetActorLocation();
+			FRotator TargetRotation = MyUniqueHits.FindRef("MachineStep05_Edelstahl_2").GetActor()->GetActorRotation();
+			TargetLocation += TargetRotation.RotateVector(FVector(0, -5, -10));
+		}
+	}
+	else if (targetPlace.Equals("table")) {
+		// Define location.
+		if (Hand.Equals("right")) {
+			TargetLocation = FVector(-30, 42, 90);
+		}
+		else {
+			TargetLocation = FVector(30, 42, 90);
+		}
+		TargetLocation = Avatar->GetMesh()->GetComponentTransform().TransformPosition(TargetLocation);
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Warning, TEXT("Warning: Unrecognized place \"%s\". Just placing here."), *targetPlace);
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Yellow, FString::Printf(TEXT("Warning: Unrecognized place \"%s\". Just placing here."), *targetPlace), true, FVector2D(1.5, 1.5));
+		return;
+	}
+
+	pendingStates = 1;
+	AnimChain.BindUObject(this, &UTaskAnimParamLogic::RunPlacingAnimChain);
+	AnimParams.ActionContext = "PLacingObject";
+
+	StartReachAnimation("reach_loc_rot", NULL, Hand, TargetLocation);
+	speedFactor = 0.7;
+}
+
 // Run animation Chains
 void UTaskAnimParamLogic::RunPassPageAnimChain(int state) {
 
@@ -614,6 +1003,35 @@ void UTaskAnimParamLogic::RunPointBookAnimChain(int state) {
 
 }
 
+void UTaskAnimParamLogic::RunGraspingAnimChain(int stage) {
+	if (pendingStates == 1) {
+		// Attach
+		AttachObject();
+		AnimParams.ActionContext = "HoldItem";
+		FVector worldLoc = Avatar->GetMesh()->GetComponentTransform().TransformPosition(FVector(-15, 15, 100));
+		StartReachAnimation("reach_loc_rot", AnimParams.Object, "right", worldLoc);
+		speedFactor = 0.7;
+	}
+
+	pendingStates--;
+}
+
+void UTaskAnimParamLogic::RunPlacingAnimChain(int stage) {
+	if (pendingStates == 1) {
+		// Dettach
+		if (AnimParams.bUsingRightHand) {
+			Avatar->DetachGraspedObject_r();
+			StartReleaseAnimation("drop_grasp","right");
+		}
+		else {
+			Avatar->DetachGraspedObject_l();
+			StartReleaseAnimation("drop_grasp", "left");
+		}	
+		speedFactor = 1;
+	}
+
+	pendingStates--;
+}
 // Set parameters for task animation
 FVector UTaskAnimParamLogic::CalculateReachBookLocation(AActor *Book, FName Tag, bool bWorldRelative) {
 
@@ -693,7 +1111,6 @@ void UTaskAnimParamLogic::StartFingerReachAnimation(AActor *Target, FString Hand
 	}
 
 	// End Points
-	SpineRotEndPoint = FRotator(0, 25, 0);
 	FingersRotsEndPoint = FingersRotsStartPoint;
 
 	if (Target->ActorHasTag("book")) {
@@ -734,6 +1151,9 @@ void UTaskAnimParamLogic::StartFingerReachAnimation(AActor *Target, FString Hand
 
 	// Apply Adjusments
 	LocEndPoint += LocEndAdjustment;
+
+	//Spine
+	SpineRotEndPoint = GetSpineRot(LocEndPoint);
 
 	// Multiplier
 	LocMultiplier = LocEndPoint - LocStartPoint;
@@ -826,7 +1246,7 @@ void UTaskAnimParamLogic::StartReachAnimation(FString Type, AActor *Target, FStr
 	FRotator HeadRotEndPoint;
 	FRotator HeadRotMultiplier;
 
-	FVector LocEndAdjustment = FVector(-7, -7, 15);
+	FVector LocEndPointAdjustment = FVector(0, 0, 0);
 	
 	AnimParams.ClearJointFlags();
 
@@ -861,28 +1281,87 @@ void UTaskAnimParamLogic::StartReachAnimation(FString Type, AActor *Target, FStr
 	}
 
 	// End Points
-	SpineRotEndPoint = FRotator(0, 25, 0);
 	FingersRotsEndPoint = FingersRotsStartPoint;
+	RotEndPoint = RotStartPoint;
 
-	if (Target->ActorHasTag("book")) {
-		if (AnimParams.bUsingRightHand) {
+	// TODO: Idealy this selection of parameters should be outside. Like a set of given parameters dependent to task.
+	if (Target != NULL) {
+		if (Target->ActorHasTag("Book") && Type.Equals("reach_grasp")) {
+			if (AnimParams.bUsingRightHand) {
 
-			LocEndAdjustment = FVector(-5, 0, 5);
-			RotEndPoint = FRotator(60, 0, 120);
-			FingersRotsEndPoint.thumb_01 = FRotator(10, -50, 140);
-			FingersRotsEndPoint.thumb_02 = FRotator(0, -0, 0);
-			FingersRotsEndPoint.thumb_03 = FRotator(0, -0, 0);
+				LocEndPointAdjustment = FVector(-5, 0, 5);
+				RotEndPoint = FRotator(60, 0, 120);
+				FingersRotsEndPoint.thumb_01 = FRotator(10, -50, 140);
+				FingersRotsEndPoint.thumb_02 = FRotator(0, -0, 0);
+				FingersRotsEndPoint.thumb_03 = FRotator(0, -0, 0);
 
-			FingersRotsEndPoint.index_01 = FRotator(-10,-65,0);
-			FingersRotsEndPoint.index_02 = FRotator(-0, -45, 0);
-			FingersRotsEndPoint.index_03 = FRotator(-0, -45, 0);
+				FingersRotsEndPoint.index_01 = FRotator(-10, -65, 0);
+				FingersRotsEndPoint.index_02 = FRotator(-0, -45, 0);
+				FingersRotsEndPoint.index_03 = FRotator(-0, -45, 0);
+
+				FingersRotsEndPoint.middle_01 = FRotator(-15, -65, 0);
+				FingersRotsEndPoint.middle_02 = FRotator(-0, -45, 0);
+				FingersRotsEndPoint.middle_03 = FRotator(-0, -45, 0);
+
+				FingersRotsEndPoint.ring_01 = FRotator(-10, -45, 0);
+				FingersRotsEndPoint.pinky_01 = FRotator(-10, -45, 0);
+
+			}
+		}
+		else if (Target->ActorHasTag("DinnerFork") && Type.Equals("reach_grasp")) {
+			RotEndPoint = FRotator(30, -90, 90);
+			LocEndPointAdjustment = FVector(0, 0, 5);
 			
-			FingersRotsEndPoint.middle_01 = FRotator(-15, -65, 0);
-			FingersRotsEndPoint.middle_02 = FRotator(-0, -45, 0);
-			FingersRotsEndPoint.middle_03 = FRotator(-0, -45, 0);
+			// Finger's Rotations
+			// Thumb
+			FingersRotsEndPoint.thumb_01 = FRotator(-34, -20, 71);
+			FingersRotsEndPoint.thumb_02 = FRotator(0, -46, 0);
+			FingersRotsEndPoint.thumb_03 = FRotator(0, -23, 0);
+			// Index
+			FingersRotsEndPoint.index_01 = FRotator(0, -50, -12);
+			FingersRotsEndPoint.index_02 = FRotator(0, -62, 0);
+			FingersRotsEndPoint.index_03 = FRotator(0, -50, 0);
+			// Middle
+			FingersRotsEndPoint.middle_01 = FRotator(0, -60, -10);
+			FingersRotsEndPoint.middle_02 = FRotator(0, -70, 0);
+			FingersRotsEndPoint.middle_03 = FRotator(0, -60, 0);
+			// Ring
+			FingersRotsEndPoint.ring_01 = FRotator(0, -70, -10);
+			FingersRotsEndPoint.ring_02 = FRotator(0, -70, 0);
+			FingersRotsEndPoint.ring_03 = FRotator(0, -60, 0);
+			// Pinky
+			FingersRotsEndPoint.pinky_01 = FRotator(0, -90, -25);
+			FingersRotsEndPoint.pinky_02 = FRotator(0, -60, 0);
+			FingersRotsEndPoint.pinky_03 = FRotator(0, -60, 0);
+		}
+		else if (Target->ActorHasTag("DinnerFork") && Type.Equals("reach_loc_rot")
+			&& AnimParams.ActionContext.Equals("HoldItem")) {
+			RotEndPoint = FRotator(9, -100, -25);
+		}
+		else if (Target->ActorHasTag("Plate") && Type.Equals("reach_grasp")) {
+			
+			RotEndPoint = FRotator(45, -135, -45);
+			LocEndPointAdjustment = FVector(-12.962555, -2.727218, 5);
 
-			FingersRotsEndPoint.ring_01 = FRotator(-10, -45, 0);
-			FingersRotsEndPoint.pinky_01 = FRotator(-10, -45, 0);
+			FingersRotsEndPoint.thumb_01 = FRotator(10, -15, 130);
+			FingersRotsEndPoint.index_01 = FRotator(0, -35, -12);
+			FingersRotsEndPoint.middle_01 = FRotator(0, -45, -10);
+			FingersRotsEndPoint.ring_01 = FRotator(0, -55, -10);
+			FingersRotsEndPoint.pinky_01 = FRotator(0, -60, -25);
+
+			FingersRotsEndPoint.thumb_02 = FRotator(0, 0, 0);
+			FingersRotsEndPoint.index_02 = FRotator(0, -20, 0);
+			FingersRotsEndPoint.middle_02 = FRotator(0, -15, 0);
+			FingersRotsEndPoint.ring_02 = FRotator(0, -10, 0);
+			FingersRotsEndPoint.pinky_02 = FRotator(0, -10, 0);
+
+			FingersRotsEndPoint.thumb_03 = FRotator(0, 0, 0);
+			FingersRotsEndPoint.index_03 = FRotator(0, -10, 0);
+			FingersRotsEndPoint.middle_03 = FRotator(0, -10, 0);
+			FingersRotsEndPoint.ring_03 = FRotator(0, -5, 0);
+			FingersRotsEndPoint.pinky_03 = FRotator(0, -10, 0);
+		}
+		else if (Target->ActorHasTag("BreadKnife") && Type.Equals("reach_grasp")) {
 
 		}
 	}
@@ -895,13 +1374,21 @@ void UTaskAnimParamLogic::StartReachAnimation(FString Type, AActor *Target, FStr
 	}
 	
 	// Head end Rotation
-	HeadRotEndPoint = Avatar->LookingRotationTo(LocEndPoint);
+	if (AnimParams.ActionContext.Equals("HoldItem")) {
+		HeadRotEndPoint = FRotator(0,0,0);
+	}
+	else {
+		HeadRotEndPoint = Avatar->LookingRotationTo(LocEndPoint);
+	}
 
 	// Relative to Avatar
 	LocEndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(LocEndPoint);
 
 	// Apply Adjusments
-	LocEndPoint += LocEndAdjustment;
+	LocEndPoint += LocEndPointAdjustment;
+
+	// Spine
+	SpineRotEndPoint = GetSpineRot(LocEndPoint);
 
 	// Multiplier
 	LocMultiplier = LocEndPoint - LocStartPoint;
@@ -949,7 +1436,7 @@ void UTaskAnimParamLogic::StartReachAnimation(FString Type, AActor *Target, FStr
 	AnimParams.Head_Rot_Curve = ReachingAnimRotCurve_Head;
 
 	// Enable only the alphas of those joints that will change during animation
-	if (Type.Equals("reach_grasp") || Type.Equals("reach_grasp_take")) {
+	if (Type.Equals("reach_grasp")) {
 		if (AnimParams.bUsingRightHand) {
 			AnimParams.bSet_RH_Loc = true;
 			AnimParams.bSet_RH_Rot = true;
@@ -961,7 +1448,7 @@ void UTaskAnimParamLogic::StartReachAnimation(FString Type, AActor *Target, FStr
 			AnimParams.bSet_LF_Rot = true;
 		}
 	}
-	else if (Type.Equals("reach")){
+	else if (Type.Equals("reach_loc_rot")){
 		if (AnimParams.bUsingRightHand) {
 			AnimParams.bSet_RH_Loc = true;
 			AnimParams.bSet_RH_Rot = true;
@@ -971,7 +1458,14 @@ void UTaskAnimParamLogic::StartReachAnimation(FString Type, AActor *Target, FStr
 			AnimParams.bSet_LH_Rot = true;
 		}
 	}
-
+	else if (Type.Equals("reach_loc")) {
+		if (AnimParams.bUsingRightHand) {
+			AnimParams.bSet_RH_Loc = true;
+		}
+		if (AnimParams.bUsingLeftHand) {
+			AnimParams.bSet_LH_Loc = true;
+		}
+	}
 	AnimParams.bSet_S01_Rot = true;
 	AnimParams.bSet_Head_Rot = true;
 
@@ -1361,7 +1855,7 @@ void UTaskAnimParamLogic::StartReleaseAnimation(FString Type, FString Hand) {
 
 	// Enable only the alphas of those joints that will change during animation.
 	// And unset only those that are going to be released at the end.
-	if (Type.Equals("drop_grasp") || Type.Equals("drop_grasp_take")) {
+	if (Type.Equals("drop_grasp")) {
 		if (Hand.Equals("right")) {
 			AnimParams.bSet_RH_Loc = true;
 			AnimParams.bSet_RH_Rot = true;
@@ -1577,44 +2071,99 @@ void UTaskAnimParamLogic::StartCutAnimation(ObjectData_t &ItemData) {
 
 void UTaskAnimParamLogic::StartForkAnimation(AActor* Target) {
 
-	FVector StartPoint;
-	FVector EndPoint;
-	FVector Multiplier;
+	// Hand
+	FVector LocStartPoint;
+	FVector LocEndPoint;
+	FVector LocMultiplier;
+
+	FRotator RotStartPoint;
+	FRotator RotEndPoint;
+	FRotator RotMultiplier;
+
+	// Spine
+	FRotator SpineRotStartPoint;
+	FRotator SpineRotEndPoint;
+	FRotator SpineRotMultiplier;
+
+	// Head 
+	FRotator HeadRotStartPoint;
+	FRotator HeadRotEndPoint;
+	FRotator HeadRotMultiplier;
+
+	// Adjusments
 	FVector EndAdjustment = FVector(-7, -7, 15);
 
-	AnimParams.Spine_01_Rot_Multiplier = FRotator(0, 15, 0);
+	AnimParams.Object = Target;
+	AnimParams.ClearJointFlags();
+
+	// StartPoints
+	FRotator TempRotIn, TempRotOut;
+	FVector TempVecIn, TempVecOut;
+
+	TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("spine_01", EBoneSpaces::WorldSpace).Rotator();
+	Avatar->GetMesh()->TransformToBoneSpace("Pelvis", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+	SpineRotStartPoint = TempRotOut;
+	SpineRotEndPoint = AnimParams.Spine_01_Rot_Original;
+
+	TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("neck_01", EBoneSpaces::WorldSpace).Rotator();
+	Avatar->GetMesh()->TransformToBoneSpace("spine_03", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+	HeadRotStartPoint = TempRotOut;
+	HeadRotEndPoint = AnimParams.Head_Rot_Original;
+
+	LocStartPoint = Avatar->GetMesh()->GetBoneLocation("hand_r", EBoneSpaces::ComponentSpace);
+	RotStartPoint = Avatar->GetMesh()->GetBoneQuaternion("hand_r", EBoneSpaces::ComponentSpace).Rotator();
+	
+	// Endpoints 
+
+	// Head
+	LocEndPoint = Target->GetActorLocation();
+	HeadRotEndPoint = Avatar->LookingRotationTo(LocEndPoint);
+
+	// Hand Loc
+	LocEndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(LocEndPoint);
+	LocEndPoint += EndAdjustment;
+
+	// Hand Rot
+	RotEndPoint = FRotator(9,-90,45);
+
+	//Spine
+	SpineRotEndPoint = GetSpineRot(LocEndPoint);
+
+	// Multipliers
+	LocMultiplier = LocEndPoint - LocStartPoint;
+	RotMultiplier = RotEndPoint - RotStartPoint;
+	SpineRotMultiplier = SpineRotEndPoint - SpineRotStartPoint;
+	HeadRotMultiplier = HeadRotEndPoint - HeadRotStartPoint;
+
+	// Parameters
+	AnimParams.RH_Loc_Offset = LocStartPoint;
+	AnimParams.RH_Loc_Multiplier = LocMultiplier;
+	AnimParams.RH_Loc_Curve = ForkingAnimCurve;
+
+	AnimParams.RH_Rot_Offset = RotStartPoint;
+	AnimParams.RH_Rot_Multiplier = RotMultiplier;
+	AnimParams.RH_Rot_Curve = ForkingAnimRotCurve;
+
+	AnimParams.Spine_01_Rot_Offset = SpineRotStartPoint;
+	AnimParams.Spine_01_Rot_Multiplier = SpineRotMultiplier;
 	AnimParams.Spine_01_Rot_Curve = ForkingAnimSpineRotCurve;
 
-	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Target->GetActorLocation());
-	EndPoint += EndAdjustment;
-
-	StartPoint = FVector(-15, 15, 105);
-
-	// Motion Depth
-	Multiplier = (EndPoint - StartPoint);
-
-	//
-	AnimParams.RH_Loc_Offset = StartPoint;
-	AnimParams.RH_Loc_Multiplier = Multiplier;
-
-	// Skill
-	AnimParams.RH_Loc_Curve = ForkingAnimCurve;
-	AnimParams.RH_Rot_Curve = ForkingAnimRotCurve;
+	AnimParams.Head_Rot_Offset = HeadRotStartPoint;
+	AnimParams.Head_Rot_Multiplier = HeadRotMultiplier;
+	AnimParams.Head_Rot_Curve = ForkingAnimRotCurve_Head;
 
 	AnimParams.animTime = 4.5;
 
-	AnimParams.bSet_LH_Loc = false;
-	AnimParams.bSet_LH_Rot = false;
-	// These 2 are active from grasp and hold
-	AnimParams.bSet_RH_Loc = false;
-	AnimParams.bSet_RH_Rot = false;
-	AnimParams.bSet_RF_Rot = false;
-	AnimParams.bSet_LF_Rot = false;
-	AnimParams.bSet_S01_Rot = true;
+	AnimParams.bUsingRightHand = true;
+	AnimParams.bSet_RH_Loc     = true;
+	AnimParams.bSet_RH_Rot     = true;
+	AnimParams.bSet_S01_Rot    = true;
+	AnimParams.bSet_Head_Rot   = true;
 
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunForkAnimation);
 	bRunAnimation = true;
 
+	speedFactor = 1;
 }
 
 void UTaskAnimParamLogic::StartSpoonAnimation(AActor* Target) {
@@ -1663,6 +2212,7 @@ void UTaskAnimParamLogic::StartSpoonAnimation(AActor* Target) {
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunSpoonAnimation);
 	bRunAnimation = true;
 
+	speedFactor = 1;
 }
 
 void UTaskAnimParamLogic::StartPourAnimation(AActor* Target) {
@@ -1703,6 +2253,8 @@ void UTaskAnimParamLogic::StartPourAnimation(AActor* Target) {
 
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunPourAnimation);
 	bRunAnimation = true;
+
+	speedFactor = 1;
 }
 
 // TODO: Separate slicing animation from reaching animation. Reach in terms to right before cutting. 
@@ -1758,26 +2310,13 @@ void UTaskAnimParamLogic::RunCutAnimation(float time) {
 // Run fork animation
 void UTaskAnimParamLogic::RunForkAnimation(float time) {
 
-	FVector Temp;
-	FVector Hand_r_Location;
-	FRotator Hand_r_Rotation;
 	bool static attached = false;
 
 	if (time == 0) {
 		attached = false;
 	}
-
-	Temp = AnimParams.RH_Rot_Curve->GetVectorValue(time);
-	Hand_r_Rotation = FRotator(Temp.Y,Temp.Z, Temp.X);
-
-	Hand_r_Location = AnimParams.RH_Loc_Curve->GetVectorValue(time);
-	Hand_r_Location *= AnimParams.RH_Loc_Multiplier;
-	Hand_r_Location += AnimParams.RH_Loc_Offset;
-
-	Animation->RightHandRotation = Hand_r_Rotation;
-	Animation->RightHandIKTargetPosition = Hand_r_Location;
-	Temp = AnimParams.Spine_01_Rot_Curve->GetVectorValue(time);
-	Animation->Spine1Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
+	
+	RunReachAnimation(time);
 
 	if (!attached && time > 2) {
 	
@@ -1933,73 +2472,128 @@ void UTaskAnimParamLogic::RunReachAnimation(float time) {
 	}
 }
 
-
-// Process a task request
-void UTaskAnimParamLogic::ProcessTask(FString task) {
-
-	AActor* Object;
-
-	if (task.Equals("cut")) {
-		Object = PickOneObject(CheckForCuttableObjects(Avatar->ListObjects()));
-		if (Object != nullptr) {
-			ApplyTaskOnActor(task, Object);
-		}
-		else {
-			UE_LOG(LogAvatarCharacter, Error, TEXT("Error: not able to find any cuttable object."));
-		}
-	}
-	else if (task.Equals("Spoon")) {
-	}
-}
-
-// Process a task request on specific object
-void UTaskAnimParamLogic::ApplyTaskOnActor(FString task, AActor* Object) {
-
+// Spooning
+void UTaskAnimParamLogic::CallSpoonAnimation(FString ObjectName) {
+	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
 	if (Object != NULL) {
-		AnimParams.Object = Object;
-		if (task.Equals("cut")) {
-			ObjectData_t CurrentCutable;
-			if (Object->GetRootComponent()->ComponentHasTag("Cuttable")) {
-				CurrentCutable.Object = Object;
-				if (isInGoodAlignment(CurrentCutable)) {
-					StartCutAnimation(CurrentCutable);
-				}
-			}
-		}
-		else if (task.Equals("pour")) {
-			StartPourAnimation(Object);
-		}
-		else if (task.Equals("fork")) {
-			StartForkAnimation(Object);
-		}
-		else if (task.Equals("spoon")) {
-			StartSpoonAnimation(Object);
-		}
-		else if (task.Equals("pass")) {
-			if (Object->ActorHasTag("book")) {
-				StartPassPageAnimChain(Object);
-			}
-		}
-		else if (task.Equals("close")) {
-			if (Object->ActorHasTag("book")) {
-				StartCloseBookAnimChain(Object);
-			}
-		}
-		else if (task.Equals("point")) {
-			if (Object->ActorHasTag("book")) {
-				StartPointBookAnimChain(Object);
-			}
-		}
-	} else {
+		StartSpoonAnimation(Object);
+	}
+	else {
 		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
 	}
 }
 
-void UTaskAnimParamLogic::ProcessTask_P_ObjectName(FString task, FString ObjectName) {
-	
-	ApplyTaskOnActor(task, CheckForObject(Avatar->ListObjects(), ObjectName));
+// Forking
+void UTaskAnimParamLogic::CallForkAnimation(FString ObjectName) {
+	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
+	if (Object != NULL) {
+		StartForkAnimation(Object);
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
+	}
 }
 
+// Pouring
+void UTaskAnimParamLogic::CallPourAnimation(FString ObjectName) {
+	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
+	if (Object != NULL) {
+		StartPourAnimation(Object);
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
+	}
+}
+
+// Poiting Book
+void UTaskAnimParamLogic::CallPointBookAnimChain(FString ObjectName) {
+	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
+	if (Object != NULL) {
+		if (Object->ActorHasTag("book")) {
+			StartPointBookAnimChain(Object);
+		}
+		else {
+			UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided as book."));
+		}
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
+	}
+}
+
+// Passing Page
+void UTaskAnimParamLogic::CallPassPageAnimChain(FString ObjectName) {
+	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
+	if (Object != NULL) {
+		if (Object->ActorHasTag("book")) {
+			StartPassPageAnimChain(Object);
+		}
+		else {
+			UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided as book."));
+		}
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
+	}
+}
+
+// Closing book
+void UTaskAnimParamLogic::CallCloseBookAnimChain(FString ObjectName) {
+	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
+	if (Object != NULL) {
+		if (Object->ActorHasTag("book")) {
+			StartCloseBookAnimChain(Object);
+		}
+		else {
+			UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided as book."));
+		}
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
+	}
+}
+
+// Slicing
+void UTaskAnimParamLogic::CallSlicingAnimChain(FString ObjectName, float width) {
+	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
+	if (Object != NULL) {
+		ObjectData_t CurrentCutable;
+		if (Object->GetRootComponent()->ComponentHasTag("Cuttable")) {
+			CurrentCutable.Object = Object;
+			if (isInGoodAlignment(CurrentCutable)) {
+				StartCutAnimation(CurrentCutable);
+			}
+		}
+		else {
+			UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided as cuttable."));
+		}
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
+	}
+}
+
+// Grasping Object
+void UTaskAnimParamLogic::CallGraspingAnimChain(FString ObjectName, FString Hand, bool bHold) {
+	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
+	if (Object != NULL) {
+		StartGraspingAnimChain(Object, Hand, bHold);
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
+	}
+}
+
+// Placing Object
+void UTaskAnimParamLogic::CallPlacingAnimChain(FString ObjectName) {
+	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
+	if (Object != NULL) {
+
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
+	}
+}
 
 void UTaskAnimParamLogic::WriteCSV(float time) {
 

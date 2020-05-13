@@ -246,6 +246,9 @@ public:
 		UCurveVector* ForkingAnimSpineRotCurve;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		UCurveVector* ForkingAnimRotCurve_Head;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		UCurveVector* PouringAnimCurve;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
@@ -344,6 +347,10 @@ public:
 
 	void SaveOriginalPose();
 
+	void AttachObject();
+
+	FRotator GetSpineRot(FVector LocalEndPoint);
+
 	// ****** Cutting Help Functions ****** //
 
 	// Check for cuttable items within a list of unique hit results and filter out those out of proper reach
@@ -371,10 +378,10 @@ public:
 	void StartSlicingAnimChain(AActor* Target);
 
 	// Grasping Object
-	void StartGraspingAnimChain(FString Type, AActor *Target, FString Hand);
+	void StartGraspingAnimChain(AActor *Target, FString Hand, bool bHold);
 
 	// Placing Object
-	void StartPlacingAnimChain(FString Type, FString Hand, FVector Point = FVector(0, 0, 0));
+	void StartPlacingAnimChain(FString targetPlace, FString Hand = "any", FVector Point = FVector(0, 0, 0));
 
 	// ****** Running Chains ****** //
 
@@ -444,14 +451,32 @@ public:
 
 	// ****** Processing Task ****** //
 
-	// Process a task request
-	void ProcessTask(FString task);
+	// Spooning
+	void CallSpoonAnimation(FString ObjectName);
 
-	// Process a task request on specific object
-	void ApplyTaskOnActor(FString task, AActor* Object);
+	// Forking
+	void CallForkAnimation(FString ObjectName);
 
-	// Process a task plus oject name
-	void ProcessTask_P_ObjectName(FString task, FString ObjectName);
+	// Pouring
+	void CallPourAnimation(FString ObjectName);
+
+	// Poiting Book
+	void CallPointBookAnimChain(FString ObjectName);
+
+	// Passing Page
+	void CallPassPageAnimChain(FString ObjectName);
+
+	// Closing book
+	void CallCloseBookAnimChain(FString ObjectName);
+
+	// Slicing
+	void CallSlicingAnimChain(FString ObjectName, float width);
+
+	// Grasping Object
+	void CallGraspingAnimChain(FString ObjectName, FString Hand, bool bHold);
+
+	// Placing Object
+	void CallPlacingAnimChain(FString ObjectName);
 
 	void WriteCSV(float time);
 };

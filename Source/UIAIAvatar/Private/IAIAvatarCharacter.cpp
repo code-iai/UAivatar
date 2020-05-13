@@ -487,7 +487,10 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 		 else {
 			 UE_LOG(LogAvatarCharacter, Log, TEXT("Grasping target: %s "), *current_obj_target.Value);
 			 GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Green, FString::Printf(TEXT("Grasping target: %s"), *current_obj_target.Value), true, FVector2D(1.2, 1.2));
-			 StartGrasp(MyUniqueHits[current_obj_target.Value]);
+			 //StartGrasp(MyUniqueHits[current_obj_target.Value]);
+			 UTaskAnimParamLogic* AnimLogic = Cast<UTaskAnimParamLogic>(GetComponentByClass(UTaskAnimParamLogic::StaticClass()));
+			 check(AnimLogic);
+			 AnimLogic->CallGraspingAnimChain(current_obj_target.Value,"any",false);
 		 }
 	 }
 	 else {
@@ -1271,18 +1274,10 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 		check(AnimLogic);
 
 		if (tokens.Num() == 1) {
-			// Cut
-			if (tokens[0].Equals("cut")) {
-				AnimLogic->ProcessTask("cut");
-			}
 			// Listing objects
-			else if (tokens[0].Equals("list")) {
+			if (tokens[0].Equals("list")) {
 				SetTargetObject();
 			}
-			// Grasping current target object
-			else if (tokens[0].Equals("grasp")) {
-				GraspTargetObject();
-			} 
 			// Stopping hand raise
 			else if (tokens[0].Equals("drop")) {
 				GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Yellow, \
@@ -1306,23 +1301,20 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 				DetachGraspedObject_r();
 				DetachGraspedObject_l();
 			}
-			// Placing objects
-			else if (tokens[0].Equals("place")) {
-				PlaceObject("UNKNWN");
-			}
 			// Command not found
 			else {
 				GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT(	\
 					"ERROR: Command \"%s\" not found."), *tokens[0]), true, FVector2D(1.7, 1.7));
 				GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Yellow,						\
-					"One word commands are: spoon, cut, list, grasp, drop, release and detach",		\
+					"One word commands are: spoon, list, drop, release and detach",		\
 					true, FVector2D(1.5, 1.5));
 			}
 		}
 		else if (tokens.Num() == 2) {
 			// Grasp specified object
 			if (tokens[0].Equals("grasp")) {
-				GraspTargetObject_ROS(tokens[1]);
+				AnimLogic->CallGraspingAnimChain(tokens[1], "any", false);
+				//GraspTargetObject_ROS();
 			}
 			// Feed Person
 			else if (tokens[0].Equals("feed")) {
@@ -1405,19 +1397,18 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			}
 			// Placing objects
 			else if (tokens[0].Equals("place")) {
-				if (tokens[1].Equals("left") || tokens[1].Equals("right")) {
-					PlaceObject("UNKNWN",tokens[1]);
-				}
-				else {
-					PlaceObject(tokens[1]);
-				}
+				AnimLogic->StartPlacingAnimChain(tokens[1], "any");
 			// Path following
 			} else if (tokens[0].Equals("follow")) {
 				StartPathFollowing(tokens[1]);
 			}
-			// Forking & Spooning
-			else if (tokens[0].Equals("fork") || tokens[0].Equals("spoon")) {
-				AnimLogic->ProcessTask_P_ObjectName(tokens[0], tokens[1]);
+			// Forking
+			else if (tokens[0].Equals("fork")) {
+				AnimLogic->CallForkAnimation(tokens[1]);
+			}
+			// Spooning
+			else if (tokens[0].Equals("spoon")) {
+				AnimLogic->CallSpoonAnimation(tokens[1]);
 			}
 			// Wrong amount of tagerts
 			else {
@@ -1453,25 +1444,35 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 					HighLightObject(tokens[1], false);
 				}
 			}
-			// Pass Page, Close Book, Point Book
-			else if ((tokens[0].Equals("pass") && tokens[1].Equals("page")) 
-					|| (tokens[0].Equals("close") && tokens[1].Equals("book"))
-				    || (tokens[0].Equals("point") && tokens[1].Equals("book"))) {
-				AnimLogic->ProcessTask_P_ObjectName(tokens[0], tokens[2]);
+			// Pass Page
+			else if (tokens[0].Equals("pass") && tokens[1].Equals("page")) {
+				AnimLogic->CallPassPageAnimChain(tokens[2]);
+			}
+			// Close Book
+			else if (tokens[0].Equals("close") && tokens[1].Equals("book")) {
+				AnimLogic->CallCloseBookAnimChain(tokens[2]);
+			}
+			// Point Book
+			else if (tokens[0].Equals("point") && tokens[1].Equals("book")) {
+				AnimLogic->CallPointBookAnimChain(tokens[2]);
 			}
 			// Interpolation off spine
 			else if	(tokens[0].Equals("interpolation") && tokens[1].Equals("off") && tokens[2].Equals("spine")) {
 				StartSpineDisablement();
 			}
+			// Grasp specified object with specified hand
+			else if (tokens[0].Equals("grasp") && (tokens[1].Equals("right") || tokens[1].Equals("left") || tokens[1].Equals("any"))) {
+				AnimLogic->CallGraspingAnimChain(tokens[2], tokens[1], false);
+			}
 			// Grasp and hold specified object
 			else if (tokens[0].Equals("grasp") && tokens[2].Equals("hold")) {
-				GraspTargetObject_ROS(tokens[1], true);
+				AnimLogic->CallGraspingAnimChain(tokens[1], "any", true);
 			}
 			// Placing objects
 			else if (tokens[0].Equals("place")) {
 				// Right or left 
 				if (tokens[1].Equals("right") || tokens[1].Equals("left")) {
-					PlaceObject(tokens[2], tokens[1]);
+					AnimLogic->StartPlacingAnimChain(tokens[2], tokens[1]);
 				}
 				// None
 				else {
@@ -1501,7 +1502,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			}
 			// Pouring
 			else if (tokens[0].Equals("pour") && tokens[1].Equals("over")) {
-				AnimLogic->ProcessTask_P_ObjectName("pour", tokens[2]);
+				AnimLogic->CallPourAnimation(tokens[2]);
 			}
 			// None
 			else {
@@ -1560,6 +1561,11 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 						*tokens[2]), true, FVector2D(1.7, 1.7));
 				}
 			}
+			// Grasp and hold specified object with specified hand
+			else if (tokens[0].Equals("grasp") && (tokens[3].Equals("hold")) &&
+				(tokens[1].Equals("right") || tokens[1].Equals("left") || tokens[1].Equals("any"))) {
+				AnimLogic->CallGraspingAnimChain(tokens[2], tokens[1], true);
+			}
 			// Placing objects
 			else if (tokens[0].Equals("place")) {
 				if (tokens[1].IsNumeric() && tokens[2].IsNumeric() && tokens[3].IsNumeric()) {
@@ -1570,7 +1576,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 					target.Z = FCString::Atof(*tokens[3]);
 
 					// Right or Left
-					PlaceObject("VECTOR", "any", target);
+					AnimLogic->StartPlacingAnimChain("VECTOR", "any", target);
 
 				}
 				// No numeric vector
@@ -1587,7 +1593,8 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 					*tokens[0], *tokens[1], *tokens[2], *tokens[3]), true, FVector2D(1.7, 1.7));
 				GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Yellow,						\
 					"4 words command are: interpolation off <left|right> <handIK|handRot>         \n\
-					                      place <x> <y> <z> ", \
+					                      place <x> <y> <z> \n\
+										  grasp [left|right|any] <item> hold", \
 					true, FVector2D(1.5, 1.5));
 			}
 		}
@@ -1603,7 +1610,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 
 					// Right or Left
 					if (tokens[1].Equals("right") || tokens[1].Equals("left")) {
-						PlaceObject("VECTOR", tokens[1], target);
+						AnimLogic->StartPlacingAnimChain("VECTOR", tokens[1], target);
 					}
 					// None
 					else {
@@ -2359,14 +2366,14 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 		 UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
 		 check(AnimationInstance != nullptr);
 
-		 AnimationInstance->leftHandGraspingAlpha = 0;
-		 AnimationInstance->resetLeftHandFingerRots();
+		 //AnimationInstance->leftHandGraspingAlpha = 0;
+		 //AnimationInstance->resetLeftHandFingerRots();
 
 		 graspedObject_l->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
 		 auto MeshCompt = Cast<UStaticMeshComponent>(graspedObject_l->GetComponentByClass(UStaticMeshComponent::StaticClass()));
 
-		 MeshCompt->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+		 //MeshCompt->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 		 MeshCompt->SetSimulatePhysics(true);
 		 
 		 isGrasped_l = false;
@@ -2387,14 +2394,14 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 		 UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
 		 check(AnimationInstance != nullptr);
 
-		 AnimationInstance->rightHandGraspingAlpha = 0;
-		 AnimationInstance->resetRightHandFingerRots();
+		 //AnimationInstance->rightHandGraspingAlpha = 0;
+		 //AnimationInstance->resetRightHandFingerRots();
 
 		 graspedObject_r->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 
 		 auto MeshCompt = Cast<UStaticMeshComponent>(graspedObject_r->GetComponentByClass(UStaticMeshComponent::StaticClass()));
 		 
-		 MeshCompt->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+		 //MeshCompt->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 		 MeshCompt->SetSimulatePhysics(true);
 
 		 isGrasped_r = false;
