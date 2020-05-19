@@ -1273,6 +1273,8 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 		UTaskAnimParamLogic* AnimLogic = Cast<UTaskAnimParamLogic>(GetComponentByClass(UTaskAnimParamLogic::StaticClass()));
 		check(AnimLogic);
 
+		UE_LOG(LogAvatarCharacter, Log, TEXT("Processing Command %s"), *inLine);
+
 		if (tokens.Num() == 1) {
 			// Listing objects
 			if (tokens[0].Equals("list")) {
@@ -2521,7 +2523,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
  FRotator AIAIAvatarCharacter::LookingRotationTo(FVector Point) {
 	 check(CurrentAnimationInstance != nullptr);
 
-	 UE_LOG(LogAvatarCharacter, Log, TEXT("Processing Command 'look to %f %f %f' ."), Point.X, Point.Y, Point.Z);
+	 UE_LOG(LogAvatarCharacter, Log, TEXT("Called 'look to %f %f %f' ."), Point.X, Point.Y, Point.Z);
 
 	 FRotator TempRotIn, TempRotOut;
 	 FVector TempVecIn, TempVecOut;
@@ -2604,10 +2606,10 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 
  void AIAIAvatarCharacter::StartPathFollowing(FString Path) {
 
-	 if (!ControlledByAI()) {
-		 UE_LOG(LogAvatarCharacter, Error, TEXT("AIAIAvatarCharacter::MoveTo can only be used on an AI Controlled Avatar. Exiting..."));
+	 /*if (!ControlledByAI()) {
+		 UE_LOG(LogAvatarCharacter, Error, TEXT("Path following can only be used on an AI Controlled Avatar. Exiting..."));
 		 return;
-	 }
+	 }*/
 	 UE_LOG(LogAvatarCharacter, Log, TEXT("[%s] Follow Spline %s"), *GetName(), *Path);
 
 	 UNavigationSystemV1 *NavigationSystem = UNavigationSystemV1::GetCurrent(GetWorld());

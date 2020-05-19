@@ -349,7 +349,7 @@ public:
 
 	void AttachObject();
 
-	FRotator GetSpineRot(FVector LocalEndPoint);
+	FRotator GetSpineRot(FVector LocalEndPoint, float elongation);
 
 	// ****** Cutting Help Functions ****** //
 

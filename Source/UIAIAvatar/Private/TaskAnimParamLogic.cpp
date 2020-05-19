@@ -212,7 +212,7 @@ AActor* UTaskAnimParamLogic::CheckForObject(TMap<FString, FHitResult> Objects, F
 	FVector ObjLocationInCompSpace = FVector(0, 0, 0);
 
 	// Defining area of proper reach
-	ReachArea = FBox::BuildAABB(FVector(45, 0, -20), FVector(25, 25, 5));
+	ReachArea = FBox::BuildAABB(FVector(45, 0, -20), FVector(25, 25, 15));
 
 	// Filtering objects
 	for (auto& It : Objects)
@@ -758,7 +758,7 @@ void UTaskAnimParamLogic::AttachObject() {
 	ObjectMesh->SetSimulatePhysics(false);
 }
 
-FRotator UTaskAnimParamLogic::GetSpineRot(FVector LocalEndPoint) {
+FRotator UTaskAnimParamLogic::GetSpineRot(FVector LocalEndPoint, float elongation) {
 
 	FRotator SpineRotEndPoint = FRotator(0, 0, 0);
 	FVector tmp1, Direction;
@@ -774,7 +774,7 @@ FRotator UTaskAnimParamLogic::GetSpineRot(FVector LocalEndPoint) {
 		Direction = LocalEndPoint - ShouldersLocation;
 		Direction.ToDirectionAndLength(tmp1, distance);
 		spineAngle += 5;
-	} while (distance > 65 && spineAngle <= 90);
+	} while (distance > elongation && spineAngle <= 90);
 
 	return SpineRotEndPoint;
 }
@@ -1153,7 +1153,8 @@ void UTaskAnimParamLogic::StartFingerReachAnimation(AActor *Target, FString Hand
 	LocEndPoint += LocEndAdjustment;
 
 	//Spine
-	SpineRotEndPoint = GetSpineRot(LocEndPoint);
+	FVector local = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(LocEndPoint);
+	SpineRotEndPoint = GetSpineRot(local,80);
 
 	// Multiplier
 	LocMultiplier = LocEndPoint - LocStartPoint;
@@ -1388,7 +1389,7 @@ void UTaskAnimParamLogic::StartReachAnimation(FString Type, AActor *Target, FStr
 	LocEndPoint += LocEndPointAdjustment;
 
 	// Spine
-	SpineRotEndPoint = GetSpineRot(LocEndPoint);
+	SpineRotEndPoint = GetSpineRot(LocEndPoint,65);
 
 	// Multiplier
 	LocMultiplier = LocEndPoint - LocStartPoint;
@@ -1613,6 +1614,8 @@ void UTaskAnimParamLogic::StartPassPageAnimation() {
 	AnimParams.animTime = 2.5;
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunReachAnimation);
 	bRunAnimation = true;
+
+	speedFactor = 1;
 }
 
 void UTaskAnimParamLogic::StartFingerReleaseAnimation(FString Hand) {
@@ -1747,6 +1750,8 @@ void UTaskAnimParamLogic::StartFingerReleaseAnimation(FString Hand) {
 	AnimParams.animTime = 1.25;
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunReachAnimation);
 	bRunAnimation = true;
+
+	speedFactor = 1;
 }
 
 void UTaskAnimParamLogic::StartReleaseAnimation(FString Type, FString Hand) {
@@ -1894,6 +1899,8 @@ void UTaskAnimParamLogic::StartReleaseAnimation(FString Type, FString Hand) {
 	AnimParams.animTime = 1.25;
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunReachAnimation);
 	bRunAnimation = true;
+
+	speedFactor = 1;
 }
 
 #pragma optimize("", off)
@@ -2127,7 +2134,7 @@ void UTaskAnimParamLogic::StartForkAnimation(AActor* Target) {
 	RotEndPoint = FRotator(9,-90,45);
 
 	//Spine
-	SpineRotEndPoint = GetSpineRot(LocEndPoint);
+	SpineRotEndPoint = GetSpineRot(LocEndPoint,65);
 
 	// Multipliers
 	LocMultiplier = LocEndPoint - LocStartPoint;
