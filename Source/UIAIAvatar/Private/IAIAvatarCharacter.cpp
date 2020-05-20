@@ -1320,7 +1320,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			}
 			// Feed Person
 			else if (tokens[0].Equals("feed")) {
-				Feed(tokens[1]);
+				AnimLogic->CallFeedingAnimChain(tokens[1]);
 			}
 			// Raise Hand
 			else if (tokens[0].Equals("raise")) {

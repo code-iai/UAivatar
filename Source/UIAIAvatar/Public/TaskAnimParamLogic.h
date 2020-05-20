@@ -383,6 +383,9 @@ public:
 	// Placing Object
 	void StartPlacingAnimChain(FString targetPlace, FString Hand = "any", FVector Point = FVector(0, 0, 0));
 
+	// Feeding
+	void StartFeedingAnimChain(ACharacter *Person);
+
 	// ****** Running Chains ****** //
 
 	// Poiting Book
@@ -390,9 +393,6 @@ public:
 
 	// Passing Page
 	void RunPassPageAnimChain(int stage);
-
-	// Closing book
-	void RunCloseBookAnimChain(int stage);
 
 	// Slicing
 	void RunSlicingAnimChain(int stage);
@@ -402,6 +402,9 @@ public:
 
 	// Placing Object
 	void RunPlacingAnimChain(int stage);
+
+	//Feeding
+	void RunFeedingAnimChain(int stage);
 
 	// ****** Setting Parameters ****** //
 
@@ -477,6 +480,9 @@ public:
 
 	// Placing Object
 	void CallPlacingAnimChain(FString ObjectName);
+
+	// Feeding Person
+	void CallFeedingAnimChain(FString PersonName);
 
 	void WriteCSV(float time);
 };

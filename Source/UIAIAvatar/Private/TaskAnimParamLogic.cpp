@@ -791,6 +791,8 @@ void UTaskAnimParamLogic::StartPassPageAnimChain(AActor *Target) {
 
 	FVector EndPoint = CalculateReachBookLocation(Target, *AnimParams.ActionContext, true);
 	StartReachAnimation("reach_grasp", Target, "right", EndPoint);
+
+	speedFactor = 1;
 }
 
 void UTaskAnimParamLogic::StartCloseBookAnimChain(AActor *Target) {
@@ -802,6 +804,8 @@ void UTaskAnimParamLogic::StartCloseBookAnimChain(AActor *Target) {
 
 	FVector EndPoint = CalculateReachBookLocation(Target, *AnimParams.ActionContext, true);
 	StartReachAnimation("reach_grasp", Target, "right", EndPoint);
+
+	speedFactor = 1;
 }
 
 void UTaskAnimParamLogic::StartPointBookAnimChain(AActor *Target) {
@@ -819,6 +823,8 @@ void UTaskAnimParamLogic::StartPointBookAnimChain(AActor *Target) {
 	EndPoint = AnimParams.Object->GetActorTransform().TransformPosition(EndPoint);
 
 	StartFingerReachAnimation(Target, "right", EndPoint);
+
+	speedFactor = 1;
 }
 
 void UTaskAnimParamLogic::StartGraspingAnimChain(AActor *Target, FString Hand, bool bHold) {
@@ -966,14 +972,32 @@ void UTaskAnimParamLogic::StartPlacingAnimChain(FString targetPlace, FString Han
 	speedFactor = 0.7;
 }
 
+// Start Feeding chain
+void UTaskAnimParamLogic::StartFeedingAnimChain(ACharacter *Person) {
+
+	pendingStates = 2;
+	AnimChain.BindUObject(this, &UTaskAnimParamLogic::RunFeedingAnimChain);
+	speedFactor = 0.7;
+
+	AnimParams.ActionContext = "approaching fork";
+
+	// Person's Local Space
+	FVector TargetLocation = Person->GetMesh()->GetBoneLocation(TEXT("jaw_end"), EBoneSpaces::WorldSpace);
+	FVector Offset = FVector(0, 0, 0);
+
+	StartReachAnimation("reach_loc", NULL, "right", TargetLocation);
+}
+
 // Run animation Chains
 void UTaskAnimParamLogic::RunPassPageAnimChain(int state) {
 
 	if (pendingStates == 2) {
 		StartPassPageAnimation();
+		speedFactor = 1;
 	}
 	else if (pendingStates == 1) {
 		StartReleaseAnimation("drop_grasp","right");
+		speedFactor = 1;
 	}
 
 	pendingStates--;
@@ -1032,6 +1056,26 @@ void UTaskAnimParamLogic::RunPlacingAnimChain(int stage) {
 
 	pendingStates--;
 }
+
+void UTaskAnimParamLogic::RunFeedingAnimChain(int stage) {
+	if (pendingStates == 2) {
+		// 1.5 Seconds Delay
+		AnimParams.ActionContext = "waiting with fork";
+		AnimParams.AnimFunctionDelegate.Unbind();
+		speedFactor = 1;
+		AnimParams.animTime = 1.5;
+		bRunAnimation = true;
+	}
+	else if (pendingStates == 1) {
+		AnimParams.ActionContext = "pushing away fork";
+		FVector worldLoc = Avatar->GetMesh()->GetComponentTransform().TransformPosition(FVector(-15, 15, 100));
+		StartReachAnimation("reach_loc", NULL, "right", worldLoc);
+		speedFactor = 1;
+	}
+
+	pendingStates--;
+}
+
 // Set parameters for task animation
 FVector UTaskAnimParamLogic::CalculateReachBookLocation(AActor *Book, FName Tag, bool bWorldRelative) {
 
@@ -1363,7 +1407,11 @@ void UTaskAnimParamLogic::StartReachAnimation(FString Type, AActor *Target, FStr
 			FingersRotsEndPoint.pinky_03 = FRotator(0, -10, 0);
 		}
 		else if (Target->ActorHasTag("BreadKnife") && Type.Equals("reach_grasp")) {
-
+		}
+	}
+	else {
+		if (AnimParams.ActionContext.Equals("approaching fork")) {
+			LocEndPointAdjustment = FVector(-13, 0, -2);
 		}
 	}
 
@@ -1615,7 +1663,6 @@ void UTaskAnimParamLogic::StartPassPageAnimation() {
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunReachAnimation);
 	bRunAnimation = true;
 
-	speedFactor = 1;
 }
 
 void UTaskAnimParamLogic::StartFingerReleaseAnimation(FString Hand) {
@@ -1751,7 +1798,6 @@ void UTaskAnimParamLogic::StartFingerReleaseAnimation(FString Hand) {
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunReachAnimation);
 	bRunAnimation = true;
 
-	speedFactor = 1;
 }
 
 void UTaskAnimParamLogic::StartReleaseAnimation(FString Type, FString Hand) {
@@ -1900,7 +1946,6 @@ void UTaskAnimParamLogic::StartReleaseAnimation(FString Type, FString Hand) {
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunReachAnimation);
 	bRunAnimation = true;
 
-	speedFactor = 1;
 }
 
 #pragma optimize("", off)
@@ -2170,7 +2215,6 @@ void UTaskAnimParamLogic::StartForkAnimation(AActor* Target) {
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunForkAnimation);
 	bRunAnimation = true;
 
-	speedFactor = 1;
 }
 
 void UTaskAnimParamLogic::StartSpoonAnimation(AActor* Target) {
@@ -2219,7 +2263,6 @@ void UTaskAnimParamLogic::StartSpoonAnimation(AActor* Target) {
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunSpoonAnimation);
 	bRunAnimation = true;
 
-	speedFactor = 1;
 }
 
 void UTaskAnimParamLogic::StartPourAnimation(AActor* Target) {
@@ -2261,7 +2304,6 @@ void UTaskAnimParamLogic::StartPourAnimation(AActor* Target) {
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunPourAnimation);
 	bRunAnimation = true;
 
-	speedFactor = 1;
 }
 
 // TODO: Separate slicing animation from reaching animation. Reach in terms to right before cutting. 
@@ -2600,6 +2642,29 @@ void UTaskAnimParamLogic::CallPlacingAnimChain(FString ObjectName) {
 	else {
 		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
 	}
+}
+
+// Feeding Person
+void UTaskAnimParamLogic::CallFeedingAnimChain(FString PersonName) {
+
+	TMap<FString, FHitResult> MyUniqueHits = Avatar->ListObjects();
+	AActor *Actor = MyUniqueHits.FindRef(PersonName).GetActor();
+
+	if (Actor == NULL) {
+		UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Actor \"%s\" not found!"), *PersonName);
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Actor \"%s\" not found!"), *PersonName), true, FVector2D(1.7, 1.7));
+		return;
+	}
+
+	ACharacter *Person = Cast<ACharacter>(Actor);
+
+	if (Person == NULL) {
+		UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Actor \"%s\" is not a character!"), *PersonName);
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Actor \"%s\" is not a character!"), *PersonName), true, FVector2D(1.7, 1.7));
+		return;
+	}
+
+	StartFeedingAnimChain(Person);
 }
 
 void UTaskAnimParamLogic::WriteCSV(float time) {
