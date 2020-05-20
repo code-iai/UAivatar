@@ -27,7 +27,7 @@ public:
 	virtual void TimeOut();
 
 	UPROPERTY()
-	AIAIAvatarCharacter* Avatar;
+	ACharacter* Avatar;
 
 	FTimerHandle TimeOutHandle;
 

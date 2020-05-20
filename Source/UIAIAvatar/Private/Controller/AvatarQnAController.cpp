@@ -10,7 +10,7 @@ void UAvatarQnAController::Init(AActor* InAgent)
 		UE_LOG(LogTemp, Error, TEXT("Avatar QnA Controller not attached to an Avatar"));
 	}
 
-	Avatar = Cast<AIAIAvatarCharacter>(InAgent);
+	Avatar = Cast<ACharacter>(InAgent);
 	check(Avatar != nullptr);	
 }
 
@@ -56,7 +56,7 @@ void UAvatarQnAController::NotifyQuestion()
 	Avatar->GetWorldTimerManager().SetTimer(TimeOutHandle, TimeOutDelegate, 5, false, 5);
 
 	GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Green, FString::Printf(TEXT("* %s"), *Question), true, FVector2D(4, 4));
-	Avatar->enableDTW = true;
+
 	bActive = true;
 	if (bSaveCSV) {
 		CSVLine = Avatar->GetName() + ",";
@@ -92,8 +92,6 @@ void UAvatarQnAController::CheckAnswer()
 void UAvatarQnAController::GiveAnswer(FString InAnswer)
 {
 	GoalStatusList.Last().Status = 3;
-	Avatar->enableDTW = false;
-	Avatar->ResetFollowCamera();
 	bActive = false;
 	bPublishResult = true;
 	bAnswering = false;
