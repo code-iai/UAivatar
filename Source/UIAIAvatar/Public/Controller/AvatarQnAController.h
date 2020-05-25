@@ -28,6 +28,7 @@ public:
 
 	UPROPERTY()
 	ACharacter* Avatar;
+	UDTWRecognizer* HeadMoveRecognizer; 
 
 	FTimerHandle TimeOutHandle;
 
@@ -36,6 +37,11 @@ public:
 
 	FString CSVLine;
 	FString FileName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float timeOutLimit;
+
+	float waitTime;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bSaveCSV;

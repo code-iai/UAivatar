@@ -12,6 +12,9 @@ void UAvatarQnAController::Init(AActor* InAgent)
 
 	Avatar = Cast<ACharacter>(InAgent);
 	check(Avatar != nullptr);	
+
+	HeadMoveRecognizer = Avatar->FindComponentByClass<UDTWRecognizer>();
+
 }
 
 UAvatarQnAController::UAvatarQnAController()
@@ -19,6 +22,8 @@ UAvatarQnAController::UAvatarQnAController()
 	bAnswering = false;
 	CSVLine= "";
 	FileName = "Preferences." + FDateTime::Now().ToString() + ".csv";
+	timeOutLimit = 6;
+	waitTime = 0;
 }
 
 void UAvatarQnAController::Tick(float InDeltaTime)
@@ -26,24 +31,28 @@ void UAvatarQnAController::Tick(float InDeltaTime)
 	CancelAction();
 	if (bActive)
 	{
+		waitTime += InDeltaTime;
 		GoalStatusList.Last().Status = 1;
 
-		if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::RightMouseButton)) {
+		if (HeadMoveRecognizer->bRecording) {
 			if (!bAnswering) {
-				
-				GetWorld()->GetTimerManager().ClearTimer(TimeOutHandle);
+				waitTime = 0;
 				bAnswering = true;
-
-				FTimerHandle CheckAnswerHandle;
-				FTimerDelegate CheckAnswerDelegate;
-
-				CheckAnswerDelegate = FTimerDelegate::CreateUObject(this, &UAvatarQnAController::CheckAnswer);
-				Avatar->GetWorldTimerManager().SetTimer(CheckAnswerHandle, CheckAnswerDelegate, 5, false, 2.6);
 			}
+		}
+
+		if (bAnswering) {
+			if (!HeadMoveRecognizer->bRecording) {
+				CheckAnswer();
+			}
+		}
+		if (waitTime > timeOutLimit) {
+			TimeOut();
 		}
 	}
 	if (bCancel) {
 		bAnswering = false;
+		waitTime = 0;
 	}
 }
 
@@ -51,9 +60,6 @@ void UAvatarQnAController::NotifyQuestion()
 {
 	
 	FTimerDelegate TimeOutDelegate;
-
-	TimeOutDelegate = FTimerDelegate::CreateUObject(this, &UAvatarQnAController::TimeOut);
-	Avatar->GetWorldTimerManager().SetTimer(TimeOutHandle, TimeOutDelegate, 5, false, 5);
 
 	GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Green, FString::Printf(TEXT("* %s"), *Question), true, FVector2D(4, 4));
 
@@ -68,7 +74,6 @@ void UAvatarQnAController::CheckAnswer()
 {
 	FString AnswerText;
 	int8 decision;
-	UDTWRecognizer* HeadMoveRecognizer = Avatar->FindComponentByClass<UDTWRecognizer>();
 	decision = HeadMoveRecognizer->GetDecision();
 
 	switch (decision)
@@ -92,6 +97,7 @@ void UAvatarQnAController::CheckAnswer()
 void UAvatarQnAController::GiveAnswer(FString InAnswer)
 {
 	GoalStatusList.Last().Status = 3;
+	waitTime = 0;
 	bActive = false;
 	bPublishResult = true;
 	bAnswering = false;
@@ -109,5 +115,5 @@ void UAvatarQnAController::GiveAnswer(FString InAnswer)
 
 void UAvatarQnAController::TimeOut()
 {
-	GiveAnswer(TEXT("None"));
+	GiveAnswer(TEXT("Time Out"));
 }
