@@ -748,6 +748,20 @@ void UTaskAnimParamLogic::AttachObject() {
 
 	// Attach Object to hand socket
 	AnimParams.Object->AttachToComponent(AvatarMesh, attachRules, socket);
+	
+	// Food on the plate
+	// This is a trick because waffle keep falling from plate
+	TMap<FString, FHitResult> Objects = Avatar->ListObjects();
+	for (auto& It : Objects)
+	{
+		AActor *Item = It.Value.GetActor();
+		if (Item->ActorHasTag("Waffle")) {
+			UStaticMeshComponent *ItemMesh;
+			ItemMesh = Cast<UStaticMeshComponent>(Item->GetComponentByClass(UStaticMeshComponent::StaticClass()));
+			ItemMesh->SetSimulatePhysics(false);
+		}
+	}
+
 
 	//ObjectMesh->BodyInstance.SetResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 	if (!keepWorldLoc)
@@ -1051,6 +1065,20 @@ void UTaskAnimParamLogic::RunPlacingAnimChain(int stage) {
 			Avatar->DetachGraspedObject_l();
 			StartReleaseAnimation("drop_grasp", "left");
 		}	
+
+		// Food on the plate
+		// This is a trick because waffle keep falling from plate
+		TMap<FString, FHitResult> Objects = Avatar->ListObjects();
+		for (auto& It : Objects)
+		{
+			AActor *Item = It.Value.GetActor();
+			if (Item->ActorHasTag("Waffle")) {
+				UStaticMeshComponent *ItemMesh;
+				ItemMesh = Cast<UStaticMeshComponent>(Item->GetComponentByClass(UStaticMeshComponent::StaticClass()));
+				ItemMesh->SetSimulatePhysics(true);
+			}
+		}
+
 		speedFactor = 1;
 	}
 
@@ -1334,7 +1362,7 @@ void UTaskAnimParamLogic::StartReachAnimation(FString Type, AActor *Target, FStr
 		if (Target->ActorHasTag("Book") && Type.Equals("reach_grasp")) {
 			if (AnimParams.bUsingRightHand) {
 
-				LocEndPointAdjustment = FVector(-5, 0, 5);
+				LocEndPointAdjustment = FVector(-3, 0, 10);
 				RotEndPoint = FRotator(60, 0, 120);
 				FingersRotsEndPoint.thumb_01 = FRotator(10, -50, 140);
 				FingersRotsEndPoint.thumb_02 = FRotator(0, -0, 0);
@@ -1597,7 +1625,7 @@ void UTaskAnimParamLogic::StartPassPageAnimation() {
 	// Relative to Avatar
 	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
 
-	LocEndPoint = EndPoint + FVector(0, 0, 7);
+	LocEndPoint = EndPoint + FVector(0, 0, 5);
 
 						 // Hand Rotation trajectory
 	                     // Pitch Yaw  Roll
