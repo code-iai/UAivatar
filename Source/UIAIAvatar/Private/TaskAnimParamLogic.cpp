@@ -749,20 +749,6 @@ void UTaskAnimParamLogic::AttachObject() {
 	// Attach Object to hand socket
 	AnimParams.Object->AttachToComponent(AvatarMesh, attachRules, socket);
 	
-	// Food on the plate
-	// This is a trick because waffle keep falling from plate
-	TMap<FString, FHitResult> Objects = Avatar->ListObjects();
-	for (auto& It : Objects)
-	{
-		AActor *Item = It.Value.GetActor();
-		if (Item->ActorHasTag("Waffle")) {
-			UStaticMeshComponent *ItemMesh;
-			ItemMesh = Cast<UStaticMeshComponent>(Item->GetComponentByClass(UStaticMeshComponent::StaticClass()));
-			ItemMesh->SetSimulatePhysics(false);
-		}
-	}
-
-
 	//ObjectMesh->BodyInstance.SetResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 	if (!keepWorldLoc)
 		ObjectMesh->SetRelativeLocation(NewObjLocation);
@@ -1046,7 +1032,7 @@ void UTaskAnimParamLogic::RunGraspingAnimChain(int stage) {
 		// Attach
 		AttachObject();
 		AnimParams.ActionContext = "HoldItem";
-		FVector worldLoc = Avatar->GetMesh()->GetComponentTransform().TransformPosition(FVector(-15, 15, 100));
+		FVector worldLoc = Avatar->GetMesh()->GetComponentTransform().TransformPosition(FVector(-15, 20, 100));
 		StartReachAnimation("reach_loc_rot", AnimParams.Object, "right", worldLoc);
 		speedFactor = 0.7;
 	}
@@ -1065,19 +1051,6 @@ void UTaskAnimParamLogic::RunPlacingAnimChain(int stage) {
 			Avatar->DetachGraspedObject_l();
 			StartReleaseAnimation("drop_grasp", "left");
 		}	
-
-		// Food on the plate
-		// This is a trick because waffle keep falling from plate
-		TMap<FString, FHitResult> Objects = Avatar->ListObjects();
-		for (auto& It : Objects)
-		{
-			AActor *Item = It.Value.GetActor();
-			if (Item->ActorHasTag("Waffle")) {
-				UStaticMeshComponent *ItemMesh;
-				ItemMesh = Cast<UStaticMeshComponent>(Item->GetComponentByClass(UStaticMeshComponent::StaticClass()));
-				ItemMesh->SetSimulatePhysics(true);
-			}
-		}
 
 		speedFactor = 1;
 	}
@@ -1414,7 +1387,7 @@ void UTaskAnimParamLogic::StartReachAnimation(FString Type, AActor *Target, FStr
 		else if (Target->ActorHasTag("Plate") && Type.Equals("reach_grasp")) {
 			
 			RotEndPoint = FRotator(45, -135, -45);
-			LocEndPointAdjustment = FVector(-12.962555, -2.727218, 5);
+			LocEndPointAdjustment = FVector(-15, -2.727218, 4.5);
 
 			FingersRotsEndPoint.thumb_01 = FRotator(10, -15, 130);
 			FingersRotsEndPoint.index_01 = FRotator(0, -35, -12);
