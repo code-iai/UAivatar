@@ -210,6 +210,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
 	FRotator HeadRotation;
 
+    // Additive Rotation on the head joint
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+    FRotator JawRotation;
+
 	// Additive Rotation on the neck joint
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
 	FRotator NeckRotation;
@@ -245,6 +249,10 @@ public:
 	// A value between 0 and 1 controls the amount of blending between the animation and the bone modification
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 	float HeadRotationAlpha;
+
+    // A value between 0 and 1 controls the amount of blending between the animation and the bone modification
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+    float JawRotationAlpha;
 
 	// A value between 0 and 1 controls the amount of blending between the animation and the bone modification
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
