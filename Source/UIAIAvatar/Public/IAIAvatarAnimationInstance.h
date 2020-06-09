@@ -162,6 +162,26 @@ public:
 		Res.thumb_03 = thumb_03 * B;
 		return Res;
 	};
+
+	bool IsZero() {
+		bool res = true;
+		res &= index_01.IsZero();
+		res &= index_02.IsZero();
+		res &= index_03.IsZero();
+		res &= pinky_01.IsZero();
+		res &= pinky_02.IsZero();
+		res &= pinky_03.IsZero();
+		res &= ring_01.IsZero();
+		res &= ring_02.IsZero();
+		res &= ring_03.IsZero();
+		res &= middle_01.IsZero();
+		res &= middle_02.IsZero();
+		res &= middle_03.IsZero();
+		res &= thumb_01.IsZero();
+		res &= thumb_02.IsZero();
+		res &= thumb_03.IsZero();
+		return res;
+	};
 };
 
 UCLASS()

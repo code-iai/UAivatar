@@ -5,7 +5,6 @@
 #include "std_msgs/String.h"
 #include "ROSMoveToServer.h"
 #include "ROSAvatarRotationServer.h"
-#include "ROSMoveHeadServer.h"
 #include "ROSSendCommandServer.h"
 #include "ROSSendConsoleCommandServer.h"
 #include "ROSGeneralGraspServer.h"
@@ -15,9 +14,6 @@
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "UIAIAvatarModule.h" // include for log levels
-
-
-
 
 // Sets default values for this component's properties
 UIAIAvatarROSIntegrationComponent::UIAIAvatarROSIntegrationComponent()
@@ -89,13 +85,6 @@ bool UIAIAvatarROSIntegrationComponent::ConnectAndSetupROS()
   //-----------------------
   // Advertise Services
   //----------------------
-
-  // /move_head
-  if (!DeactivateMoveHeadService) {
-    TSharedPtr<FROSMoveHeadServer> MoveHeadServiceServer =
-      MakeShareable<FROSMoveHeadServer>(new FROSMoveHeadServer(this->GetOwner(), *(RosNamingPrefix + FString("/move_head")), TEXT("iai_avatar_msgs/PanTilt")));
-    ActiveGameInstance->ROSHandler->AddServiceServer(MoveHeadServiceServer);
-  }
 
   // /move_to
   if (!DeactivateMoveToService) {
