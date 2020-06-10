@@ -154,6 +154,16 @@ public:
 	bool bSet_Head_Rot;
 	bool bUnSet_Head_Rot;
 
+	// Jaw
+    UCurveVector* Jaw_Rot_Curve;
+    DataTableHandler* Jaw_Rot_Table;
+    FRotator Jaw_Rot_Offset;
+    FRotator Jaw_Rot_Multiplier;
+
+    bool bSet_Jaw_Rot;
+    bool bUnSet_Jaw_Rot;
+
+
 	// Original positions
 	FVector RH_Loc_Original;
 	FVector LH_Loc_Original;
@@ -165,6 +175,7 @@ public:
 	FFingerRots_t LH_FingerRots_Original;
 	FRotator Spine_01_Rot_Original;
 	FRotator Head_Rot_Original;
+    FRotator Jaw_Rot_Original;
 
 	void ClearJointFlags() {	
 
@@ -191,6 +202,11 @@ public:
 
 		bUsingRightHand = false;
 		bUsingLeftHand  = false;
+
+
+        bSet_Jaw_Rot   = false;
+        bUnSet_Jaw_Rot = false;
+
 	};
 };
 
@@ -202,6 +218,9 @@ class UIAIAVATAR_API UTaskAnimParamLogic : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UTaskAnimParamLogic();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+        UCurveVector* TalkingAnimCurve_Jaw;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		UCurveVector* CuttingBreadAnimCurve;
@@ -393,7 +412,7 @@ public:
 
 	// Passing Page
 	void RunPassPageAnimChain(int stage);
-
+    //void RunPassPageAnimChain(int stage, float time);
 	// Slicing
 	void RunSlicingAnimChain(int stage);
 
@@ -416,7 +435,7 @@ public:
 
 	// Set aprameters for pass page animation. Assumes hand is already in position and Reach Animation have been run
 	void StartPassPageAnimation();
-
+    //void StartPassPageAnimation(float time);
 	// Set parameters for drop animation
 	void StartFingerReleaseAnimation(FString Hand);
 

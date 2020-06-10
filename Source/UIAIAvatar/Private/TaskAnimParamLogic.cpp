@@ -256,6 +256,8 @@ void UTaskAnimParamLogic::SetJointAlphas() {
 		Animation->SpineRotationAlpha = 1;
 	if (AnimParams.bSet_Head_Rot)
 		Animation->HeadRotationAlpha = 1;
+    if (AnimParams.bSet_Jaw_Rot)
+       Animation->JawRotationAlpha = 1;
 }
 
 void UTaskAnimParamLogic::UnSetJointAlphas() {
@@ -279,6 +281,8 @@ void UTaskAnimParamLogic::UnSetJointAlphas() {
 		Animation->SpineRotationAlpha = 0;
 	if (AnimParams.bUnSet_Head_Rot)
 		Animation->HeadRotationAlpha = 0;
+    if (AnimParams.bUnSet_Jaw_Rot)
+        Animation->JawRotationAlpha = 0;
 }
 
 FFingerRots_t UTaskAnimParamLogic::GetCurrentFingersRots(bool isRightHand) {
@@ -402,7 +406,11 @@ void UTaskAnimParamLogic::SaveOriginalPose() {
 	Avatar->GetMesh()->TransformToBoneSpace("spine_03", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
 	AnimParams.Head_Rot_Original = TempRotOut;
 
-	AnimParams.RH_IndexLoc_Original = Avatar->GetMesh()->GetBoneLocation("index_end_r", EBoneSpaces::WorldSpace);
+    TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("jaw", EBoneSpaces::WorldSpace).Rotator();
+    Avatar->GetMesh()->TransformToBoneSpace("head", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+    AnimParams.Jaw_Rot_Original = TempRotOut;
+
+    AnimParams.RH_IndexLoc_Original = Avatar->GetMesh()->GetBoneLocation("index_end_r", EBoneSpaces::WorldSpace);
 	AnimParams.LH_IndexLoc_Original = Avatar->GetMesh()->GetBoneLocation("index_end_l", EBoneSpaces::WorldSpace);
 
 	AnimParams.RH_FingerRots_Original = GetCurrentFingersRots(true);
@@ -814,7 +822,7 @@ void UTaskAnimParamLogic::StartPointBookAnimChain(AActor *Target) {
 	SaveOriginalPose();
 	AnimParams.ActionContext = "TurnPageBox"; // This is a hack to get a location where to point
 	AnimChain.BindUObject(this, &UTaskAnimParamLogic::RunPointBookAnimChain);
-
+    AnimParams.Object = Target;
 	FVector EndPoint = CalculateReachBookLocation(Target, *AnimParams.ActionContext, false);
 	EndPoint.Y = EndPoint.Y * 1/5;
 	EndPoint.X = 0;
@@ -990,9 +998,10 @@ void UTaskAnimParamLogic::StartFeedingAnimChain(ACharacter *Person) {
 
 // Run animation Chains
 void UTaskAnimParamLogic::RunPassPageAnimChain(int state) {
-
+//void UTaskAnimParamLogic::RunPassPageAnimChain(int state, float time){
 	if (pendingStates == 2) {
-		StartPassPageAnimation();
+          StartPassPageAnimation();
+        //StartPassPageAnimation(time);
 		speedFactor = 1;
 	}
 	else if (pendingStates == 1) {
@@ -1121,6 +1130,11 @@ void UTaskAnimParamLogic::StartFingerReachAnimation(AActor *Target, FString Hand
 	FRotator HeadRotEndPoint;
 	FRotator HeadRotMultiplier;
 
+    // Jaw
+    FRotator JawRotStartPoint;
+    FRotator JawRotEndPoint;
+    FRotator JawRotMultiplier;
+
 	FVector LocEndAdjustment = FVector(0, 0, 0);
 
 	AnimParams.ClearJointFlags();
@@ -1143,6 +1157,10 @@ void UTaskAnimParamLogic::StartFingerReachAnimation(AActor *Target, FString Hand
 	TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("neck_01", EBoneSpaces::WorldSpace).Rotator();
 	Avatar->GetMesh()->TransformToBoneSpace("spine_03", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
 	HeadRotStartPoint = TempRotOut;
+
+    TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("jaw", EBoneSpaces::WorldSpace).Rotator();
+    Avatar->GetMesh()->TransformToBoneSpace("head", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
+    JawRotStartPoint = TempRotOut;
 
 	FingersRotsStartPoint = GetCurrentFingersRots(AnimParams.bUsingRightHand);
 
@@ -1193,6 +1211,7 @@ void UTaskAnimParamLogic::StartFingerReachAnimation(AActor *Target, FString Hand
 	}
 
 	HeadRotEndPoint = Avatar->LookingRotationTo(LocEndPoint);
+    JawRotEndPoint = Avatar->LookingRotationTo(LocEndPoint); //works for now
 
 	// Apply Adjusments
 	LocEndPoint += LocEndAdjustment;
@@ -1206,6 +1225,7 @@ void UTaskAnimParamLogic::StartFingerReachAnimation(AActor *Target, FString Hand
 	RotMultiplier = RotEndPoint - RotStartPoint;
 	SpineRotMultiplier = SpineRotEndPoint - SpineRotStartPoint;
 	HeadRotMultiplier = HeadRotEndPoint - HeadRotStartPoint;
+    JawRotMultiplier = JawRotEndPoint - JawRotStartPoint;
 	FingersRotsMultiplier = FingersRotsEndPoint - FingersRotsStartPoint;
 
 	// Update AnimParams
@@ -1246,6 +1266,11 @@ void UTaskAnimParamLogic::StartFingerReachAnimation(AActor *Target, FString Hand
 	AnimParams.Head_Rot_Multiplier = HeadRotMultiplier;
 	AnimParams.Head_Rot_Curve = ReachingAnimRotCurve_Head;
 
+
+    AnimParams.Jaw_Rot_Offset = JawRotStartPoint;
+    AnimParams.Jaw_Rot_Multiplier = JawRotMultiplier;
+    AnimParams.Jaw_Rot_Curve = TalkingAnimCurve_Jaw;
+
 	// Enable only the alphas of those joints that will change during animation	
 	if (AnimParams.bUsingRightHand) {
 		AnimParams.bSet_RI_Loc = true;
@@ -1260,6 +1285,8 @@ void UTaskAnimParamLogic::StartFingerReachAnimation(AActor *Target, FString Hand
 
 	AnimParams.bSet_S01_Rot = true;
 	AnimParams.bSet_Head_Rot = true;
+	AnimParams.bSet_Jaw_Rot = true;
+    AnimParams.bUnSet_Jaw_Rot = true;
 
 	AnimParams.animTime = 1.25;
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunReachAnimation);
@@ -1525,7 +1552,7 @@ void UTaskAnimParamLogic::StartReachAnimation(FString Type, AActor *Target, FStr
 }
 
 void UTaskAnimParamLogic::StartPassPageAnimation() {
-
+//void UTaskAnimParamLogic::StartPassPageAnimation(float time) {
 	// Hand
 	FVector LocStartPoint;
 	FVector LocEndPoint;
@@ -2520,6 +2547,17 @@ void UTaskAnimParamLogic::RunReachAnimation(float time) {
 		TempRot += AnimParams.Head_Rot_Offset;
 		Animation->HeadRotation = TempRot;
 	}
+
+	//Jaw Rotation
+    if (AnimParams.bSet_Jaw_Rot) {
+        TempVec = AnimParams.Jaw_Rot_Curve->GetVectorValue(time);
+        TempRot = FRotator(TempVec.Y, TempVec.Z, TempVec.X);
+        TempRot.Pitch *= AnimParams.Jaw_Rot_Multiplier.Pitch;
+        TempRot.Yaw *= AnimParams.Jaw_Rot_Multiplier.Yaw;
+        TempRot.Roll *= AnimParams.Jaw_Rot_Multiplier.Roll;
+        TempRot += AnimParams.Jaw_Rot_Offset;
+        Animation->JawRotation = TempRot;
+    }
 }
 
 // Spooning
