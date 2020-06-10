@@ -17,10 +17,10 @@ class AIAIAvatarCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	// ************************** Private Parameters *******************************
+		// ************************** Private Parameters *******************************
 
-	/** Camera boom positioning the camera behind the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+		/** Camera boom positioning the camera behind the character */
+		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class USpringArmComponent* CameraBoom;
 
 	/** Follow camera */
@@ -38,7 +38,7 @@ class AIAIAvatarCharacter : public ACharacter
 protected:
 
 	// **************************** Protected Parameters ***************************
-    /** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
+	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		float BaseTurnRate;
 
@@ -233,21 +233,10 @@ public:
 		UCurveFloat* RightFingerIKCurveFloat;
 
 	// ******** For Head ********
-	FRotator GoalHeadRotation;
-	float IKEnableTickDirection_head = 0.0f;
 
 	// Head Controller
 	UPROPERTY(EditAnywhere, Category = "IAI Avatar Configuration")
 		bool HeadFollowCamera;
-
-	// Head Controller
-	UPROPERTY(EditAnywhere, Category = "IAI Avatar Configuration|Head PID Controller")
-		FPIDController3D HeadPIDController;
-
-	// After each PID controller iteration, the distance between the current head pose and the desired pose is calculated. 
-	// If it's equal or less than this value, the PID control process will be stopped.
-	UPROPERTY(EditAnywhere, Category = "IAI Avatar Configuration|Head PID Controller", meta = (ClampMin = 0))
-		float HeadRotationErrorThreshold;
 
 	// ******** For IK Handlers ********
 
@@ -408,7 +397,7 @@ public:
 	TArray<FString> GraspTargetObject_ROS(FString targetObject, bool hold = false);
 
 	/** Place object on left hand over/in specified place */
-	void PlaceObject(FString targetPlace, FString Hand = "any", FVector targetPoint = FVector(0,0,0));
+	void PlaceObject(FString targetPlace, FString Hand = "any", FVector targetPoint = FVector(0, 0, 0));
 
 	/**Detach Left Object after Grasping*/
 	void DetachGraspObject();
@@ -452,26 +441,6 @@ public:
 	// Stop hands reaching motion
 	UFUNCTION(BlueprintCallable)
 		void StopHandReach();
-
-	// ******** Moving Head ********
-
-	// Use rot to rotate the head to a given rotation
-	// The movement will be interpolated by using this->HeadAlphaInterpolation
-	void MoveHead(FRotator rot);
-
-	FRotator LookingRotationTo(FVector point);
-
-	void StartMoveHeadUp();
-	void StopMoveHeadUp();
-
-	void StartMoveHeadDown();
-	void StopMoveHeadDown();
-
-	void StartMoveHeadLeft();
-	void StopMoveHeadLeft();
-
-	void StartMoveHeadRight();
-	void StopMoveHeadRight();
 
 	// ******** Moving Avatar ********
 

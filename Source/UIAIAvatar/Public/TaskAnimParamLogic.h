@@ -61,6 +61,39 @@ public:
 	FVector Extent;
 };
 
+struct FCurvesSet_t {
+	UCurveVector* RH_Loc_Interpolation;
+	UCurveVector* LH_Loc_Interpolation;
+	UCurveVector* RH_Rot_Interpolation;
+	UCurveVector* LH_Rot_Interpolation;
+	UCurveVector* RH_IndexLoc_Interpolation;
+	UCurveVector* LH_IndexLoc_Interpolation;
+	UCurveFloat* RH_FingerRots_Interpolation;
+	UCurveFloat* LH_FingerRots_Interpolation;
+	UCurveVector* Head_Rot_Interpolation;
+	UCurveVector* Spine_01_Rot_Interpolation;
+	float time;
+};
+
+struct FAvatarPose_t
+{
+public:
+	FVector RH_Loc;
+	FVector LH_Loc;
+
+	FRotator RH_Rot;
+	FRotator LH_Rot;
+
+	FVector RH_IndexLoc;
+	FVector LH_IndexLoc;
+
+	FFingerRots_t RH_FingerRots;
+	FFingerRots_t LH_FingerRots;
+
+	FRotator Spine_01_Rot;
+	FRotator Head_Rot;
+};
+
 USTRUCT(BlueprintType)
 struct FTaskAnimParameters_t
 {
@@ -155,27 +188,13 @@ public:
 	bool bUnSet_Head_Rot;
 
 	// Jaw
-    UCurveVector* Jaw_Rot_Curve;
-    DataTableHandler* Jaw_Rot_Table;
-    FRotator Jaw_Rot_Offset;
-    FRotator Jaw_Rot_Multiplier;
+	UCurveVector* Jaw_Rot_Curve;
+	DataTableHandler* Jaw_Rot_Table;
+	FRotator Jaw_Rot_Offset;
+	FRotator Jaw_Rot_Multiplier;
 
-    bool bSet_Jaw_Rot;
-    bool bUnSet_Jaw_Rot;
-
-
-	// Original positions
-	FVector RH_Loc_Original;
-	FVector LH_Loc_Original;
-	FRotator RH_Rot_Original;
-	FRotator LH_Rot_Original;
-	FVector RH_IndexLoc_Original;
-	FVector LH_IndexLoc_Original;
-	FFingerRots_t RH_FingerRots_Original;
-	FFingerRots_t LH_FingerRots_Original;
-	FRotator Spine_01_Rot_Original;
-	FRotator Head_Rot_Original;
-    FRotator Jaw_Rot_Original;
+	bool bSet_Jaw_Rot;
+	bool bUnSet_Jaw_Rot;
 
 	void ClearJointFlags() {	
 
@@ -199,14 +218,8 @@ public:
 		bUnSet_S01_Rot  = false;
 		bSet_Head_Rot   = false;
 		bUnSet_Head_Rot = false;
-
-		bUsingRightHand = false;
-		bUsingLeftHand  = false;
-
-
         bSet_Jaw_Rot   = false;
         bUnSet_Jaw_Rot = false;
-
 	};
 };
 
@@ -338,6 +351,8 @@ protected:
 
 	FTaskAnimParameters_t AnimParams;
 
+	FAvatarPose_t OriginalPose;
+
 	bool bRunAnimation;
 
 	float currentAnimTime;
@@ -350,25 +365,44 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
-
 	// ****** Help Functions ****** //
-	void SetJointAlphas();
-	void UnSetJointAlphas();
 
+	// Set all needed alphas to run an animation
+	void SetJointAlphas();
+
+	// Release all needed alphas to drop a pose
+	void UnSetJointAlphas();
+	
+	// Attach object to hand
+	void AttachObject();
+
+	// Save current pose as original pose
+	void SaveOriginalPose();
+
+	// Get current avatar's pose
+	FAvatarPose_t GetCurrentAvatarPose();
+
+	// Get current finger rotations
+	FFingerRots_t GetCurrentFingersRots(bool isRightHand);
+	
 	// Check for item within a list of unique hit results and filter out those out of proper reach
 	AActor* CheckForObject(TMap<FString, FHitResult> Objects, FString ObjName);
+
+	// Calculate needed spine rotation to reacha location
+	FRotator CalculateSpineRot(FVector LocalEndPoint, float elongation);
+
+	// Calculate head rotation to look to WorlEndPoint
+	FRotator CalculateHeadRot(FVector WorldEndPoint);
 
 	// News paper help function for holding locations
 	FVector CalculateReachBookLocation(AActor* Book, FName Tag, bool bWorldRelative);
 
-	// Getting current finger Rotations
-	FFingerRots_t GetCurrentFingersRots(bool isRightHand);
+	// Calculate EndPose for passing page
+	// vPageLoc and hPageLoc values fron 0 to 1
+	void Calculate_PointBook_EndPose_Curves(float vPageLoc, float hPageLoc, FAvatarPose_t &EndPose, FCurvesSet_t &Curves);
 
-	void SaveOriginalPose();
-
-	void AttachObject();
-
-	FRotator GetSpineRot(FVector LocalEndPoint, float elongation);
+	// Calculate EndPose for passing page and set corresponding curves
+	void Calculate_PassPage_EndPose_Curves(FAvatarPose_t &EndPose, FCurvesSet_t &Curves);
 
 	// ****** Cutting Help Functions ****** //
 
@@ -381,20 +415,16 @@ public:
 	// Check if item is in good position for cutting
 	bool isInGoodAlignment(ObjectData_t &ItemData);
 
-
 	// ****** Setting Chain Animations ****** //
 
-	// Pointing Book
-	void StartPointBookAnimChain(AActor *Target);
+	// Reading newspaper
+	void StartReadNewspaperAnimChain(AActor *Target, FString Hand = "right");
 
 	// Passing Page
-	void StartPassPageAnimChain(AActor *Target);
-
-	// Closing book
-	void StartCloseBookAnimChain(AActor * Target);
+	void StartPassPageAnimChain(AActor *Target, bool bLast = false, FString Hand = "right");
 
 	// Slicing
-	void StartSlicingAnimChain(AActor* Target);
+	void StartSlicingAnimChain(ObjectData_t ItemData, float sliceWidth);
 
 	// Grasping Object
 	void StartGraspingAnimChain(AActor *Target, FString Hand, bool bHold);
@@ -408,7 +438,7 @@ public:
 	// ****** Running Chains ****** //
 
 	// Poiting Book
-	void RunPointBookAnimChain(int stage);
+	void RunReadNewspaperAnimChain(int stage);
 
 	// Passing Page
 	void RunPassPageAnimChain(int stage);
@@ -427,20 +457,8 @@ public:
 
 	// ****** Setting Parameters ****** //
 
-	// Set parameters for finger reach animation
-	void StartFingerReachAnimation(AActor *Target, FString Hand, FVector Point = FVector(0, 0, 0));
-
-	// Set parameters for reach animation
-	void StartReachAnimation(FString Type, AActor *Target, FString Hand, FVector Point = FVector(0,0,0));
-
-	// Set aprameters for pass page animation. Assumes hand is already in position and Reach Animation have been run
-	void StartPassPageAnimation();
-    //void StartPassPageAnimation(float time);
-	// Set parameters for drop animation
-	void StartFingerReleaseAnimation(FString Hand);
-
-	// Set parameters for drop animation
-	void StartReleaseAnimation(FString Type, FString Hand);
+	// Setting animation parameters
+	void SetAnimParams(FAvatarPose_t StartPose, FAvatarPose_t EndPose, FCurvesSet_t Curves, bool bReleaseAlphas = false);
 
 	// Set parameters for cut animation
 	void StartCutAnimation(ObjectData_t &ItemData);
@@ -454,10 +472,16 @@ public:
 	// Set parameters for Spoon animation
 	void StartSpoonAnimation(AActor* Target);
 
+	// Set parameters for looking animation
+	void StartLookAnimation(FVector Point);
+
+	// Set parameters for releasing looking animation
+	void StartReleaseLookAnimation();
+
 	// ****** Running Animations ****** //
 
-	// Running reach animation
-	void RunReachAnimation(float time);
+	// Running animation
+	void RunAnimation(float time);
 
 	// Running Pour Animation
 	void RunPourAnimation(float time);

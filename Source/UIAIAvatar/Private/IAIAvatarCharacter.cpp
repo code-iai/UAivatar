@@ -56,9 +56,6 @@ AIAIAvatarCharacter::AIAIAvatarCharacter()
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 
-	// Set the default values that might get overwriten by the Editor
-	HeadRotationErrorThreshold = 0.6f;
-
 	HandTargetPosition.X = 20;
 	HandTargetPosition.Y = 56;
 	HandTargetPosition.Z = 118;
@@ -120,18 +117,6 @@ void AIAIAvatarCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 
 	PlayerInputComponent->BindAction("GraspObject_r", IE_Pressed, this, &AIAIAvatarCharacter::StartGraspObject_r);
 	PlayerInputComponent->BindAction("GraspObject_r", IE_Released, this, &AIAIAvatarCharacter::StopGraspObject_r);
-
-	PlayerInputComponent->BindAction("HeadLeft", IE_Pressed, this, &AIAIAvatarCharacter::StartMoveHeadLeft);
-	PlayerInputComponent->BindAction("HeadLeft", IE_Released, this, &AIAIAvatarCharacter::StopMoveHeadLeft);
-
-	PlayerInputComponent->BindAction("HeadRight", IE_Pressed, this, &AIAIAvatarCharacter::StartMoveHeadRight);
-	PlayerInputComponent->BindAction("HeadRight", IE_Released, this, &AIAIAvatarCharacter::StopMoveHeadRight);
-
-	PlayerInputComponent->BindAction("HeadUp", IE_Pressed, this, &AIAIAvatarCharacter::StartMoveHeadUp);
-	PlayerInputComponent->BindAction("HeadUp", IE_Released, this, &AIAIAvatarCharacter::StopMoveHeadUp);
-
-	PlayerInputComponent->BindAction("HeadDown", IE_Pressed, this, &AIAIAvatarCharacter::StartMoveHeadDown);
-	PlayerInputComponent->BindAction("HeadDown", IE_Released, this, &AIAIAvatarCharacter::StopMoveHeadDown);
 
 	PlayerInputComponent->BindAction("RaiseHand", IE_Pressed, this, &AIAIAvatarCharacter::StartRaiseHand);
 	PlayerInputComponent->BindAction("RaiseHand", IE_Released, this, &AIAIAvatarCharacter::StopRaiseHand);
@@ -1437,6 +1422,17 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 						*tokens[1]), true, FVector2D(1.7, 1.7));
 				}
 			}
+			// Cut
+			else if (tokens[0].Equals("cut")) {
+				if (tokens[2].IsNumeric()) {
+					AnimLogic->CallSlicingAnimChain(tokens[1], FCString::Atof(*tokens[2]));
+				}
+				else {
+					GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT(\
+						"ERROR: Width argument %s is not a numeric value."), \
+						*tokens[2]), true, FVector2D(1.7, 1.7));
+				}
+			}
 			// Highlight object
 			else if (tokens[0].Equals("highlight")) {
 				if (tokens[2].Equals("on")) {
@@ -1486,19 +1482,27 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			// Reset look to
 			else if (tokens[0].Equals("look") && tokens[1].Equals("to")) {
 				if (tokens[2].Equals("front")) {
-					StopMoveHeadLeft();
+					AnimLogic->StartReleaseLookAnimation();
 				}
 				else {
-					TMap<FString, FHitResult> MyUniqueHits;
-					MyUniqueHits = ListObjects();
+
+					TArray<AActor*> FoundActors;
+					UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
+					bool bFound = false;
+
+					for (auto It = FoundActors.CreateIterator(); It; ++It) {
+						if ((*It)->GetName().Equals(tokens[2])) {
+							bFound = true;
+							AnimLogic->StartLookAnimation((*It)->GetActorLocation());
+							break;
+						}
+					}
 
 					// Verify list hasn't changed
-					if (MyUniqueHits.FindRef(tokens[2]).GetActor() == NULL) {
+					if (!bFound){
 						UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Object \"%s\" not found!"), *tokens[2]);
 						GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Object \"%s\" not found!"), *tokens[2]), true, FVector2D(1.7, 1.7));
-					}
-					else {
-						MoveHead(LookingRotationTo(MyUniqueHits.FindRef(tokens[2]).GetActor()->GetActorLocation()));
+						
 					}
 				}
 			}
@@ -1637,7 +1641,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 					target.Y = FCString::Atof(*tokens[3]);
 					target.Z = FCString::Atof(*tokens[4]);
 
-					MoveHead(LookingRotationTo(target));
+					AnimLogic->StartLookAnimation(target);
 				}
 				// No numeric vector
 				else {
@@ -2465,89 +2469,6 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 	 IKEnableTickDirection_r = -1;
  }
 
- void AIAIAvatarCharacter::StartMoveHeadUp() {
-	 check(CurrentAnimationInstance != nullptr);
-	 GoalHeadRotation = FRotator(0, 0, -30);
-	 IKEnableTickDirection_head = 1.0f;
- }
-
- void AIAIAvatarCharacter::StopMoveHeadUp() {
-	 check(CurrentAnimationInstance != nullptr);
-	 GoalHeadRotation = FRotator(0, 0, 0);
-	 IKEnableTickDirection_head = -1.0f;
- }
-
- void AIAIAvatarCharacter::StartMoveHeadDown() {
-	 check(CurrentAnimationInstance != nullptr);
-	 GoalHeadRotation = FRotator(0, 0, 30);
-	 IKEnableTickDirection_head = 1.0f;
- }
-
- void AIAIAvatarCharacter::StopMoveHeadDown() {
-	 check(CurrentAnimationInstance != nullptr);
-	 GoalHeadRotation = FRotator(0, 0, 0);
-	 IKEnableTickDirection_head = -1.0f;
- }
-
- void AIAIAvatarCharacter::StartMoveHeadLeft() {
-	 check(CurrentAnimationInstance != nullptr);
-	 GoalHeadRotation = FRotator(0, -30, 0);
-	 IKEnableTickDirection_head = 1.0f;
- }
-
- void AIAIAvatarCharacter::StopMoveHeadLeft() {
-	 check(CurrentAnimationInstance != nullptr);
-	 GoalHeadRotation = FRotator(0, 0, 0);
-	 IKEnableTickDirection_head = -1.0f;
- }
-
- void AIAIAvatarCharacter::StartMoveHeadRight() {
-	 check(CurrentAnimationInstance != nullptr);
-	 GoalHeadRotation = FRotator(0, 30, 0);
-	 IKEnableTickDirection_head = 1.0f;
- }
-
-
- void AIAIAvatarCharacter::StopMoveHeadRight() {
-	 check(CurrentAnimationInstance != nullptr);
-	 GoalHeadRotation = FRotator(0, 0, 0);
-	 IKEnableTickDirection_head = -1.0f;
- }
-
- void AIAIAvatarCharacter::MoveHead(FRotator rot) {
-	 check(CurrentAnimationInstance != nullptr);
-	 GoalHeadRotation = rot;
-	 IKEnableTickDirection_head = 1.0f;
- }
-
- FRotator AIAIAvatarCharacter::LookingRotationTo(FVector Point) {
-	 check(CurrentAnimationInstance != nullptr);
-
-	 UE_LOG(LogAvatarCharacter, Log, TEXT("Called 'look to %f %f %f' ."), Point.X, Point.Y, Point.Z);
-
-	 FRotator TempRotIn, TempRotOut;
-	 FVector TempVecIn, TempVecOut;
-	 FVector HeadLoc = GetMesh()->GetBoneLocation(TEXT("neck_01"), EBoneSpaces::WorldSpace);
-	 FVector DirVec = HeadLoc - Point;
-	 TempRotIn = DirVec.ToOrientationRotator();
-
-	 GetMesh()->TransformToBoneSpace("spine_03", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
-
-	 float temp = TempRotOut.Roll;
-	 TempRotOut.Roll = TempRotOut.Pitch;
-	 TempRotOut.Yaw += 90;
-	 TempRotOut.Pitch = 0; // = temp - 90; // Or = 0
-
-	 // Limit rotation so Avatar doesn't look wierd
-	 if (TempRotOut.Yaw > 35) {
-		 TempRotOut.Yaw = 35;
-	 }
-
-	 UE_LOG(LogAvatarCharacter, Log, TEXT("Rotator: %f %f %f' ."), TempRotOut.Roll, TempRotOut.Pitch, TempRotOut.Yaw);
-
-	 return TempRotOut;
- }
-
  void AIAIAvatarCharacter::SimpleMoveToTargetPoint() {
 	 UE_LOG(LogAvatarCharacter, Log, TEXT("AutoMove"));
 	 UNavigationSystem *NavigationSystem = FNavigationSystem::GetCurrent<UNavigationSystem>(GetWorld());
@@ -2668,13 +2589,6 @@ void AIAIAvatarCharacter::BeginPlay() {
 	 AnimationInstance->HipRotation    = HipRotation;
 	 AnimationInstance->HandRotation = HandRotation;
 	 AnimationInstance->RightHandRotation = RightHandRotation;
-
-	 HeadPIDController.P = 1.0f;
-	 HeadPIDController.I = 0.0f;
-	 HeadPIDController.D = 0.0f;
-	 HeadPIDController.MaxOutAbs = 2.f;
-
-	 HeadPIDController.Init();
 
 }
 
@@ -2816,49 +2730,6 @@ void AIAIAvatarCharacter::Tick(float DeltaTime) {
 	 if (IKEnableActive_r) {
 		 HandleIKEnablement_r(DeltaTime);
 	 }
-
-
-	 {
-		 FRotator CurrentHeadRotation = CurrentAnimationInstance->HeadRotation;
-
-		 if (IKEnableTickDirection_head == 1.0) {
-			 CurrentAnimationInstance->HeadRotationAlpha = 1;
-			 IKEnableTickDirection_head = 0.0f;
-		 }
-
-		 const FRotator HeadRotationError = GoalHeadRotation - CurrentHeadRotation;
-		 //UE_LOG(LogTemp, Error, TEXT("Rotation State. Anim %s , Current %s , Goal %s, Error: %s"),
-		 //	*CurrentAnimationInstance->HeadRotation.ToString(),
-		 //	*CurrentHeadRotation.ToString(),
-		 //	*GoalHeadRotation.ToString(),
-		 //	*HeadRotationError.ToString());
-
-
-		 // Convert to vector representation to comply with the PID Controller interface
-		 const FVector HeadRotationErrorVector(HeadRotationError.Pitch, HeadRotationError.Yaw, HeadRotationError.Roll);
-
-		 // Get the magnitude of the Vector and decide if we're close enough to the desired Head Pose
-		 if ( HeadRotationErrorVector.Size() <= HeadRotationErrorThreshold) {
-
-			 if (IKEnableTickDirection_head == -1.0f) {
-				 CurrentAnimationInstance->HeadRotationAlpha = 0;
-				 IKEnableTickDirection_head = 0.0f;
-			 }
-
-			 return;
-		 }
-
-		 //UE_LOG(LogAvatarCharacter, Log, TEXT("  Difference between current head and goal: %s = %f"), *(HeadRotationErrorVector.ToString()), HeadRotationErrorVector.Size());
-
-		 const FVector PIDOutputVector = HeadPIDController.Update(HeadRotationErrorVector, DeltaTime);
-		 //UE_LOG(LogAvatarCharacter, Log, TEXT("  PID Output is: %s"), *(PIDOutputVector.ToString()));
-
-		 const FRotator PIDOutputRotator = FRotator(PIDOutputVector.X, PIDOutputVector.Y, PIDOutputVector.Z);
-
-		 CurrentAnimationInstance->HeadRotation = PIDOutputRotator + CurrentHeadRotation;
-		 //UE_LOG(LogAvatarCharacter, Log, TEXT("  New Head Rotation shall be: %s"), *(CurrentAnimationInstance->HeadRotation.ToString()));
-	 }
-	
 }
 
 void AIAIAvatarCharacter::MoveForward(float Value)
