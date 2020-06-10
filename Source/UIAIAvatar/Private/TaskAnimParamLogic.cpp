@@ -838,9 +838,19 @@ FVector UTaskAnimParamLogic::CalculateReachBookLocation(AActor *Book, FName Tag,
 
 void UTaskAnimParamLogic::Calculate_PointBook_EndPose_Curves(float vPageLoc, float hPageLoc, FAvatarPose_t &EndPose, FCurvesSet_t &Curves) {
 	
-	FVector EndPoint = CalculateReachBookLocation(AnimParams.Object, *AnimParams.ActionContext, false);
-	EndPoint.Y = EndPoint.Y * vPageLoc;
-	EndPoint.X = EndPoint.X * hPageLoc;
+	FVector EndPoint;
+	FVector Origin;
+	FVector Extent;
+	FVector Scale;
+
+	Scale = AnimParams.Object->GetActorScale();
+	AnimParams.Object->GetActorBounds(true, Origin, Extent);
+	EndPoint.Z = 1;
+	EndPoint.X = Extent.Y/Scale.Y * vPageLoc;
+	EndPoint.Y = -Extent.X/Scale.X * hPageLoc;
+
+	UE_LOG(LogAvatarCharacter, Log, TEXT("Extent %s - %f %f"), *Extent.ToString(), vPageLoc, hPageLoc);
+	UE_LOG(LogAvatarCharacter, Log, TEXT("Scale %s"), *Scale.ToString());
 
 	// Relative to world
 	EndPoint = AnimParams.Object->GetActorTransform().TransformPosition(EndPoint);
@@ -868,7 +878,30 @@ void UTaskAnimParamLogic::Calculate_PointBook_EndPose_Curves(float vPageLoc, flo
 			EndPose.RH_FingerRots.pinky_01 = FRotator(-0, -90, -25);
 			EndPose.RH_FingerRots.pinky_02 = FRotator(-0, -60, -0);
 			EndPose.RH_FingerRots.pinky_03 = FRotator(-0, -60, -0);
+			
+		} 
+		else if (AnimParams.bUsingLeftHand) {
 
+			EndPose.LH_Rot = FRotator(-50, 90, -90);
+			EndPose.LH_FingerRots.thumb_01 = FRotator(-35, -20, 70);
+			EndPose.LH_FingerRots.thumb_02 = FRotator(0, -60, 0);
+			EndPose.LH_FingerRots.thumb_03 = FRotator(0, -23, 0);
+
+			EndPose.LH_FingerRots.index_01 = FRotator(0, -50, -12);
+			EndPose.LH_FingerRots.index_02 = FRotator(-0, -80, 0);
+			EndPose.LH_FingerRots.index_03 = FRotator(-0, -50, 0);
+
+			EndPose.LH_FingerRots.middle_01 = FRotator(0, -60, -10);
+			EndPose.LH_FingerRots.middle_02 = FRotator(-0, -70, 0);
+			EndPose.LH_FingerRots.middle_03 = FRotator(-0, -60, 0);
+
+			EndPose.LH_FingerRots.ring_01 = FRotator(-0, -70, -10);
+			EndPose.LH_FingerRots.ring_02 = FRotator(-0, -70, -0);
+			EndPose.LH_FingerRots.ring_03 = FRotator(-0, -60, -0);
+
+			EndPose.LH_FingerRots.pinky_01 = FRotator(-0, -90, -25);
+			EndPose.LH_FingerRots.pinky_02 = FRotator(-0, -60, -0);
+			EndPose.LH_FingerRots.pinky_03 = FRotator(-0, -60, -0);
 		}
 	}
 
@@ -881,7 +914,12 @@ void UTaskAnimParamLogic::Calculate_PointBook_EndPose_Curves(float vPageLoc, flo
 	// Spine
 	EndPose.Spine_01_Rot = CalculateSpineRot(Local, 80);
 
-	EndPose.RH_IndexLoc = EndPoint;
+	if (AnimParams.bUsingRightHand) {
+		EndPose.RH_IndexLoc = EndPoint;
+	}
+	else if (AnimParams.bUsingLeftHand) {
+		EndPose.LH_IndexLoc = EndPoint;
+	}
 
 	// Set corresponding curves
 	Curves.time = 1.25;
@@ -1047,8 +1085,8 @@ void UTaskAnimParamLogic::StartPassPageAnimChain(AActor *Target, bool bLast, FSt
 }
 
 // Start point book animation chain
-void UTaskAnimParamLogic::StartPointBookAnimChain(AActor *Target, FString Hand) {
-	
+void UTaskAnimParamLogic::StartReadNewspaperAnimChain(AActor *Target, FString Hand) {
+
 	FAvatarPose_t StartPose, EndPose, MultiplierPose;
 	FCurvesSet_t Curves;
 
@@ -1056,11 +1094,11 @@ void UTaskAnimParamLogic::StartPointBookAnimChain(AActor *Target, FString Hand) 
 	AnimParams.bUsingRightHand = false;
 	AnimParams.bUsingLeftHand = false;
 
-	pendingStates = 2;
+	pendingStates = 17;
 	SaveOriginalPose();
 	AnimParams.Object = Target;
 	AnimParams.ActionContext = "TurnPageBox"; // This is a hack to get a location where to point
-	AnimChain.BindUObject(this, &UTaskAnimParamLogic::RunPointBookAnimChain);
+	AnimChain.BindUObject(this, &UTaskAnimParamLogic::RunReadNewspaperAnimChain);
 	speedFactor = 1;
 
 	if (Hand.Equals("left") && !Avatar->isGrasped_l) {
@@ -1078,8 +1116,9 @@ void UTaskAnimParamLogic::StartPointBookAnimChain(AActor *Target, FString Hand) 
 
 	StartPose = GetCurrentAvatarPose();
 	EndPose = StartPose;
-
-	Calculate_PointBook_EndPose_Curves(0.5, 0, EndPose, Curves);
+	float page_start = 0;
+	if (AnimParams.bUsingLeftHand) page_start = -1;
+	Calculate_PointBook_EndPose_Curves(-0.35, page_start - 0.15, EndPose, Curves);
 
 	SetAnimParams(StartPose, EndPose, Curves);
 
@@ -1522,7 +1561,7 @@ void UTaskAnimParamLogic::RunPassPageAnimChain(int state) {
 }
 
 // Run point book animation chain
-void UTaskAnimParamLogic::RunPointBookAnimChain(int state) {
+void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 
 	FAvatarPose_t StartPose, EndPose, MultiplierPose;
 	FCurvesSet_t Curves;
@@ -1531,9 +1570,88 @@ void UTaskAnimParamLogic::RunPointBookAnimChain(int state) {
 	StartPose = GetCurrentAvatarPose();
 	EndPose = StartPose;
 
+	float page_start = 0;
+	if (AnimParams.bUsingLeftHand) page_start = -1;
+
+	// Section 1:	- Big paragraph Middle
+	if (pendingStates == 17) {
+		speedFactor = 0.03;
+		Calculate_PointBook_EndPose_Curves(0, page_start - 0.13, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}//				- Big paragraph End
+	if (pendingStates == 16) {
+		speedFactor = 0.03;
+		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.13, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}//				- Paragraph 2 Start
+	if (pendingStates == 15) {
+		speedFactor = 0.5;
+		Calculate_PointBook_EndPose_Curves(0, page_start - 0.29, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}//				- Paragraph 2 End
+	if (pendingStates == 14) {
+		speedFactor = 0.03;
+		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.29, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}//				- Paragraph 3 Start
+	if (pendingStates == 13) {
+		speedFactor = 0.5;
+		Calculate_PointBook_EndPose_Curves(0, page_start - 0.45, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}//				- Paragraph 3 End
+	if (pendingStates == 12) {
+		speedFactor = 0.03;
+		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.45, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}// Section 2:	- Paragraph 1 Start
+	if (pendingStates == 11) {
+		speedFactor = 0.5;
+		Calculate_PointBook_EndPose_Curves(0, page_start - 0.62, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}//				- Paragraph 1 End
+	if (pendingStates == 10) {
+		speedFactor = 0.03;
+		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.62, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}//				- Paragraph 2 Start
+	if (pendingStates == 9) {
+		speedFactor = 0.5;
+		Calculate_PointBook_EndPose_Curves(0, page_start - 0.77, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}//				- Paragraph 2 End
+	if (pendingStates == 8) {
+		speedFactor = 0.03;
+		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.77, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}// Section 3:	- Paragraph 1 Start
+	if (pendingStates == 7) {
+		speedFactor = 0.5;
+		Calculate_PointBook_EndPose_Curves(0.55, page_start - 0.13, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}//				- Paragraph 1 End
+	if (pendingStates == 6) {
+		speedFactor = 0.03;
+		Calculate_PointBook_EndPose_Curves(0.95, page_start - 0.13, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}//				- Paragraph 2 Start
+	if (pendingStates == 5) {
+		speedFactor = 0.5;
+		Calculate_PointBook_EndPose_Curves(0.5, page_start - 0.29, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}//				- Paragraph 2 End
+	if (pendingStates == 4) {
+		speedFactor = 0.03;
+		Calculate_PointBook_EndPose_Curves(0.95, page_start - 0.29, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}//				- Paragraph 3 Start
+	if (pendingStates == 3) {
+		speedFactor = 0.5;
+		Calculate_PointBook_EndPose_Curves(0.4, page_start - 0.45, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves);
+	}//				- Paragraph 3 End
 	if (pendingStates == 2) {
-		speedFactor = 0.3;
-		Calculate_PointBook_EndPose_Curves(0.8, 0, EndPose, Curves);
+		speedFactor = 0.03;
+		Calculate_PointBook_EndPose_Curves(0.95, page_start - 0.45, EndPose, Curves);
 		SetAnimParams(StartPose, EndPose, Curves);
 	}
 	else if (pendingStates == 1) {
@@ -1563,7 +1681,7 @@ void UTaskAnimParamLogic::RunPointBookAnimChain(int state) {
 		Curves.Head_Rot_Interpolation = DroppingAnimRotCurve_Head;
 		Curves.Spine_01_Rot_Interpolation = DroppingAnimRotCurve_Spine01;
 
-		SetAnimParams(StartPose, EndPose, Curves);
+		SetAnimParams(StartPose, EndPose, Curves, true);
 	}
 	pendingStates--;
 }
@@ -2644,7 +2762,7 @@ void UTaskAnimParamLogic::CallPointBookAnimChain(FString ObjectName) {
 	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
 	if (Object != NULL) {
 		if (Object->ActorHasTag("book")) {
-			StartPointBookAnimChain(Object);
+			StartReadNewspaperAnimChain(Object, "left");
 		}
 		else {
 			UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided as book."));

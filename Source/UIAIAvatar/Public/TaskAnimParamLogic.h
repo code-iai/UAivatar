@@ -403,8 +403,8 @@ public:
 
 	// ****** Setting Chain Animations ****** //
 
-	// Pointing Book
-	void StartPointBookAnimChain(AActor *Target, FString Hand = "right");
+	// Reading newspaper
+	void StartReadNewspaperAnimChain(AActor *Target, FString Hand = "right");
 
 	// Passing Page
 	void StartPassPageAnimChain(AActor *Target, bool bLast = false, FString Hand = "right");
@@ -424,7 +424,7 @@ public:
 	// ****** Running Chains ****** //
 
 	// Poiting Book
-	void RunPointBookAnimChain(int stage);
+	void RunReadNewspaperAnimChain(int stage);
 
 	// Passing Page
 	void RunPassPageAnimChain(int stage);

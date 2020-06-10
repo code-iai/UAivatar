@@ -1485,17 +1485,24 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 					AnimLogic->StartReleaseLookAnimation();
 				}
 				else {
-					TMap<FString, FHitResult> MyUniqueHits;
-					MyUniqueHits = ListObjects();
+
+					TArray<AActor*> FoundActors;
+					UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), FoundActors);
+					bool bFound = false;
+
+					for (auto It = FoundActors.CreateIterator(); It; ++It) {
+						if ((*It)->GetName().Equals(tokens[2])) {
+							bFound = true;
+							AnimLogic->StartLookAnimation((*It)->GetActorLocation());
+							break;
+						}
+					}
 
 					// Verify list hasn't changed
-					if (MyUniqueHits.FindRef(tokens[2]).GetActor() == NULL) {
+					if (!bFound){
 						UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Object \"%s\" not found!"), *tokens[2]);
 						GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Object \"%s\" not found!"), *tokens[2]), true, FVector2D(1.7, 1.7));
-					}
-					else {
-
-						AnimLogic->StartLookAnimation(MyUniqueHits.FindRef(tokens[2]).GetActor()->GetActorLocation());
+						
 					}
 				}
 			}
