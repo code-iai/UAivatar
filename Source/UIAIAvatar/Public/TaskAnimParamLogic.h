@@ -72,6 +72,7 @@ struct FCurvesSet_t {
 	UCurveFloat* LH_FingerRots_Interpolation;
 	UCurveVector* Head_Rot_Interpolation;
 	UCurveVector* Spine_01_Rot_Interpolation;
+	UCurveVector* Jaw_Rot_Interpolation;
 	float time;
 };
 
@@ -92,6 +93,7 @@ public:
 
 	FRotator Spine_01_Rot;
 	FRotator Head_Rot;
+	FRotator Jaw_Rot;
 };
 
 USTRUCT(BlueprintType)

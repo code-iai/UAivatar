@@ -760,7 +760,7 @@ FAvatarPose_t UTaskAnimParamLogic::GetCurrentAvatarPose() {
 
 	TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("jaw", EBoneSpaces::WorldSpace).Rotator();
 	Avatar->GetMesh()->TransformToBoneSpace("head", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
-	AnimParams.Jaw_Rot_Original = TempRotOut;
+	Pose.Jaw_Rot = TempRotOut;
 
 	Pose.RH_IndexLoc = Avatar->GetMesh()->GetBoneLocation("index_end_r", EBoneSpaces::WorldSpace);
 	Pose.LH_IndexLoc = Avatar->GetMesh()->GetBoneLocation("index_end_l", EBoneSpaces::WorldSpace);
@@ -915,6 +915,7 @@ void UTaskAnimParamLogic::Calculate_PointBook_EndPose_Curves(float vPageLoc, flo
 
 	// Head
 	EndPose.Head_Rot = CalculateHeadRot(EndPoint);
+	EndPose.Jaw_Rot = CalculateHeadRot(EndPoint); //works for now
 
 	// Relative to avatar
 	FVector Local = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
@@ -1128,7 +1129,6 @@ void UTaskAnimParamLogic::StartReadNewspaperAnimChain(AActor *Target, FString Ha
 	Calculate_PointBook_EndPose_Curves(-0.35, page_start - 0.15, EndPose, Curves);
 
 	SetAnimParams(StartPose, EndPose, Curves);
-
 }
 
 // Start grasping animation chain
@@ -1583,11 +1583,13 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 	if (pendingStates == 17) {
 		speedFactor = 0.03;
 		Calculate_PointBook_EndPose_Curves(0, page_start - 0.13, EndPose, Curves);
+		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Big paragraph End
 	if (pendingStates == 16) {
 		speedFactor = 0.03;
 		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.13, EndPose, Curves);
+		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 2 Start
 	if (pendingStates == 15) {
@@ -1598,6 +1600,7 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 	if (pendingStates == 14) {
 		speedFactor = 0.03;
 		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.29, EndPose, Curves);
+		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 3 Start
 	if (pendingStates == 13) {
@@ -1608,6 +1611,7 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 	if (pendingStates == 12) {
 		speedFactor = 0.03;
 		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.45, EndPose, Curves);
+		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}// Section 2:	- Paragraph 1 Start
 	if (pendingStates == 11) {
@@ -1618,6 +1622,7 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 	if (pendingStates == 10) {
 		speedFactor = 0.03;
 		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.62, EndPose, Curves);
+		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 2 Start
 	if (pendingStates == 9) {
@@ -1628,6 +1633,7 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 	if (pendingStates == 8) {
 		speedFactor = 0.03;
 		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.77, EndPose, Curves);
+		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}// Section 3:	- Paragraph 1 Start
 	if (pendingStates == 7) {
@@ -1638,6 +1644,7 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 	if (pendingStates == 6) {
 		speedFactor = 0.03;
 		Calculate_PointBook_EndPose_Curves(0.95, page_start - 0.13, EndPose, Curves);
+		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 2 Start
 	if (pendingStates == 5) {
@@ -1648,6 +1655,7 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 	if (pendingStates == 4) {
 		speedFactor = 0.03;
 		Calculate_PointBook_EndPose_Curves(0.95, page_start - 0.29, EndPose, Curves);
+		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 3 Start
 	if (pendingStates == 3) {
@@ -1658,6 +1666,7 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 	if (pendingStates == 2) {
 		speedFactor = 0.03;
 		Calculate_PointBook_EndPose_Curves(0.95, page_start - 0.45, EndPose, Curves);
+		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}
 	else if (pendingStates == 1) {
@@ -2032,6 +2041,7 @@ void UTaskAnimParamLogic::SetAnimParams(FAvatarPose_t StartPose, FAvatarPose_t E
 
 	MultiplierPose.Spine_01_Rot = EndPose.Spine_01_Rot - StartPose.Spine_01_Rot;
 	MultiplierPose.Head_Rot = EndPose.Head_Rot - StartPose.Head_Rot;
+	MultiplierPose.Jaw_Rot = EndPose.Jaw_Rot - StartPose.Jaw_Rot;
 
 	// Set AnimParams
 	if (!MultiplierPose.RH_Loc.IsZero()) {
@@ -2103,6 +2113,14 @@ void UTaskAnimParamLogic::SetAnimParams(FAvatarPose_t StartPose, FAvatarPose_t E
 		AnimParams.Head_Rot_Curve = Curves.Head_Rot_Interpolation;
 		AnimParams.bSet_Head_Rot = true;
 		if (bReleaseAlphas) AnimParams.bUnSet_Head_Rot = true;
+	}
+
+	if (!MultiplierPose.Jaw_Rot.IsZero()) {
+		AnimParams.Jaw_Rot_Offset = StartPose.Jaw_Rot;
+		AnimParams.Jaw_Rot_Multiplier = MultiplierPose.Jaw_Rot;
+		AnimParams.Jaw_Rot_Curve = Curves.Jaw_Rot_Interpolation;
+		AnimParams.bSet_Jaw_Rot = true;
+		if (bReleaseAlphas) AnimParams.bUnSet_Jaw_Rot = true;
 	}
 
 	AnimParams.animTime = Curves.time;
