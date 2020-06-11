@@ -458,7 +458,7 @@ public:
 	void CallPourAnimation(FString ObjectName);
 
 	// Poiting Book
-	void CallPointBookAnimChain(FString ObjectName);
+	void CallReadBookAnimChain(FString ObjectName, FString Page);
 
 	// Passing Page
 	void CallPassPageAnimChain(FString ObjectName);

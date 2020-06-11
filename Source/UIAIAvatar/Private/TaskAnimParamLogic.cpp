@@ -2718,11 +2718,11 @@ void UTaskAnimParamLogic::CallPourAnimation(FString ObjectName) {
 }
 
 // Poiting book
-void UTaskAnimParamLogic::CallPointBookAnimChain(FString ObjectName) {
+void UTaskAnimParamLogic::CallReadBookAnimChain(FString ObjectName, FString Page) {
 	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
 	if (Object != NULL) {
 		if (Object->ActorHasTag("book")) {
-			StartReadNewspaperAnimChain(Object, "left");
+			StartReadNewspaperAnimChain(Object, Page);
 		}
 		else {
 			UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided as book."));

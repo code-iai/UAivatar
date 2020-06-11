@@ -1451,8 +1451,8 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 				AnimLogic->CallCloseBookAnimChain(tokens[2]);
 			}
 			// Point Book
-			else if (tokens[0].Equals("point") && tokens[1].Equals("book")) {
-				AnimLogic->CallPointBookAnimChain(tokens[2]);
+			else if (tokens[0].Equals("read") && (tokens[1].Equals("left") || tokens[1].Equals("right"))) {
+				AnimLogic->CallReadBookAnimChain(tokens[2], tokens[1]);
 			}
 			// Interpolation off spine
 			else if	(tokens[0].Equals("interpolation") && tokens[1].Equals("off") && tokens[2].Equals("spine")) {
