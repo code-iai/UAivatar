@@ -915,7 +915,6 @@ void UTaskAnimParamLogic::Calculate_PointBook_EndPose_Curves(float vPageLoc, flo
 
 	// Head
 	EndPose.Head_Rot = CalculateHeadRot(EndPoint);
-	EndPose.Jaw_Rot = CalculateHeadRot(EndPoint); //works for now
 
 	// Relative to avatar
 	FVector Local = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
@@ -929,17 +928,6 @@ void UTaskAnimParamLogic::Calculate_PointBook_EndPose_Curves(float vPageLoc, flo
 	else if (AnimParams.bUsingLeftHand) {
 		EndPose.LH_IndexLoc = EndPoint;
 	}
-
-	// Set corresponding curves
-	Curves.time = 1.25;
-	Curves.RH_FingerRots_Interpolation = ReachingAnimRotCurve_Fingers;
-	Curves.LH_FingerRots_Interpolation = ReachingAnimRotCurve_Fingers;
-	Curves.RH_IndexLoc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.LH_IndexLoc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.RH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-	Curves.LH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-	Curves.Head_Rot_Interpolation = ReachingAnimRotCurve_Head;
-	Curves.Spine_01_Rot_Interpolation = ReachingAnimRotCurve_Spine01;
 }
 
 void UTaskAnimParamLogic::Calculate_PassPage_EndPose_Curves(FAvatarPose_t &EndPose, FCurvesSet_t &Curves) {
@@ -982,13 +970,7 @@ void UTaskAnimParamLogic::Calculate_PassPage_EndPose_Curves(FAvatarPose_t &EndPo
 	// 60   -150   120 
 	EndPose.RH_Rot = FRotator(0, -150, 90);
 
-	Curves.time = 2.5;
-	Curves.RH_Loc_Interpolation = PassingPageAnimLocCurve_Hand;
-	Curves.LH_Loc_Interpolation = PassingPageAnimLocCurve_Hand;
-	Curves.RH_Rot_Interpolation = PassingPageAnimRotCurve_Hand;
-	Curves.LH_Rot_Interpolation = PassingPageAnimRotCurve_Hand;
-	Curves.Head_Rot_Interpolation = ReachingAnimRotCurve_Head;
-	Curves.Spine_01_Rot_Interpolation = PassingPageAnimRotCurve_Spine01;
+	Curves = PassingPageCurves;
 
 }
 
@@ -1079,15 +1061,7 @@ void UTaskAnimParamLogic::StartPassPageAnimChain(AActor *Target, bool bLast, FSt
 	}
 
 	// Set corresponding curves
-	Curves.time = 1.25;
-	Curves.RH_FingerRots_Interpolation = ReachingAnimRotCurve_Fingers;
-	Curves.LH_FingerRots_Interpolation = ReachingAnimRotCurve_Fingers;
-	Curves.RH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.LH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.RH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-	Curves.LH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-	Curves.Head_Rot_Interpolation = ReachingAnimRotCurve_Head;
-	Curves.Spine_01_Rot_Interpolation = ReachingAnimRotCurve_Spine01;
+	Curves = ReachingCurves;
 
 	SetAnimParams(StartPose, EndPose, Curves);
 }
@@ -1126,7 +1100,10 @@ void UTaskAnimParamLogic::StartReadNewspaperAnimChain(AActor *Target, FString Ha
 	EndPose = StartPose;
 	float page_start = 0;
 	if (AnimParams.bUsingLeftHand) page_start = -1;
-	Calculate_PointBook_EndPose_Curves(-0.35, page_start - 0.15, EndPose, Curves);
+	Calculate_PointBook_EndPose_Curves(-0.35, page_start + 0.15, EndPose, Curves);
+
+	// Set corresponding curves
+	Curves = ReachingCurves;
 
 	SetAnimParams(StartPose, EndPose, Curves);
 }
@@ -1205,11 +1182,7 @@ void UTaskAnimParamLogic::StartGraspingAnimChain(AActor *Target, FString Hand, b
 	}
 
 	// Set corresponding curves
-	Curves.time = 1.25;
-	Curves.RH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.LH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.RH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-	Curves.LH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
+	Curves = ReachingCurves;
 
 	SetAnimParams(StartPose, EndPose, Curves);
 }
@@ -1339,13 +1312,7 @@ void UTaskAnimParamLogic::StartPlacingAnimChain(FString targetPlace, FString Han
 
 	// Set corresponding curves
 
-	Curves.time = 1.25;
-	Curves.RH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.LH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.RH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-	Curves.LH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-	Curves.Head_Rot_Interpolation = ReachingAnimRotCurve_Head;
-	Curves.Spine_01_Rot_Interpolation = ReachingAnimRotCurve_Spine01;
+	Curves = ReachingCurves;
 
 	SetAnimParams(StartPose, EndPose, Curves);
 }
@@ -1383,13 +1350,7 @@ void UTaskAnimParamLogic::StartFeedingAnimChain(ACharacter *Person) {
 	EndPose.RH_Loc = TargetLocation;
 
 	// Set corresponding curves
-	Curves.time = 1.25;
-	Curves.RH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.LH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.RH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-	Curves.LH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-	Curves.Head_Rot_Interpolation = ReachingAnimRotCurve_Head;
-	Curves.Spine_01_Rot_Interpolation = ReachingAnimRotCurve_Spine01;
+	Curves = ReachingCurves;
 
 	SetAnimParams(StartPose, EndPose, Curves);
 }
@@ -1500,15 +1461,7 @@ void UTaskAnimParamLogic::StartSlicingAnimChain(ObjectData_t ItemData, float sli
 	EndPose.LH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPose.LH_Loc);
 
 	// Set corresponding curves
-	Curves.time = 1.25;
-	Curves.RH_FingerRots_Interpolation = ReachingAnimRotCurve_Fingers;
-	Curves.LH_FingerRots_Interpolation = ReachingAnimRotCurve_Fingers;
-	Curves.RH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.LH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.RH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-	Curves.LH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-	Curves.Head_Rot_Interpolation = ReachingAnimRotCurve_Head;
-	Curves.Spine_01_Rot_Interpolation = ReachingAnimRotCurve_Spine01;
+	Curves = ReachingCurves;
 
 	SetAnimParams(StartPose, EndPose, Curves);
 }
@@ -1548,15 +1501,7 @@ void UTaskAnimParamLogic::RunPassPageAnimChain(int state) {
 			EndPose.LH_FingerRots = OriginalPose.LH_FingerRots;
 		}
 
-		Curves.time = 1.25;
-		Curves.RH_FingerRots_Interpolation = DroppingAnimRotCurve_Fingers;
-		Curves.LH_FingerRots_Interpolation = DroppingAnimRotCurve_Fingers;
-		Curves.RH_Loc_Interpolation = DroppingAnimLocCurve_Hand;
-		Curves.LH_Loc_Interpolation = DroppingAnimLocCurve_Hand;
-		Curves.RH_Rot_Interpolation = DroppingAnimRotCurve_Hand;
-		Curves.LH_Rot_Interpolation = DroppingAnimRotCurve_Hand;
-		Curves.Head_Rot_Interpolation = DroppingAnimRotCurve_Head;
-		Curves.Spine_01_Rot_Interpolation = DroppingAnimRotCurve_Spine01;
+		Curves = DroppingCurves;
 
 		SetAnimParams(StartPose, EndPose, Curves, true);
 
@@ -1581,92 +1526,108 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 
 	// Section 1:	- Big paragraph Middle
 	if (pendingStates == 17) {
-		speedFactor = 0.03;
-		Calculate_PointBook_EndPose_Curves(0, page_start - 0.13, EndPose, Curves);
-		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
+		speedFactor = 1;
+		Calculate_PointBook_EndPose_Curves(0, page_start + 0.13, EndPose, Curves);
+		EndPose.Jaw_Rot = FRotator(0, 150, 0);
+		Curves = ReadingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Big paragraph End
 	if (pendingStates == 16) {
-		speedFactor = 0.03;
-		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.13, EndPose, Curves);
-		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
+		speedFactor = 1;
+		Calculate_PointBook_EndPose_Curves(0.34, page_start + 0.13, EndPose, Curves);
+		EndPose.Jaw_Rot = FRotator(0, 150, 0);
+		Curves = ReadingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 2 Start
 	if (pendingStates == 15) {
 		speedFactor = 0.5;
-		Calculate_PointBook_EndPose_Curves(0, page_start - 0.29, EndPose, Curves);
+		Calculate_PointBook_EndPose_Curves(0, page_start + 0.29, EndPose, Curves);
+		Curves = ReachingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 2 End
 	if (pendingStates == 14) {
-		speedFactor = 0.03;
-		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.29, EndPose, Curves);
-		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
+		speedFactor = 1;
+		Calculate_PointBook_EndPose_Curves(0.34, page_start + 0.29, EndPose, Curves);
+		EndPose.Jaw_Rot = FRotator(0, 150, 0);
+		Curves = ReadingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 3 Start
 	if (pendingStates == 13) {
 		speedFactor = 0.5;
-		Calculate_PointBook_EndPose_Curves(0, page_start - 0.45, EndPose, Curves);
+		Calculate_PointBook_EndPose_Curves(0, page_start + 0.45, EndPose, Curves);
+		Curves = ReachingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 3 End
 	if (pendingStates == 12) {
-		speedFactor = 0.03;
-		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.45, EndPose, Curves);
-		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
+		speedFactor = 1;
+		Calculate_PointBook_EndPose_Curves(0.34, page_start + 0.45, EndPose, Curves);
+		EndPose.Jaw_Rot = FRotator(0, 150, 0);
+		Curves = ReadingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}// Section 2:	- Paragraph 1 Start
 	if (pendingStates == 11) {
 		speedFactor = 0.5;
-		Calculate_PointBook_EndPose_Curves(0, page_start - 0.62, EndPose, Curves);
+		Calculate_PointBook_EndPose_Curves(0, page_start + 0.62, EndPose, Curves);
+		Curves = ReachingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 1 End
 	if (pendingStates == 10) {
-		speedFactor = 0.03;
-		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.62, EndPose, Curves);
-		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
+		speedFactor = 1;
+		Calculate_PointBook_EndPose_Curves(0.34, page_start + 0.62, EndPose, Curves);
+		EndPose.Jaw_Rot = FRotator(0, 150, 0);
+		Curves = ReadingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 2 Start
 	if (pendingStates == 9) {
 		speedFactor = 0.5;
-		Calculate_PointBook_EndPose_Curves(0, page_start - 0.77, EndPose, Curves);
+		Calculate_PointBook_EndPose_Curves(0, page_start + 0.77, EndPose, Curves);
+		Curves = ReachingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 2 End
 	if (pendingStates == 8) {
-		speedFactor = 0.03;
-		Calculate_PointBook_EndPose_Curves(0.34, page_start - 0.77, EndPose, Curves);
-		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
+		speedFactor = 1;
+		Calculate_PointBook_EndPose_Curves(0.34, page_start + 0.77, EndPose, Curves);
+		EndPose.Jaw_Rot = FRotator(0, 150, 0);
+		Curves = ReadingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}// Section 3:	- Paragraph 1 Start
 	if (pendingStates == 7) {
 		speedFactor = 0.5;
-		Calculate_PointBook_EndPose_Curves(0.55, page_start - 0.13, EndPose, Curves);
+		Calculate_PointBook_EndPose_Curves(0.55, page_start + 0.13, EndPose, Curves);
+		Curves = ReachingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 1 End
 	if (pendingStates == 6) {
-		speedFactor = 0.03;
-		Calculate_PointBook_EndPose_Curves(0.95, page_start - 0.13, EndPose, Curves);
-		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
+		speedFactor = 1;
+		Calculate_PointBook_EndPose_Curves(0.95, page_start + 0.13, EndPose, Curves);
+		EndPose.Jaw_Rot = FRotator(0, 150, 0);
+		Curves = ReadingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 2 Start
 	if (pendingStates == 5) {
 		speedFactor = 0.5;
-		Calculate_PointBook_EndPose_Curves(0.5, page_start - 0.29, EndPose, Curves);
+		Calculate_PointBook_EndPose_Curves(0.5, page_start + 0.29, EndPose, Curves);
+		Curves = ReachingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 2 End
 	if (pendingStates == 4) {
-		speedFactor = 0.03;
-		Calculate_PointBook_EndPose_Curves(0.95, page_start - 0.29, EndPose, Curves);
-		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
+		speedFactor = 1;
+		Calculate_PointBook_EndPose_Curves(0.95, page_start + 0.29, EndPose, Curves);
+		EndPose.Jaw_Rot = FRotator(0, 150, 0);
+		Curves = ReadingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 3 Start
 	if (pendingStates == 3) {
 		speedFactor = 0.5;
-		Calculate_PointBook_EndPose_Curves(0.4, page_start - 0.45, EndPose, Curves);
+		Calculate_PointBook_EndPose_Curves(0.4, page_start + 0.45, EndPose, Curves);
+		Curves = ReachingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 3 End
 	if (pendingStates == 2) {
-		speedFactor = 0.03;
-		Calculate_PointBook_EndPose_Curves(0.95, page_start - 0.45, EndPose, Curves);
-		Curves.Jaw_Rot_Interpolation = TalkingAnimCurve_Jaw;
+		speedFactor = 1;
+		Calculate_PointBook_EndPose_Curves(0.95, page_start + 0.45, EndPose, Curves);
+		EndPose.Jaw_Rot = FRotator(0, 150, 0);
+		Curves = ReadingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}
 	else if (pendingStates == 1) {
@@ -1686,15 +1647,7 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 			EndPose.LH_FingerRots = OriginalPose.LH_FingerRots;
 		}
 
-		Curves.time = 1.25;
-		Curves.RH_FingerRots_Interpolation = DroppingAnimRotCurve_Fingers;
-		Curves.LH_FingerRots_Interpolation = DroppingAnimRotCurve_Fingers;
-		Curves.RH_IndexLoc_Interpolation = DroppingAnimLocCurve_Hand;
-		Curves.LH_IndexLoc_Interpolation = DroppingAnimLocCurve_Hand;
-		Curves.RH_Rot_Interpolation = DroppingAnimRotCurve_Hand;
-		Curves.LH_Rot_Interpolation = DroppingAnimRotCurve_Hand;
-		Curves.Head_Rot_Interpolation = DroppingAnimRotCurve_Head;
-		Curves.Spine_01_Rot_Interpolation = DroppingAnimRotCurve_Spine01;
+		Curves = DroppingCurves;
 
 		SetAnimParams(StartPose, EndPose, Curves, true);
 	}
@@ -1866,15 +1819,7 @@ void UTaskAnimParamLogic::RunGraspingAnimChain(int stage) {
 	}
 
 	// Set corresponding curves
-	Curves.time = 1.25;
-	Curves.RH_FingerRots_Interpolation = ReachingAnimRotCurve_Fingers;
-	Curves.LH_FingerRots_Interpolation = ReachingAnimRotCurve_Fingers;
-	Curves.RH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.LH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-	Curves.RH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-	Curves.LH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-	Curves.Head_Rot_Interpolation = ReachingAnimRotCurve_Head;
-	Curves.Spine_01_Rot_Interpolation = ReachingAnimRotCurve_Spine01;
+	Curves = ReachingCurves;
 
 	SetAnimParams(StartPose, EndPose, Curves);
 	pendingStates--;
@@ -1918,15 +1863,7 @@ void UTaskAnimParamLogic::RunPlacingAnimChain(int stage) {
 		}
 
 		// Set corresponding curves
-		Curves.time = 1.25;
-		Curves.RH_FingerRots_Interpolation = DroppingAnimRotCurve_Fingers;
-		Curves.LH_FingerRots_Interpolation = DroppingAnimRotCurve_Fingers;
-		Curves.RH_Loc_Interpolation = DroppingAnimLocCurve_Hand;
-		Curves.LH_Loc_Interpolation = DroppingAnimLocCurve_Hand;
-		Curves.RH_Rot_Interpolation = DroppingAnimRotCurve_Hand;
-		Curves.LH_Rot_Interpolation = DroppingAnimRotCurve_Hand;
-		Curves.Head_Rot_Interpolation = DroppingAnimRotCurve_Head;
-		Curves.Spine_01_Rot_Interpolation = DroppingAnimRotCurve_Spine01;
+		Curves = DroppingCurves;
 
 		SetAnimParams(StartPose, EndPose, Curves, true);
 	}
@@ -1967,12 +1904,7 @@ void UTaskAnimParamLogic::RunFeedingAnimChain(int stage) {
 		EndPose.Spine_01_Rot = FRotator(0, 0, 0);
 
 		// Set corresponding curves
-		Curves.time = 1.25;
-		Curves.RH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-		Curves.LH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-		Curves.RH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-		Curves.LH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-		Curves.Spine_01_Rot_Interpolation = ReachingAnimRotCurve_Spine01;
+		Curves = ReachingCurves;
 
 		SetAnimParams(StartPose, EndPose, Curves);
 	}
@@ -2002,15 +1934,7 @@ void UTaskAnimParamLogic::RunSlicingAnimChain(int stage) {
 		EndPose.LH_Loc = FVector(15, 15, 100);
 		EndPose.RH_Loc = FVector(-15, 15, 100);
 
-		Curves.time = 1.25;
-		Curves.RH_FingerRots_Interpolation = ReachingAnimRotCurve_Fingers;
-		Curves.LH_FingerRots_Interpolation = ReachingAnimRotCurve_Fingers;
-		Curves.RH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-		Curves.LH_Loc_Interpolation = ReachingAnimLocCurve_Hand;
-		Curves.RH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-		Curves.LH_Rot_Interpolation = ReachingAnimRotCurve_Hand;
-		Curves.Head_Rot_Interpolation = ReachingAnimRotCurve_Head;
-		Curves.Spine_01_Rot_Interpolation = ReachingAnimRotCurve_Spine01;
+		Curves = ReachingCurves;
 
 		SetAnimParams(StartPose, EndPose, Curves);
 		speedFactor = 1;
@@ -2160,11 +2084,11 @@ void UTaskAnimParamLogic::StartCutAnimation(ObjectData_t &ItemData) {
 	if (ItemData.Object->ActorHasTag("Bread")) {
 
 		// Skill
-		AnimParams.RH_Loc_Curve = CuttingBreadAnimCurve;
-		AnimParams.RH_Rot_Curve = CuttingBreadAnimRotCurve;
-		AnimParams.LH_Loc_Curve = CuttingBreadAnimCurve_LH;
-		AnimParams.LH_Rot_Curve = CuttingBreadAnimRotCurve_LH;
-		AnimParams.Spine_01_Rot_Curve = CuttingBreadAnimRotCurve_Spine01;
+		AnimParams.RH_Loc_Curve = CuttingBreadCurves.RH_Loc_Interpolation;
+		AnimParams.RH_Rot_Curve = CuttingBreadCurves.RH_Rot_Interpolation;
+		AnimParams.LH_Loc_Curve = CuttingBreadCurves.LH_Loc_Interpolation;
+		AnimParams.LH_Rot_Curve = CuttingBreadCurves.LH_Rot_Interpolation;
+		AnimParams.Spine_01_Rot_Curve = CuttingBreadCurves.Spine_01_Rot_Interpolation;
 
 		AnimParams.RH_Loc_Table = new DataTableHandler(
 			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/RH_Curve.csv"));
@@ -2191,8 +2115,8 @@ void UTaskAnimParamLogic::StartCutAnimation(ObjectData_t &ItemData) {
 	else if (ItemData.Object->ActorHasTag("Steak")) {
 
 		// Skill
-		AnimParams.RH_Loc_Curve = CuttingSteakAnimCurve;
-		AnimParams.RH_Rot_Curve = CuttingSteakAnimRotCurve;
+		AnimParams.RH_Loc_Curve = CuttingSteakCurves.RH_Loc_Interpolation;
+		AnimParams.RH_Rot_Curve = CuttingSteakCurves.RH_Rot_Interpolation;
 		AnimParams.animTime = 2;
 		sliceWidth = 1;
 
@@ -2208,8 +2132,8 @@ void UTaskAnimParamLogic::StartCutAnimation(ObjectData_t &ItemData) {
 	else if (ItemData.Object->ActorHasTag("Zucchini")) {
 
 		// Skill
-		AnimParams.RH_Loc_Curve = CuttingZucchiniAnimCurve;
-		AnimParams.RH_Rot_Curve = CuttingZucchiniAnimRotCurve;
+		AnimParams.RH_Loc_Curve = CuttingZucchiniCurves.RH_Loc_Interpolation;
+		AnimParams.RH_Rot_Curve = CuttingZucchiniCurves.RH_Rot_Interpolation;
 		AnimParams.animTime = 1.6;
 		sliceWidth = 1;
 
@@ -2371,19 +2295,19 @@ void UTaskAnimParamLogic::StartForkAnimation(AActor* Target) {
 	// Parameters
 	AnimParams.RH_Loc_Offset = LocStartPoint;
 	AnimParams.RH_Loc_Multiplier = LocMultiplier;
-	AnimParams.RH_Loc_Curve = ForkingAnimCurve;
+	AnimParams.RH_Loc_Curve = ForkingCurves.RH_Loc_Interpolation;
 
 	AnimParams.RH_Rot_Offset = RotStartPoint;
 	AnimParams.RH_Rot_Multiplier = RotMultiplier;
-	AnimParams.RH_Rot_Curve = ForkingAnimRotCurve;
+	AnimParams.RH_Rot_Curve = ForkingCurves.RH_Rot_Interpolation;
 
 	AnimParams.Spine_01_Rot_Offset = SpineRotStartPoint;
 	AnimParams.Spine_01_Rot_Multiplier = SpineRotMultiplier;
-	AnimParams.Spine_01_Rot_Curve = ForkingAnimSpineRotCurve;
+	AnimParams.Spine_01_Rot_Curve = ForkingCurves.Spine_01_Rot_Interpolation;
 
 	AnimParams.Head_Rot_Offset = HeadRotStartPoint;
 	AnimParams.Head_Rot_Multiplier = HeadRotMultiplier;
-	AnimParams.Head_Rot_Curve = ForkingAnimRotCurve_Head;
+	AnimParams.Head_Rot_Curve = ForkingCurves.Head_Rot_Interpolation;
 
 	AnimParams.animTime = 4.5;
 
@@ -2427,8 +2351,8 @@ void UTaskAnimParamLogic::StartSpoonAnimation(AActor* Target) {
 	AnimParams.RH_Loc_Multiplier = Multiplier;
 
 	// Skill
-	AnimParams.RH_Loc_Curve = SpooningSoupAnimCurve;
-	AnimParams.RH_Rot_Curve = SpooningSoupAnimRotCurve;
+	AnimParams.RH_Loc_Curve = SpooningSoupCurves.RH_Loc_Interpolation;
+	AnimParams.RH_Rot_Curve = SpooningSoupCurves.RH_Rot_Interpolation ;
 
 	AnimParams.animTime = 5;
 
@@ -2468,8 +2392,8 @@ void UTaskAnimParamLogic::StartPourAnimation(AActor* Target) {
 	AnimParams.RH_Loc_Multiplier = Multiplier;
 
 	// Skill
-	AnimParams.RH_Loc_Curve = PouringAnimCurve;
-	AnimParams.RH_Rot_Curve = PouringAnimRotCurve;
+	AnimParams.RH_Loc_Curve = PouringCurves.RH_Loc_Interpolation;
+	AnimParams.RH_Rot_Curve = PouringCurves.RH_Rot_Interpolation;
 
 	AnimParams.animTime = 9;
 
@@ -2503,7 +2427,7 @@ void UTaskAnimParamLogic::StartLookAnimation(FVector Point) {
 	EndPose.Head_Rot = CalculateHeadRot(Point);
 
 	Curves.time = 1.25;
-	Curves.Head_Rot_Interpolation = ReachingAnimRotCurve_Head;
+	Curves.Head_Rot_Interpolation = ReachingCurves.Head_Rot_Interpolation;
 
 	SetAnimParams(StartPose, EndPose, Curves);
 }
@@ -2524,7 +2448,7 @@ void UTaskAnimParamLogic::StartReleaseLookAnimation() {
 	EndPose.Head_Rot = FRotator(0,0,0);
 
 	Curves.time = 1.25;
-	Curves.Head_Rot_Interpolation = ReachingAnimRotCurve_Head;
+	Curves.Head_Rot_Interpolation = ReachingCurves.Head_Rot_Interpolation;
 
 	SetAnimParams(StartPose, EndPose, Curves, true);
 }
@@ -2918,35 +2842,35 @@ void UTaskAnimParamLogic::WriteCSV(float time) {
 		UE_LOG(LogAvatarCharacter, Error, TEXT("Time: %f"), time);
 
 		FMyDataTable Row;
-		FVector ToBeChangeVector = CuttingBreadAnimCurve->GetVectorValue(time);
+		FVector ToBeChangeVector = CuttingBreadCurves.RH_Loc_Interpolation->GetVectorValue(time);
 		Row.X = ToBeChangeVector.X;
 		Row.Y = ToBeChangeVector.Y;
 		Row.Z = ToBeChangeVector.Z;
 
 		RH_Table->AddRow(FName(*FString::SanitizeFloat(time)), Row);
 
-		ToBeChangeVector = CuttingBreadAnimRotCurve->GetVectorValue(time);
+		ToBeChangeVector = CuttingBreadCurves.RH_Rot_Interpolation->GetVectorValue(time);
 		Row.X = ToBeChangeVector.X;
 		Row.Y = ToBeChangeVector.Y;
 		Row.Z = ToBeChangeVector.Z;
 
 		RH_Rot_Table->AddRow(FName(*FString::SanitizeFloat(time)), Row);
 
-		ToBeChangeVector = CuttingBreadAnimCurve_LH->GetVectorValue(time);
+		ToBeChangeVector = CuttingBreadCurves.LH_Loc_Interpolation->GetVectorValue(time);
 		Row.X = ToBeChangeVector.X;
 		Row.Y = ToBeChangeVector.Y;
 		Row.Z = ToBeChangeVector.Z;
 
 		LH_Table->AddRow(FName(*FString::SanitizeFloat(time)), Row);
 
-		ToBeChangeVector = CuttingBreadAnimRotCurve_LH->GetVectorValue(time);
+		ToBeChangeVector = CuttingBreadCurves.LH_Rot_Interpolation->GetVectorValue(time);
 		Row.X = ToBeChangeVector.X;
 		Row.Y = ToBeChangeVector.Y;
 		Row.Z = ToBeChangeVector.Z;
 
 		LH_Rot_Table->AddRow(FName(*FString::SanitizeFloat(time)), Row);
 
-		ToBeChangeVector = CuttingBreadAnimRotCurve_Spine01->GetVectorValue(time);
+		ToBeChangeVector = CuttingBreadCurves.Spine_01_Rot_Interpolation->GetVectorValue(time);
 		Row.X = ToBeChangeVector.X;
 		Row.Y = ToBeChangeVector.Y;
 		Row.Z = ToBeChangeVector.Z;

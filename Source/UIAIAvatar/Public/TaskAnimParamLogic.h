@@ -61,19 +61,34 @@ public:
 	FVector Extent;
 };
 
+USTRUCT(Blueprintable)
 struct FCurvesSet_t {
-	UCurveVector* RH_Loc_Interpolation;
-	UCurveVector* LH_Loc_Interpolation;
-	UCurveVector* RH_Rot_Interpolation;
-	UCurveVector* LH_Rot_Interpolation;
-	UCurveVector* RH_IndexLoc_Interpolation;
-	UCurveVector* LH_IndexLoc_Interpolation;
-	UCurveFloat* RH_FingerRots_Interpolation;
-	UCurveFloat* LH_FingerRots_Interpolation;
-	UCurveVector* Head_Rot_Interpolation;
-	UCurveVector* Spine_01_Rot_Interpolation;
-	UCurveVector* Jaw_Rot_Interpolation;
-	float time;
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		UCurveVector* RH_Loc_Interpolation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		UCurveVector* LH_Loc_Interpolation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		UCurveVector* RH_Rot_Interpolation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		UCurveVector* LH_Rot_Interpolation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		UCurveVector* RH_IndexLoc_Interpolation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		UCurveVector* LH_IndexLoc_Interpolation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		UCurveFloat* RH_FingerRots_Interpolation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		UCurveFloat* LH_FingerRots_Interpolation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		UCurveVector* Head_Rot_Interpolation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		UCurveVector* Spine_01_Rot_Interpolation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		UCurveVector* Jaw_Rot_Interpolation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		float time;
 };
 
 struct FAvatarPose_t
@@ -234,101 +249,35 @@ public:
 	// Sets default values for this component's properties
 	UTaskAnimParamLogic();
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-        UCurveVector* TalkingAnimCurve_Jaw;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		FCurvesSet_t ReadingCurves;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* CuttingBreadAnimCurve;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		FCurvesSet_t CuttingBreadCurves;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* CuttingBreadAnimRotCurve;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		FCurvesSet_t CuttingSteakCurves;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* CuttingBreadAnimCurve_LH;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		FCurvesSet_t CuttingZucchiniCurves;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* CuttingBreadAnimRotCurve_LH;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		FCurvesSet_t SpooningSoupCurves;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* CuttingBreadAnimRotCurve_Spine01;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		FCurvesSet_t ForkingCurves;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* CuttingSteakAnimCurve;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		FCurvesSet_t PouringCurves;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* CuttingSteakAnimRotCurve;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		FCurvesSet_t PassingPageCurves;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* CuttingZucchiniAnimCurve;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		FCurvesSet_t ReachingCurves;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* CuttingZucchiniAnimRotCurve;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* SpooningSoupAnimCurve;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* SpooningSoupAnimRotCurve;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* ForkingAnimCurve;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* ForkingAnimRotCurve;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* ForkingAnimSpineRotCurve;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* ForkingAnimRotCurve_Head;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* PouringAnimCurve;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* PouringAnimRotCurve;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* PassingPageAnimLocCurve_Hand;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* PassingPageAnimRotCurve_Hand;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveFloat* PassingPageAnimRotCurve_Fingers;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* PassingPageAnimRotCurve_Spine01;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* ReachingAnimLocCurve_Hand;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* ReachingAnimRotCurve_Hand;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveFloat* ReachingAnimRotCurve_Fingers;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* ReachingAnimRotCurve_Head;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* ReachingAnimRotCurve_Spine01;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* DroppingAnimLocCurve_Hand;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* DroppingAnimRotCurve_Hand;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveFloat* DroppingAnimRotCurve_Fingers;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* DroppingAnimRotCurve_Head;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
-		UCurveVector* DroppingAnimRotCurve_Spine01;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = InterpolationCurves)
+		FCurvesSet_t DroppingCurves;
 
 	// This tables are intended for the use of real human motion curves
 	UDataTable *RH_Table;
