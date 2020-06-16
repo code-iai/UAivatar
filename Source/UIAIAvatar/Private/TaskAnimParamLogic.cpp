@@ -260,63 +260,61 @@ AActor* UTaskAnimParamLogic::PickOneObject(TArray<AActor*> Cuttables) {
 }
 
 // Check if item is in good position for cutting
-bool UTaskAnimParamLogic::isInGoodAlignment(ObjectData_t &ItemData) {
+bool UTaskAnimParamLogic::isInGoodAlignment() {
 
-	AActor* Item = ItemData.Object;
 	FRotator OriginalRot;
 	FVector ShortestAxis;
 	float shortestAxisLength;
-	float smallestAngleToVec = 90;
 	float tempAngle;
 
 	// Save Original rotation
-	ItemData.OriginalRotation = Item->GetActorRotation();
+	OriginalRot = Obj2BCut.Object->GetActorRotation();
 	// The bounding box is the best dimensional ground data
 // Temporaly align bounding box to mesh				// we can get with no vision.
-	Item->SetActorRotation(FRotator(0, 0, 0));          // But it's aligned to world's axes, not Item's axes. 
+	Obj2BCut.Object->SetActorRotation(FRotator(0, 0, 0));          // But it's aligned to world's axes, not Item's axes. 
 														// Note: This work under the assumption that the actual
 	// Get origin and extension							// mesh is properly aligned to Item's axes. 
-	Item->GetActorBounds(false, ItemData.Origin, ItemData.Extent);
+	Obj2BCut.Object->GetActorBounds(false, Obj2BCut.Origin, Obj2BCut.Extent);
 
 	// Set original rotation
-	Item->SetActorRotation(ItemData.OriginalRotation);
+	Obj2BCut.Object->SetActorRotation(OriginalRot);
 
 	// Check height
-	if (ItemData.Extent.Z > 40) {
-		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: height %f is way too high for cutting. Minimun is 80."), 2 * ItemData.Extent.Z);
+	if (Obj2BCut.Extent.Z > 40) {
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: height %f is way too high for cutting. Minimun is 80."), 2 * Obj2BCut.Extent.Z);
 		return false;
 	}
 
 	// Find shortest axis in the XY plane
-	if (ItemData.Extent.X < ItemData.Extent.Y) {
+	if (Obj2BCut.Extent.X < Obj2BCut.Extent.Y) {
 		ShortestAxis = FVector(1, 0, 0);
-		shortestAxisLength = ItemData.Extent.X;
+		shortestAxisLength = Obj2BCut.Extent.X;
 	}
 	else {
 		ShortestAxis = FVector(0, 1, 0);
-		shortestAxisLength = ItemData.Extent.Y;
+		shortestAxisLength = Obj2BCut.Extent.Y;
 	}
 
 	// Check width
 	if (shortestAxisLength > 10) {
-		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: width %f is too high for cutting. Minimun is 20."), 2 * ItemData.Extent.Z);
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: width %f is too wide for cutting. Maximun is 20."), 2 * Obj2BCut.Extent.Z);
 		return false;
 	}
 
 	// Rotate shortest axis according to actor rotation
-	ShortestAxis = ItemData.OriginalRotation.RotateVector(ShortestAxis);
+	ShortestAxis = OriginalRot.RotateVector(ShortestAxis);
 
 	// Idealy the shortest axis should be aligned to Avatar's forward vector.
 	FRotator A = ShortestAxis.ToOrientationRotator();
 	FRotator B = Avatar->GetActorForwardVector().ToOrientationRotator();
 	tempAngle = A.Yaw - B.Yaw;
-	if ((tempAngle > -6 && tempAngle < 6) ||
+	if ((tempAngle > -10 && tempAngle < 10) ||
 		(tempAngle > 354 && tempAngle < 366) ||
 		(tempAngle > -366 && tempAngle < -354) ||
 		(tempAngle > -186 && tempAngle < -174) ||
-		(tempAngle > 174 && tempAngle < 186)
+		(tempAngle > 170 && tempAngle < 190)
 		) {
-		ItemData.angle = tempAngle;
+		Obj2BCut.angle = tempAngle;
 	}
 	else {
 		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: The angle of %f between Item's short axis and the Avatar is too high for cutting. Good angle is 0° with ±6°. %f"), tempAngle);
@@ -334,7 +332,6 @@ void UTaskAnimParamLogic::AttachObject() {
 	FVector  NewObjLocation = FVector(0, 0, 0);
 	FRotator NewObjRotation = FRotator(0, 0, 0);
 	UStaticMeshComponent *ObjectMesh;
-	FFingerRots_t NewFingerRots;
 	FName    socket;
 	bool keepWorldRot = false;
 	bool keepWorldLoc = false;
@@ -344,9 +341,6 @@ void UTaskAnimParamLogic::AttachObject() {
 		EAttachmentRule::SnapToTarget,
 		EAttachmentRule::KeepWorld,
 		true);
-
-	// Default Fingers' Rotations
-	NewFingerRots = GetCurrentFingersRots(AnimParams.bUsingRightHand);
 
 	// Get Animation
 	UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(Avatar->GetMesh()->GetAnimInstance());
@@ -377,7 +371,7 @@ void UTaskAnimParamLogic::AttachObject() {
 	else if (AnimParams.Object->ActorHasTag(TEXT("BreadKnife"))) {		// ********** Bread Knife *********
 
 		// Object Location
-		NewObjLocation = FVector(-2, 2, 9);
+		NewObjLocation = FVector(-3.76, 2.27, 9.46);
 
 		// Object Rotation
 		if (AnimParams.bUsingRightHand) {
@@ -630,6 +624,147 @@ void UTaskAnimParamLogic::UnSetJointAlphas() {
 		Animation->HeadRotationAlpha = 0;
 	if (AnimParams.bUnSet_Jaw_Rot)
 		Animation->JawRotationAlpha = 0;
+}
+
+void UTaskAnimParamLogic::SetGraspingObjPose(FAvatarPose_t &Pose) {
+
+	FVector RH_LocEndPoint_Adjustment = FVector(0, 0, 0);
+	FVector LH_LocEndPoint_Adjustment = FVector(0, 0, 0);
+
+	if (AnimParams.Object->ActorHasTag("DinnerFork")) {
+		if (AnimParams.bUsingRightHand) {
+			Pose.RH_Rot = FRotator(30, -90, 90);
+			RH_LocEndPoint_Adjustment = FVector(0, 0, 5);
+
+			// Finger's Rotations
+			// Thumb
+			Pose.RH_FingerRots.thumb_01 = FRotator(-34, -20, 71);
+			Pose.RH_FingerRots.thumb_02 = FRotator(0, -46, 0);
+			Pose.RH_FingerRots.thumb_03 = FRotator(0, -23, 0);
+			// Index
+			Pose.RH_FingerRots.index_01 = FRotator(0, -50, -12);
+			Pose.RH_FingerRots.index_02 = FRotator(0, -62, 0);
+			Pose.RH_FingerRots.index_03 = FRotator(0, -50, 0);
+			// Middle
+			Pose.RH_FingerRots.middle_01 = FRotator(0, -60, -10);
+			Pose.RH_FingerRots.middle_02 = FRotator(0, -70, 0);
+			Pose.RH_FingerRots.middle_03 = FRotator(0, -60, 0);
+			// Ring
+			Pose.RH_FingerRots.ring_01 = FRotator(0, -70, -10);
+			Pose.RH_FingerRots.ring_02 = FRotator(0, -70, 0);
+			Pose.RH_FingerRots.ring_03 = FRotator(0, -60, 0);
+			// Pinky
+			Pose.RH_FingerRots.pinky_01 = FRotator(0, -90, -25);
+			Pose.RH_FingerRots.pinky_02 = FRotator(0, -60, 0);
+			Pose.RH_FingerRots.pinky_03 = FRotator(0, -60, 0);
+		}
+	}
+	else if (AnimParams.Object->ActorHasTag("Plate")) {
+		if (AnimParams.bUsingRightHand) {
+			Pose.RH_Rot = FRotator(45, -135, -45);
+			RH_LocEndPoint_Adjustment = FVector(-15, -2.727218, 4.5);
+
+			Pose.RH_FingerRots.thumb_01 = FRotator(10, -15, 130);
+			Pose.RH_FingerRots.index_01 = FRotator(0, -35, -12);
+			Pose.RH_FingerRots.middle_01 = FRotator(0, -45, -10);
+			Pose.RH_FingerRots.ring_01 = FRotator(0, -55, -10);
+			Pose.RH_FingerRots.pinky_01 = FRotator(0, -60, -25);
+
+			Pose.RH_FingerRots.thumb_02 = FRotator(0, 0, 0);
+			Pose.RH_FingerRots.index_02 = FRotator(0, -20, 0);
+			Pose.RH_FingerRots.middle_02 = FRotator(0, -15, 0);
+			Pose.RH_FingerRots.ring_02 = FRotator(0, -10, 0);
+			Pose.RH_FingerRots.pinky_02 = FRotator(0, -10, 0);
+
+			Pose.RH_FingerRots.thumb_03 = FRotator(0, 0, 0);
+			Pose.RH_FingerRots.index_03 = FRotator(0, -10, 0);
+			Pose.RH_FingerRots.middle_03 = FRotator(0, -10, 0);
+			Pose.RH_FingerRots.ring_03 = FRotator(0, -5, 0);
+			Pose.RH_FingerRots.pinky_03 = FRotator(0, -10, 0);
+		}
+	}
+	else if (AnimParams.Object->ActorHasTag("BreadKnife")) {
+		if (AnimParams.bUsingRightHand) {
+			Pose.RH_Rot = FRotator(10, -30, 90);
+			RH_LocEndPoint_Adjustment = FVector(5, -13, 5);
+
+			// Fingers' Rotations
+			// Thumb
+			Pose.RH_FingerRots.thumb_01 = FRotator(-45, -48, 90);
+			Pose.RH_FingerRots.thumb_02 = FRotator(25, -55, 0);
+			Pose.RH_FingerRots.thumb_03 = FRotator(0, -45, 0);
+			// Index
+			Pose.RH_FingerRots.index_01 = FRotator(-3, -80, 0);
+			Pose.RH_FingerRots.index_02 = FRotator(0, -90, 0);
+			Pose.RH_FingerRots.index_03 = FRotator(0, -45, 0);
+			// Middle
+			Pose.RH_FingerRots.middle_01 = FRotator(0, -90, 0);
+			Pose.RH_FingerRots.middle_02 = FRotator(0, -90, 0);
+			Pose.RH_FingerRots.middle_03 = FRotator(0, -45, 0);
+			// Ring
+			Pose.RH_FingerRots.ring_01 = FRotator(3, -90, 0);
+			Pose.RH_FingerRots.ring_02 = FRotator(0, -90, 0);
+			Pose.RH_FingerRots.ring_03 = FRotator(0, -45, 0);
+			// Pinky
+			Pose.RH_FingerRots.pinky_01 = FRotator(5, -100, 0);
+			Pose.RH_FingerRots.pinky_02 = FRotator(0, -80, 10);
+			Pose.RH_FingerRots.pinky_03 = FRotator(0, -45, 0);
+		}
+	}
+
+	FVector ObjectLoc = AnimParams.Object->GetActorLocation();
+	Pose.Head_Rot = CalculateHeadRot(ObjectLoc);
+
+	if (AnimParams.bUsingLeftHand) {
+		Pose.LH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(ObjectLoc);
+		Pose.LH_Loc += LH_LocEndPoint_Adjustment;
+		Pose.Spine_01_Rot = CalculateSpineRot(Pose.LH_Loc, 65);
+	}
+	if (AnimParams.bUsingRightHand) {
+		Pose.RH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(ObjectLoc);
+		Pose.RH_Loc += RH_LocEndPoint_Adjustment;
+		Pose.Spine_01_Rot = CalculateSpineRot(Pose.RH_Loc, 65);
+	}
+}
+
+void UTaskAnimParamLogic::SetHoldingObjPose(FAvatarPose_t &Pose) {
+
+	if (AnimParams.Object->ActorHasTag("BreadKnife")) {
+		if (AnimParams.bUsingRightHand) {
+			Pose.RH_Rot = FRotator(75, -145, 35);
+			Pose.RH_Loc = FVector(-15, 15, 100);
+		}
+	}
+	else if (AnimParams.Object->ActorHasTag("DinnerFork")) {
+		if (AnimParams.bUsingRightHand) {
+			Pose.RH_Rot = FRotator(9, -100, -25);
+			Pose.RH_Loc = FVector(-15, 15, 100);
+		}
+	}
+	else if (AnimParams.Object->ActorHasTag("Plate")) {
+		if (AnimParams.bUsingRightHand) {
+			Pose.RH_Loc = FVector(-15, 20, 100);
+		}
+	}
+	else {
+		if (AnimParams.bUsingRightHand) {
+			Pose.RH_Loc = FVector(-15, 15, 100);
+			Pose.RH_Rot = FRotator(45, -110, 60);
+		}
+		if (AnimParams.bUsingLeftHand) {
+			Pose.RH_Loc = FVector(15, 15, 100);
+			Pose.RH_Rot = FRotator(45, -110, 60);
+		}
+	}
+
+	if (AnimParams.bUsingLeftHand) {
+		Pose.Spine_01_Rot = CalculateSpineRot(Pose.LH_Loc, 65);
+	}
+	if (AnimParams.bUsingRightHand) {
+		Pose.Spine_01_Rot = CalculateSpineRot(Pose.RH_Loc, 65);
+	}
+
+	Pose.Head_Rot = FRotator(0, 0, 0);
 }
 
 void UTaskAnimParamLogic::SaveOriginalPose() {
@@ -1109,7 +1244,7 @@ void UTaskAnimParamLogic::StartReadNewspaperAnimChain(AActor *Target, FString Ha
 }
 
 // Start grasping animation chain
-void UTaskAnimParamLogic::StartGraspingAnimChain(AActor *Target, FString Hand, bool bHold) {
+void UTaskAnimParamLogic::StartGraspingAnimChain(AActor *Target, FString Hand) {
 
 	FAvatarPose_t StartPose, EndPose, MultiplierPose;
 	FCurvesSet_t Curves;
@@ -1169,6 +1304,9 @@ void UTaskAnimParamLogic::StartGraspingAnimChain(AActor *Target, FString Hand, b
 	EndPose = StartPose;
 
 	// Calculate EndPose
+	
+	// Head
+	EndPose.Head_Rot = CalculateHeadRot(Target->GetActorLocation());
 
 	// Pre step for reaching object
 	if (AnimParams.bUsingRightHand) {
@@ -1178,7 +1316,7 @@ void UTaskAnimParamLogic::StartGraspingAnimChain(AActor *Target, FString Hand, b
 
 	if (AnimParams.bUsingLeftHand) {
 		EndPose.LH_Loc = FVector(20, 15, 100);
-		EndPose.LH_Rot = FRotator(45, -110, 60);
+		EndPose.LH_Rot = FRotator(-45, 110, -120);
 	}
 
 	// Set corresponding curves
@@ -1356,109 +1494,28 @@ void UTaskAnimParamLogic::StartFeedingAnimChain(ACharacter *Person) {
 }
 
 // Start slicing animation chain
-void UTaskAnimParamLogic::StartSlicingAnimChain(ObjectData_t ItemData, float sliceWidth) {
+void UTaskAnimParamLogic::StartSlicingAnimChain() {
 
 	FAvatarPose_t StartPose, EndPose, MultiplierPose;
 	FCurvesSet_t Curves;
 
-	FVector HoldAdjusment = FVector(0, 0, 0);
-	FVector EndAdjustment = FVector(0, 0, 0);
-
-	bool orderWidthLenght = false;
-	float holdingDistance = 15;
-	float halfLength;
-	float tmp;
-
-	pendingStates = 2;
+	pendingStates = 5;
 	AnimChain.BindUObject(this, &UTaskAnimParamLogic::RunSlicingAnimChain);
-	speedFactor = 0.7;
+	speedFactor = 3;
+	AnimParams.ClearJointFlags();
 
 	// Set params for first animation in chain ************************
 	StartPose = GetCurrentAvatarPose();
 	EndPose = StartPose;
 
 	// Calculate EndPose
+	EndPose.LH_Loc = FVector(12, 10, 97);
+	EndPose.LH_Rot = FRotator(-45, 110, -120);
 
-	// Work on longest axis
-	if (ItemData.Extent.Y > ItemData.Extent.X) {
-		orderWidthLenght = true;
-		halfLength = ItemData.Extent.Y;
-	}
-	else {
-		orderWidthLenght = false;
-		halfLength = ItemData.Extent.X;
-	}
+	EndPose.RH_Rot = FRotator(75, -135, 0);
 
-	// Adjust to Item
-	if (ItemData.Object->ActorHasTag("Bread")) {
-		// Right Hand
-		HoldAdjusment = FVector(-5, 0, 2);
-		EndAdjustment = FVector(-18, 0, 5.3);
-
-		// Left Hand
-		EndPose.LH_Rot = FRotator(0, 90, -80);
-	}
-	else if (ItemData.Object->ActorHasTag("Steak")) {
-		// Right Hand
-		HoldAdjusment = FVector(-5, 6.5, 15.2);
-		EndAdjustment = FVector(-20, -1, 8);
-		// Left Hand
-		EndPose.LH_Rot = FRotator(-30, 160, -87);
-	}
-	else if (ItemData.Object->ActorHasTag("Zucchini")) {
-		// Right Hand
-		HoldAdjusment = FVector(-7, 0, 4);
-		EndAdjustment = FVector(-30, -1, 8);
-		// Left Hand
-		EndPose.LH_Rot = FRotator(0, 90, -80);
-	}
-
-	// local order is (Width, Lenght, Height)
-
-	// Calculate End Point
-	EndPose.RH_Loc.X = 0;
-	EndPose.RH_Loc.Y = -1 * halfLength + sliceWidth;
-	EndPose.RH_Loc.Z = -1 * ItemData.Extent.Z;
-
-	// Calculate hold point
-	EndPose.LH_Loc.X = 0;
-	EndPose.LH_Loc.Y = halfLength - halfLength*2/3;
-	EndPose.LH_Loc.Z = ItemData.Extent.Z;
-
-	// Adjust coordinates. The IK used is controling the Avatar's wrist that shouldn't be exactly on
-	// the working points but maybe a bit above and behind.
-	EndPose.RH_Loc += EndAdjustment;
-	EndPose.LH_Loc += HoldAdjusment;
-
-	// Put back to original order
-	if (!orderWidthLenght) {
-
-		tmp = EndPose.RH_Loc.X;
-		EndPose.RH_Loc.X = EndPose.RH_Loc.Y;
-		EndPose.RH_Loc.Y = tmp;
-
-		tmp = EndPose.LH_Loc.X;
-		EndPose.LH_Loc.X = EndPose.LH_Loc.Y;
-		EndPose.LH_Loc.Y = tmp;
-	}
-
-	// We are always cutting on the right extreme of the object according to Avatar's point of view.
-	if (!(ItemData.angle > 354 || ItemData.angle < -354 || (ItemData.angle < 6 && ItemData.angle > -6))) {
-		EndPose.RH_Loc = EndPose.RH_Loc.RotateAngleAxis(180, FVector(0, 0, 1));
-		EndPose.LH_Loc = EndPose.LH_Loc.RotateAngleAxis(180, FVector(0, 0, 1));
-		ItemData.angle -= 180;
-	}
-
-	// Calculate Orientation
-	//LocalRot = FRotator(0, ItemData.angle, 0);
-
-	// Convert coordinates relative to world
-	EndPose.RH_Loc = ItemData.Object->GetActorTransform().TransformPosition(EndPose.RH_Loc);
-	EndPose.LH_Loc = ItemData.Object->GetActorTransform().TransformPosition(EndPose.LH_Loc);
-
-	// Convert points relative to Avatar. This is best to adjust points
-	EndPose.RH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPose.RH_Loc);
-	EndPose.LH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPose.LH_Loc);
+	// Head
+	EndPose.Head_Rot = CalculateHeadRot(Obj2BCut.Origin);
 
 	// Set corresponding curves
 	Curves = ReachingCurves;
@@ -1669,104 +1726,7 @@ void UTaskAnimParamLogic::RunGraspingAnimChain(int stage) {
 	// Grasp
 	if (pendingStates == 2) {
 		speedFactor = 1.5;
-
-		FVector RH_LocEndPoint_Adjustment = FVector(0, 0, 0);
-		FVector LH_LocEndPoint_Adjustment = FVector(0, 0, 0);
-
-		if (AnimParams.Object->ActorHasTag("DinnerFork")) {
-			if (AnimParams.bUsingRightHand) {
-				EndPose.RH_Rot = FRotator(30, -90, 90);
-				RH_LocEndPoint_Adjustment = FVector(0, 0, 5);
-
-				// Finger's Rotations
-				// Thumb
-				EndPose.RH_FingerRots.thumb_01 = FRotator(-34, -20, 71);
-				EndPose.RH_FingerRots.thumb_02 = FRotator(0, -46, 0);
-				EndPose.RH_FingerRots.thumb_03 = FRotator(0, -23, 0);
-				// Index
-				EndPose.RH_FingerRots.index_01 = FRotator(0, -50, -12);
-				EndPose.RH_FingerRots.index_02 = FRotator(0, -62, 0);
-				EndPose.RH_FingerRots.index_03 = FRotator(0, -50, 0);
-				// Middle
-				EndPose.RH_FingerRots.middle_01 = FRotator(0, -60, -10);
-				EndPose.RH_FingerRots.middle_02 = FRotator(0, -70, 0);
-				EndPose.RH_FingerRots.middle_03 = FRotator(0, -60, 0);
-				// Ring
-				EndPose.RH_FingerRots.ring_01 = FRotator(0, -70, -10);
-				EndPose.RH_FingerRots.ring_02 = FRotator(0, -70, 0);
-				EndPose.RH_FingerRots.ring_03 = FRotator(0, -60, 0);
-				// Pinky
-				EndPose.RH_FingerRots.pinky_01 = FRotator(0, -90, -25);
-				EndPose.RH_FingerRots.pinky_02 = FRotator(0, -60, 0);
-				EndPose.RH_FingerRots.pinky_03 = FRotator(0, -60, 0);
-			}
-		}
-		else if (AnimParams.Object->ActorHasTag("Plate")) {
-			if (AnimParams.bUsingRightHand) {
-				EndPose.RH_Rot = FRotator(45, -135, -45);
-				RH_LocEndPoint_Adjustment = FVector(-15, -2.727218, 4.5);
-
-				EndPose.RH_FingerRots.thumb_01 = FRotator(10, -15, 130);
-				EndPose.RH_FingerRots.index_01 = FRotator(0, -35, -12);
-				EndPose.RH_FingerRots.middle_01 = FRotator(0, -45, -10);
-				EndPose.RH_FingerRots.ring_01 = FRotator(0, -55, -10);
-				EndPose.RH_FingerRots.pinky_01 = FRotator(0, -60, -25);
-
-				EndPose.RH_FingerRots.thumb_02 = FRotator(0, 0, 0);
-				EndPose.RH_FingerRots.index_02 = FRotator(0, -20, 0);
-				EndPose.RH_FingerRots.middle_02 = FRotator(0, -15, 0);
-				EndPose.RH_FingerRots.ring_02 = FRotator(0, -10, 0);
-				EndPose.RH_FingerRots.pinky_02 = FRotator(0, -10, 0);
-
-				EndPose.RH_FingerRots.thumb_03 = FRotator(0, 0, 0);
-				EndPose.RH_FingerRots.index_03 = FRotator(0, -10, 0);
-				EndPose.RH_FingerRots.middle_03 = FRotator(0, -10, 0);
-				EndPose.RH_FingerRots.ring_03 = FRotator(0, -5, 0);
-				EndPose.RH_FingerRots.pinky_03 = FRotator(0, -10, 0);
-			}
-		}
-		else if (AnimParams.Object->ActorHasTag("BreadKnife")) {
-			if (AnimParams.bUsingRightHand) {
-				EndPose.RH_Rot = FRotator(10, -30, 90);
-				RH_LocEndPoint_Adjustment = FVector(5, -13, 5);
-
-				// Fingers' Rotations
-				// Thumb
-				EndPose.RH_FingerRots.thumb_01 = FRotator(-45, -48, 90);
-				EndPose.RH_FingerRots.thumb_02 = FRotator(25, -55, 0);
-				EndPose.RH_FingerRots.thumb_03 = FRotator(0, -45, 0);
-				// Index
-				EndPose.RH_FingerRots.index_01 = FRotator(-3, -80, 0);
-				EndPose.RH_FingerRots.index_02 = FRotator(0, -90, 0);
-				EndPose.RH_FingerRots.index_03 = FRotator(0, -45, 0);
-				// Middle
-				EndPose.RH_FingerRots.middle_01 = FRotator(0, -90, 0);
-				EndPose.RH_FingerRots.middle_02 = FRotator(0, -90, 0);
-				EndPose.RH_FingerRots.middle_03 = FRotator(0, -45, 0);
-				// Ring
-				EndPose.RH_FingerRots.ring_01 = FRotator(3, -90, 0);
-				EndPose.RH_FingerRots.ring_02 = FRotator(0, -90, 0);
-				EndPose.RH_FingerRots.ring_03 = FRotator(0, -45, 0);
-				// Pinky
-				EndPose.RH_FingerRots.pinky_01 = FRotator(5, -100, 0);
-				EndPose.RH_FingerRots.pinky_02 = FRotator(0, -80, 10);
-				EndPose.RH_FingerRots.pinky_03 = FRotator(0, -45, 0);
-			}
-		}
-
-		FVector ObjectLoc = AnimParams.Object->GetActorLocation();
-		EndPose.Head_Rot = CalculateHeadRot(ObjectLoc);
-
-		if (AnimParams.bUsingLeftHand) {
-			EndPose.LH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(ObjectLoc);
-			EndPose.LH_Loc += LH_LocEndPoint_Adjustment;
-			EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.LH_Loc, 65);
-		}
-		if (AnimParams.bUsingRightHand) {
-			EndPose.RH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(ObjectLoc);
-			EndPose.RH_Loc += RH_LocEndPoint_Adjustment;
-			EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.RH_Loc, 65);
-		}
+		SetGraspingObjPose(EndPose);
 	}
 	else if (pendingStates == 3) {
 		// 1 Seconds Delay
@@ -1775,47 +1735,12 @@ void UTaskAnimParamLogic::RunGraspingAnimChain(int stage) {
 		AnimParams.animTime = 1;
 		bRunAnimation = true;
 	}
+	// Hold
 	else if (pendingStates == 1) {
 		// Attach
 		AttachObject();
 		speedFactor = 0.7;
-
-		if (AnimParams.Object->ActorHasTag("BreadKnife")) {
-			if (AnimParams.bUsingRightHand) {
-				EndPose.RH_Rot = FRotator(45, -145, 35);
-				EndPose.RH_Loc = FVector(-15, 15, 100);
-			}
-		}
-		else if (AnimParams.Object->ActorHasTag("DinnerFork")) {
-			if (AnimParams.bUsingRightHand) {
-				EndPose.RH_Rot = FRotator(9, -100, -25);
-				EndPose.RH_Loc = FVector(-15, 15, 100);
-			}
-		}
-		else if (AnimParams.Object->ActorHasTag("Plate")) {
-			if (AnimParams.bUsingRightHand) {
-				EndPose.RH_Loc = FVector(-15, 20, 100);
-			}
-		}
-		else {
-			if (AnimParams.bUsingRightHand) {
-				EndPose.RH_Loc = FVector(-15, 15, 100);
-				EndPose.RH_Rot = FRotator(45, -110, 60);
-			}
-			if (AnimParams.bUsingLeftHand) {
-				EndPose.RH_Loc = FVector(15, 15, 100);
-				EndPose.RH_Rot = FRotator(45, -110, 60);
-			}
-		}
-
-		if (AnimParams.bUsingLeftHand) {
-			EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.LH_Loc, 65);
-		}
-		if (AnimParams.bUsingRightHand) {
-			EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.RH_Loc, 65);
-		}
-
-		EndPose.Head_Rot = FRotator(0, 0, 0);
+		SetHoldingObjPose(EndPose);
 	}
 
 	// Set corresponding curves
@@ -1918,26 +1843,170 @@ void UTaskAnimParamLogic::RunSlicingAnimChain(int stage) {
 	FAvatarPose_t StartPose, EndPose, MultiplierPose;
 	FCurvesSet_t Curves;
 
-	if (pendingStates == 2) {
-		// 1.5 Seconds Delay
-		AnimParams.ActionContext = "waiting with fork";
-		AnimParams.AnimFunctionDelegate.Unbind();
-		speedFactor = 1;
-		AnimParams.animTime = 1.5;
-		bRunAnimation = true;
-	}
-	else if (pendingStates == 1) {
-		
-		StartPose = GetCurrentAvatarPose();
-		EndPose = StartPose;
+	AnimParams.ClearJointFlags();
+	StartPose = GetCurrentAvatarPose();
+	EndPose = StartPose;
 
-		EndPose.LH_Loc = FVector(15, 15, 100);
-		EndPose.RH_Loc = FVector(-15, 15, 100);
+	// Hold it first
+	if (pendingStates == 5) {
+
+		FVector HoldAdjusment = FVector(0, 0, 0);
+		FVector EndAdjustment = FVector(0, 0, 0);
+
+		bool orderWidthLenght = false;
+		float holdingDistance = 15;
+		float halfLength;
+		float tmp;
+
+		AnimParams.bUsingLeftHand = true;
+		AnimParams.bUsingRightHand = true;
+
+		// Work on longest axis
+		if (Obj2BCut.Extent.Y > Obj2BCut.Extent.X) {
+			orderWidthLenght = true;
+			halfLength = Obj2BCut.Extent.Y;
+		}
+		else {
+			orderWidthLenght = false;
+			halfLength = Obj2BCut.Extent.X;
+		}
+
+		// Adjust to Item
+		if (Obj2BCut.Object->ActorHasTag("Bread")) {
+			// Right Hand
+			HoldAdjusment = FVector(-7, 0, 1);
+			EndAdjustment = FVector(-18, 0, 10.5);
+
+			// Left Hand
+			EndPose.LH_Rot = FRotator(0, 90, -100);
+		}
+		else if (Obj2BCut.Object->ActorHasTag("Steak")) {
+			// Right Hand
+			HoldAdjusment = FVector(-5, 6.5, 15.2);
+			EndAdjustment = FVector(-20, -1, 8);
+			// Left Hand
+			EndPose.LH_Rot = FRotator(-30, 160, -87);
+		}
+		else if (Obj2BCut.Object->ActorHasTag("Zucchini")) {
+			// Right Hand
+			HoldAdjusment = FVector(-7, 0, 4);
+			EndAdjustment = FVector(-30, -1, 8);
+			// Left Hand
+			EndPose.LH_Rot = FRotator(0, 90, -80);
+		}
+
+		// local order is (Width, Lenght, Height)
+
+		// Calculate End Point
+		Obj2BCut.CutLoc.X = 0;
+		Obj2BCut.CutLoc.Y = -1 * halfLength + Obj2BCut.sliceWidth;
+		Obj2BCut.CutLoc.Z = Obj2BCut.Extent.Z;
+
+		// Calculate hold point
+		Obj2BCut.HoldLoc.X = 0;
+		Obj2BCut.HoldLoc.Y = halfLength - halfLength * 2 / 3;
+		Obj2BCut.HoldLoc.Z = Obj2BCut.Extent.Z;
+
+		// Adjust coordinates. The IK used is controling the Avatar's wrist that shouldn't be exactly on
+		// the working points but maybe a bit above and behind.
+		Obj2BCut.CutLoc += EndAdjustment;
+		Obj2BCut.HoldLoc += HoldAdjusment;
+
+		// Put back to original order
+		if (!orderWidthLenght) {
+
+			tmp = Obj2BCut.CutLoc.X;
+			Obj2BCut.CutLoc.X = Obj2BCut.CutLoc.Y;
+			Obj2BCut.CutLoc.Y = tmp;
+
+			tmp = Obj2BCut.HoldLoc.X;
+			Obj2BCut.HoldLoc.X = Obj2BCut.HoldLoc.Y;
+			Obj2BCut.HoldLoc.Y = tmp;
+		}
+
+		// We are always cutting on the right extreme of the object according to Avatar's point of view.
+		if (!(Obj2BCut.angle > 350 || Obj2BCut.angle < -350 || (Obj2BCut.angle < 10 && Obj2BCut.angle > -10))) {
+			Obj2BCut.CutLoc = Obj2BCut.CutLoc.RotateAngleAxis(180, FVector(0, 0, 1));
+			Obj2BCut.HoldLoc = Obj2BCut.HoldLoc.RotateAngleAxis(180, FVector(0, 0, 1));
+			Obj2BCut.angle -= 180;
+		}
+
+		// Convert coordinates relative to world
+		Obj2BCut.CutLoc = Obj2BCut.Object->GetActorTransform().TransformPosition(Obj2BCut.CutLoc);
+		Obj2BCut.HoldLoc = Obj2BCut.Object->GetActorTransform().TransformPosition(Obj2BCut.HoldLoc);
+
+		// Head
+		EndPose.Head_Rot = CalculateHeadRot(Obj2BCut.CutLoc);
+
+		// Convert points relative to Avatar. This is best to adjust points
+		Obj2BCut.CutLoc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Obj2BCut.CutLoc);
+		Obj2BCut.HoldLoc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Obj2BCut.HoldLoc);
+
+		// Spine
+		EndPose.Spine_01_Rot = CalculateSpineRot(Obj2BCut.HoldLoc, 65);
+
+		EndPose.RH_Loc = Obj2BCut.CutLoc;
+		EndPose.RH_Loc.Y = (Obj2BCut.CutLoc.Y - StartPose.RH_Loc.Y) / 3 + StartPose.RH_Loc.Y;
+		EndPose.RH_Rot = FRotator(75, -100, 0);
+
+		EndPose.LH_Loc = Obj2BCut.HoldLoc;
+
+		Curves = ReachingCurves;
+		SetAnimParams(StartPose, EndPose, Curves);
+		speedFactor = 1;
+
+	}
+	// Put knife on top
+	else if (pendingStates == 4) {
+
+		// Calculate Orientation //Pitch 69 for flat
+		EndPose.RH_Rot = FRotator(75, -90 + Obj2BCut.angle, 0);
+		// Set Location
+		EndPose.RH_Loc = Obj2BCut.CutLoc;
+
+		Curves = ReachingCurves;
+		SetAnimParams(StartPose, EndPose, Curves);
+		speedFactor = 2;
+	}
+	// Cut
+	else if (pendingStates == 3) {
+
+		EndPose.RH_Loc = Obj2BCut.CutLoc;
+		EndPose.RH_Loc.Z -= 2 * Obj2BCut.Extent.Z + 4.5;
+		EndPose.RH_Loc += FVector(0, 4, 0).RotateAngleAxis(Obj2BCut.angle, FVector(0, 0, 1));
+		EndPose.RH_Rot = FRotator(69, -90 + Obj2BCut.angle, 0);
+
+		Curves = CuttingBreadCurves;
+		SetAnimParams(StartPose, EndPose, Curves);
+		speedFactor = 1;
+	}
+	// Take hands back
+	else if (pendingStates == 2) {
+
+		EndPose.LH_Loc = FVector(20, 15, 97);
+		EndPose.RH_Loc = FVector(-15, 18, 100);
+
+		EndPose.RH_Rot = FRotator(75, -145, 35);
+		EndPose.LH_Rot = FRotator(-55, 110, -120);
+
+		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.LH_Loc, 65);
+		EndPose.Head_Rot = FRotator(0,0,0);
 
 		Curves = ReachingCurves;
 
 		SetAnimParams(StartPose, EndPose, Curves);
 		speedFactor = 1;
+	}
+	// Relax left hand
+	else if (pendingStates == 1) {
+
+		EndPose.LH_Loc = OriginalPose.LH_Loc;
+		EndPose.LH_Rot = OriginalPose.LH_Rot;
+
+		Curves = DroppingCurves;
+
+		SetAnimParams(StartPose, EndPose, Curves, true);
+		speedFactor = 2;
 	}
 
 	pendingStates--;
@@ -2051,178 +2120,6 @@ void UTaskAnimParamLogic::SetAnimParams(FAvatarPose_t StartPose, FAvatarPose_t E
 	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunAnimation);
 	bRunAnimation = true;
 }
-
-#pragma optimize("", off)
-void UTaskAnimParamLogic::StartCutAnimation(ObjectData_t &ItemData) {
-
-	bool orderWidthLenght = false;
-	FVector HoldPoint;
-	FVector StartPoint;
-	FVector EndPoint;
-	FVector Multiplier = FVector(0, 0, 0);
-	FVector HoldAdjusment = FVector(0, 0, 0);
-	FVector StartAdjustment = FVector(0, 0, 0);
-	FVector EndAdjustment = FVector(0, 0, 0);
-	FRotator HoldRotation = FRotator(0, 0, 0);
-	FRotator LocalRot;
-	float sliceWidth = 2;
-	float holdingDistance = 15;
-	float halfLength;
-	float tmp;
-
-	// Work on longest axis
-	if (ItemData.Extent.Y > ItemData.Extent.X) {
-		orderWidthLenght = true;
-		halfLength = ItemData.Extent.Y;
-	}
-	else {
-		orderWidthLenght = false;
-		halfLength = ItemData.Extent.X;
-	}
-
-	// Adjust to Item
-	if (ItemData.Object->ActorHasTag("Bread")) {
-
-		// Skill
-		AnimParams.RH_Loc_Curve = CuttingBreadCurves.RH_Loc_Interpolation;
-		AnimParams.RH_Rot_Curve = CuttingBreadCurves.RH_Rot_Interpolation;
-		AnimParams.LH_Loc_Curve = CuttingBreadCurves.LH_Loc_Interpolation;
-		AnimParams.LH_Rot_Curve = CuttingBreadCurves.LH_Rot_Interpolation;
-		AnimParams.Spine_01_Rot_Curve = CuttingBreadCurves.Spine_01_Rot_Interpolation;
-
-		AnimParams.RH_Loc_Table = new DataTableHandler(
-			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/RH_Curve.csv"));
-		AnimParams.RH_Rot_Table = new DataTableHandler(
-			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/RH_Rot_Curve.csv"));
-		AnimParams.LH_Loc_Table = new DataTableHandler(
-			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/LH_Curve.csv"));
-		AnimParams.LH_Rot_Table = new DataTableHandler(
-			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/LH_Rot_Curve.csv"));
-		AnimParams.Spine_01_Rot_Table = new DataTableHandler(
-			FPaths::ProjectPluginsDir() + FString("UIAIAvatar/Content/Animation_Assets/AnimDataTables/CuttingBread/Spine01_Rot_Curve.csv"));
-	
-		AnimParams.animTime = AnimParams.RH_Rot_Table->GetDuration();
-		sliceWidth = 2;
-
-		// Right Hand
-		HoldAdjusment = FVector(-5, 0, 2);
-		EndAdjustment = FVector(-18, 0, 5.3);
-		Multiplier = FVector(1, 4, 1);
-
-		// Left Hand
-		HoldRotation = FRotator(0, 90, -80);
-	}
-	else if (ItemData.Object->ActorHasTag("Steak")) {
-
-		// Skill
-		AnimParams.RH_Loc_Curve = CuttingSteakCurves.RH_Loc_Interpolation;
-		AnimParams.RH_Rot_Curve = CuttingSteakCurves.RH_Rot_Interpolation;
-		AnimParams.animTime = 2;
-		sliceWidth = 1;
-
-		// Right Hand
-		HoldAdjusment = FVector(-5, 6.5, 15.2);
-		StartAdjustment = FVector(-20, -1, 8.5);
-		EndAdjustment = FVector(-20, -1, 8);
-		Multiplier = FVector(1, 4, 1);
-
-		// Left Hand
-		HoldRotation = FRotator(-30, 160, -87);
-	}
-	else if (ItemData.Object->ActorHasTag("Zucchini")) {
-
-		// Skill
-		AnimParams.RH_Loc_Curve = CuttingZucchiniCurves.RH_Loc_Interpolation;
-		AnimParams.RH_Rot_Curve = CuttingZucchiniCurves.RH_Rot_Interpolation;
-		AnimParams.animTime = 1.6;
-		sliceWidth = 1;
-
-		// Right Hand
-		HoldAdjusment = FVector(-7, 0, 4);
-		StartAdjustment = FVector(-30, -1, 18);
-		EndAdjustment = FVector(-30, -1, 8);
-		Multiplier = FVector(1, 8, 1);
-
-		// Left Hand
-		HoldRotation = FRotator(0, 90, -80);
-	}
-
-	// local order is (Width, Lenght, Height)
-
-	// Calculate End Point
-	EndPoint.X = 0;
-	EndPoint.Y = -1 * halfLength + sliceWidth;
-	EndPoint.Z = -1 * ItemData.Extent.Z;
-
-	// Calculate hold point
-	HoldPoint.X = 0;
-	HoldPoint.Y = -1 * halfLength + holdingDistance;
-	HoldPoint.Z = ItemData.Extent.Z;
-
-	// Adjust coordinates. The IK used is controling the Avatar's wrist that shouldn't be exactly on
-	// the working points but maybe a bit above and behind.
-	EndPoint += EndAdjustment;
-	HoldPoint += HoldAdjusment;
-
-	// Put back to original order
-	if (!orderWidthLenght) {
-
-		tmp = EndPoint.X;
-		EndPoint.X = EndPoint.Y;
-		EndPoint.Y = tmp;
-
-		tmp = HoldPoint.X;
-		HoldPoint.X = HoldPoint.Y;
-		HoldPoint.Y = tmp;
-	}
-
-	// We are always cutting on the right extreme of the object according to Avatar's point of view.
-	if (!(ItemData.angle > 354 || ItemData.angle < -354 || (ItemData.angle < 6 && ItemData.angle > -6))) {
-		EndPoint = EndPoint.RotateAngleAxis(180, FVector(0, 0, 1));
-		HoldPoint = HoldPoint.RotateAngleAxis(180, FVector(0, 0, 1));
-		ItemData.angle -= 180;
-	}
-
-	// Calculate Orientation
-	LocalRot = FRotator(0, ItemData.angle, 0);
-
-	// Convert coordinates relative to world
-	EndPoint = ItemData.Object->GetActorTransform().TransformPosition(EndPoint);
-	HoldPoint = ItemData.Object->GetActorTransform().TransformPosition(HoldPoint);
-
-	// Convert points relative to Avatar. This is best to adjust points
-	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
-	HoldPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(HoldPoint);
-
-	// Start Point is holding position
-	StartPoint = Avatar->GetMesh()->GetBoneLocation("hand_r", EBoneSpaces::ComponentSpace); 
-
-	// Motion Depth
-	Multiplier = EndPoint - StartPoint;
-
-	// Set animation parameters
-	AnimParams.RH_Loc_Offset = StartPoint;
-	AnimParams.RH_Loc_Multiplier = Multiplier;
-	AnimParams.LH_Rot_Multiplier = HoldRotation;
-	AnimParams.LH_Loc_Offset = Avatar->GetMesh()->GetBoneLocation("hand_l", EBoneSpaces::ComponentSpace);
-	AnimParams.LH_Loc_Multiplier = HoldPoint - AnimParams.LH_Loc_Offset;
-
-	AnimParams.RH_Loc_Curve_Orientation = LocalRot;
-
-	AnimParams.bSet_LH_Loc = true;
-	AnimParams.bSet_LH_Rot = true;
-	// These 2 are active from grasp and hold
-	AnimParams.bSet_RH_Loc = false;
-	AnimParams.bSet_RH_Rot = false;
-	AnimParams.bSet_RF_Rot = false;
-	AnimParams.bSet_LF_Rot = false;
-	AnimParams.bSet_S01_Rot = true;
-
-	AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunCutAnimation);
-	bRunAnimation = true;
-
-}
-#pragma optimize("", on)
 
 void UTaskAnimParamLogic::StartForkAnimation(AActor* Target) {
 
@@ -2566,56 +2463,6 @@ void UTaskAnimParamLogic::RunAnimation(float time) {
 	}
 }
 
-// TODO: Separate slicing animation from reaching animation. Reach in terms to right before cutting. 
-// Run cut animation
-void UTaskAnimParamLogic::RunCutAnimation(float time) {
-
-	FVector Temp;
-	FVector Hand_r_Location;
-	FVector Hand_l_Location;
-	FRotator Hand_r_Rotation;
-	FRotator Hand_l_Rotation;
-
-	// Right hand rotation
-	//Temp = AnimParams.RH_Rot_Curve->GetVectorValue(time);
-	Temp = AnimParams.RH_Rot_Table->GetVectorValue(time);
-	Hand_r_Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
-	Hand_r_Rotation += AnimParams.RH_Loc_Curve_Orientation;
-
-	// Right hand location
-	//Hand_r_Location = AnimParams.RH_Loc_Curve->GetVectorValue(time);
-	Hand_r_Location = AnimParams.RH_Loc_Table->GetVectorValue(time);
-	Hand_r_Location *= AnimParams.RH_Loc_Multiplier;
-	//Hand_r_Location = AnimParams.RH_Loc_Curve_Orientation.RotateVector(Hand_r_Location);
-	Hand_r_Location += AnimParams.RH_Loc_Offset;
-
-	// Left hand rotation
-	//Temp = AnimParams.LH_Rot_Curve->GetVectorValue(time);
-	Temp = AnimParams.LH_Rot_Table->GetVectorValue(time);
-	Hand_l_Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
-
-	// Left hand location
-	//Hand_l_Location = AnimParams.LH_Loc_Curve->GetVectorValue(time);
-	Hand_l_Location = AnimParams.LH_Loc_Table->GetVectorValue(time);
-	Hand_l_Location *= AnimParams.LH_Loc_Multiplier;
-	Hand_l_Location += AnimParams.LH_Loc_Offset;
-
-	// Assigning on animation
-
-	// Right hand
-	Animation->RightHandRotation = Hand_r_Rotation;
-	Animation->RightHandIKTargetPosition = Hand_r_Location;
-
-	// Left hand
-	Animation->HandRotation = Hand_l_Rotation;
-	Animation->LeftHandIKTargetPosition = Hand_l_Location;
-	
-	// Spine
-	//Temp = AnimParams.Spine01_Rot_Curve->GetVectorValue(time);
-	Temp = AnimParams.Spine_01_Rot_Table->GetVectorValue(time);
-	Animation->Spine1Rotation = FRotator(Temp.Y, Temp.Z, Temp.X);
-}
-
 // Run fork animation
 void UTaskAnimParamLogic::RunForkAnimation(float time) {
 
@@ -2769,11 +2616,11 @@ void UTaskAnimParamLogic::CallCloseBookAnimChain(FString ObjectName) {
 void UTaskAnimParamLogic::CallSlicingAnimChain(FString ObjectName, float width) {
 	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
 	if (Object != NULL) {
-		ObjectData_t CurrentCutable;
 		if (Object->GetRootComponent()->ComponentHasTag("Cuttable")) {
-			CurrentCutable.Object = Object;
-			if (isInGoodAlignment(CurrentCutable)) {
-				StartSlicingAnimChain(CurrentCutable, width);
+			Obj2BCut.Object = Object;
+			Obj2BCut.sliceWidth = width;
+			if (isInGoodAlignment()) {
+				StartSlicingAnimChain();
 			}
 		}
 		else {
@@ -2786,13 +2633,13 @@ void UTaskAnimParamLogic::CallSlicingAnimChain(FString ObjectName, float width) 
 }
 
 // Grasping object
-void UTaskAnimParamLogic::CallGraspingAnimChain(FString ObjectName, FString Hand, bool bHold) {
+void UTaskAnimParamLogic::CallGraspingAnimChain(FString ObjectName, FString Hand) {
 
 	TMap<FString, FHitResult> MyUniqueHits = Avatar->ListObjects();
 	AActor *Object = MyUniqueHits.FindRef(ObjectName).GetActor();
 
 	if (Object != NULL) {
-		StartGraspingAnimChain(Object, Hand, bHold);
+		StartGraspingAnimChain(Object, Hand);
 	}
 	else {
 		UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Object \"%s\" not found!"), *ObjectName);

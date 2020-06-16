@@ -51,14 +51,17 @@ public:
 	FVector GetVectorValue(float time);
 };
 
-struct ObjectData_t
+struct CuttingObjData_t
 {
 public:
 	AActor* Object;
-	float angle;
-	FRotator OriginalRotation;
 	FVector Origin;
 	FVector Extent;
+	FVector HoldLoc;
+	FVector CutLoc;
+	
+	float angle;
+	float sliceWidth;
 };
 
 USTRUCT(Blueprintable)
@@ -304,6 +307,8 @@ protected:
 
 	FAvatarPose_t OriginalPose;
 
+	CuttingObjData_t Obj2BCut;
+
 	bool bRunAnimation;
 
 	float currentAnimTime;
@@ -324,6 +329,12 @@ public:
 	// Release all needed alphas to drop a pose
 	void UnSetJointAlphas();
 	
+	// Set grasping pose parameters
+	void SetGraspingObjPose(FAvatarPose_t &Pose);
+
+	// Set holding pose parameters
+	void SetHoldingObjPose(FAvatarPose_t &Pose);
+
 	// Attach object to hand
 	void AttachObject();
 
@@ -364,7 +375,7 @@ public:
 	AActor* PickOneObject(TArray<AActor*> Cuttables);
 
 	// Check if item is in good position for cutting
-	bool isInGoodAlignment(ObjectData_t &ItemData);
+	bool isInGoodAlignment();
 
 	// ****** Setting Chain Animations ****** //
 
@@ -375,10 +386,10 @@ public:
 	void StartPassPageAnimChain(AActor *Target, bool bLast = false, FString Hand = "right");
 
 	// Slicing
-	void StartSlicingAnimChain(ObjectData_t ItemData, float sliceWidth);
+	void StartSlicingAnimChain();
 
 	// Grasping Object
-	void StartGraspingAnimChain(AActor *Target, FString Hand, bool bHold);
+	void StartGraspingAnimChain(AActor *Target, FString Hand);
 
 	// Placing Object
 	void StartPlacingAnimChain(FString targetPlace, FString Hand = "any", FVector Point = FVector(0, 0, 0));
@@ -411,9 +422,6 @@ public:
 	// Setting animation parameters
 	void SetAnimParams(FAvatarPose_t StartPose, FAvatarPose_t EndPose, FCurvesSet_t Curves, bool bReleaseAlphas = false);
 
-	// Set parameters for cut animation
-	void StartCutAnimation(ObjectData_t &ItemData);
-
 	// Set parameters for pour animation
 	void StartPourAnimation(AActor* Target);
 
@@ -443,9 +451,6 @@ public:
 	// Running fork Animation
 	void RunSpoonAnimation(float time);
 
-	// Running fork Animation
-	void RunCutAnimation(float time);
-
 	// ****** Processing Task ****** //
 
 	// Spooning
@@ -470,7 +475,7 @@ public:
 	void CallSlicingAnimChain(FString ObjectName, float width);
 
 	// Grasping Object
-	void CallGraspingAnimChain(FString ObjectName, FString Hand, bool bHold);
+	void CallGraspingAnimChain(FString ObjectName, FString Hand);
 
 	// Placing Object
 	void CallPlacingAnimChain(FString ObjectName);

@@ -475,7 +475,7 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 			 //StartGrasp(MyUniqueHits[current_obj_target.Value]);
 			 UTaskAnimParamLogic* AnimLogic = Cast<UTaskAnimParamLogic>(GetComponentByClass(UTaskAnimParamLogic::StaticClass()));
 			 check(AnimLogic);
-			 AnimLogic->CallGraspingAnimChain(current_obj_target.Value,"any",false);
+			 AnimLogic->CallGraspingAnimChain(current_obj_target.Value,"any");
 		 }
 	 }
 	 else {
@@ -1300,7 +1300,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 		else if (tokens.Num() == 2) {
 			// Grasp specified object
 			if (tokens[0].Equals("grasp")) {
-				AnimLogic->CallGraspingAnimChain(tokens[1], "any", false);
+				AnimLogic->CallGraspingAnimChain(tokens[1], "any");
 				//GraspTargetObject_ROS();
 			}
 			// Feed Person
@@ -1460,11 +1460,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			}
 			// Grasp specified object with specified hand
 			else if (tokens[0].Equals("grasp") && (tokens[1].Equals("right") || tokens[1].Equals("left") || tokens[1].Equals("any"))) {
-				AnimLogic->CallGraspingAnimChain(tokens[2], tokens[1], false);
-			}
-			// Grasp and hold specified object
-			else if (tokens[0].Equals("grasp") && tokens[2].Equals("hold")) {
-				AnimLogic->CallGraspingAnimChain(tokens[1], "any", true);
+				AnimLogic->CallGraspingAnimChain(tokens[2], tokens[1]);
 			}
 			// Placing objects
 			else if (tokens[0].Equals("place")) {
@@ -1567,11 +1563,6 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 						*tokens[2]), true, FVector2D(1.7, 1.7));
 				}
 			}
-			// Grasp and hold specified object with specified hand
-			else if (tokens[0].Equals("grasp") && (tokens[3].Equals("hold")) &&
-				(tokens[1].Equals("right") || tokens[1].Equals("left") || tokens[1].Equals("any"))) {
-				AnimLogic->CallGraspingAnimChain(tokens[2], tokens[1], true);
-			}
 			// Placing objects
 			else if (tokens[0].Equals("place")) {
 				if (tokens[1].IsNumeric() && tokens[2].IsNumeric() && tokens[3].IsNumeric()) {
@@ -1599,8 +1590,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 					*tokens[0], *tokens[1], *tokens[2], *tokens[3]), true, FVector2D(1.7, 1.7));
 				GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Yellow,						\
 					"4 words command are: interpolation off <left|right> <handIK|handRot>         \n\
-					                      place <x> <y> <z> \n\
-										  grasp [left|right|any] <item> hold", \
+					                      place <x> <y> <z> \n", \
 					true, FVector2D(1.5, 1.5));
 			}
 		}
