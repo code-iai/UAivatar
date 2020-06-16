@@ -1563,6 +1563,10 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 						*tokens[2]), true, FVector2D(1.7, 1.7));
 				}
 			}
+			// Grasp specified object with specified hand
+			else if (tokens[0].Equals("grasp") && (tokens[1].Equals("right") || tokens[1].Equals("left") || tokens[1].Equals("any"))) {
+				AnimLogic->CallGraspingAnimChain(tokens[2], tokens[1]);
+			}
 			// Placing objects
 			else if (tokens[0].Equals("place")) {
 				if (tokens[1].IsNumeric() && tokens[2].IsNumeric() && tokens[3].IsNumeric()) {
