@@ -17,7 +17,6 @@ public:
 	virtual void Init(UObject* InModel, TSharedPtr<FROSBridgeHandler> InHandler, FString InName);
 	virtual void Init(UObject* InModel, TArray<FString>* OutArray, TSharedPtr<FROSBridgeHandler> InHandler);
 
-	//virtual void SetParameters(float InSimTime, FJointState InParameters, FTransform InRobotPose) {};
 	virtual void Init(UObject* InModel) {};
 	virtual void Init(UObject* InModel, TArray<FString>* OutArray) {};
 protected:

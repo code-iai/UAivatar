@@ -718,12 +718,12 @@ void UTaskAnimParamLogic::SetGraspingObjPose(FAvatarPose_t &Pose) {
 	if (AnimParams.bUsingLeftHand) {
 		Pose.LH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(ObjectLoc);
 		Pose.LH_Loc += LH_LocEndPoint_Adjustment;
-		Pose.Spine_01_Rot = CalculateSpineRot(Pose.LH_Loc, 65);
+		Pose.Spine_01_Rot = CalculateSpineRot(Pose.LH_Loc, 52);
 	}
 	if (AnimParams.bUsingRightHand) {
 		Pose.RH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(ObjectLoc);
 		Pose.RH_Loc += RH_LocEndPoint_Adjustment;
-		Pose.Spine_01_Rot = CalculateSpineRot(Pose.RH_Loc, 65);
+		Pose.Spine_01_Rot = CalculateSpineRot(Pose.RH_Loc, 52);
 	}
 }
 
@@ -758,10 +758,10 @@ void UTaskAnimParamLogic::SetHoldingObjPose(FAvatarPose_t &Pose) {
 	}
 
 	if (AnimParams.bUsingLeftHand) {
-		Pose.Spine_01_Rot = CalculateSpineRot(Pose.LH_Loc, 65);
+		Pose.Spine_01_Rot = CalculateSpineRot(Pose.LH_Loc, 52);
 	}
 	if (AnimParams.bUsingRightHand) {
-		Pose.Spine_01_Rot = CalculateSpineRot(Pose.RH_Loc, 65);
+		Pose.Spine_01_Rot = CalculateSpineRot(Pose.RH_Loc, 52);
 	}
 
 	Pose.Head_Rot = FRotator(0, 0, 0);
@@ -917,16 +917,29 @@ FRotator UTaskAnimParamLogic::CalculateSpineRot(FVector LocalEndPoint, float elo
 	FRotator SpineRotEndPoint = FRotator(0, 0, 0);
 	FVector tmp1, Direction;
 	FVector ShoulderVector;
-	FVector ShoulderVectorO = FVector(0, 0, 43);
-	FVector SpineHeight = FVector(0, 0, 110);
+	FVector ShoulderVectorO = FVector(0, 0, 32); // Height with respect to spine_01
+	FVector SpineHeight;
 	FVector ShouldersLocation;
+
+	FVector TempVecOut;
+
+	SpineHeight = Avatar->GetMesh()->GetBoneLocation("spine_01", EBoneSpaces::ComponentSpace);
+
+	UE_LOG(LogAvatarCharacter, Error, TEXT("LLL Error: %s"), *SpineHeight.ToCompactString());
+
+
 	float distance, spineAngle = 0;
 	do {
 		SpineRotEndPoint.Yaw = spineAngle;
 		ShoulderVector = ShoulderVectorO.RotateAngleAxis(spineAngle, FVector(-1, 0, 0));
 		ShouldersLocation = ShoulderVector + SpineHeight;
+		UE_LOG(LogAvatarCharacter, Error, TEXT("LLL Shoulder Vec %s"), *ShoulderVector.ToCompactString());
+		UE_LOG(LogAvatarCharacter, Error, TEXT("LLL Shoulder Loc %s"), *ShouldersLocation.ToCompactString());
+		UE_LOG(LogAvatarCharacter, Error, TEXT("LLL EndPoint Loc %s"), *LocalEndPoint.ToCompactString());
 		Direction = LocalEndPoint - ShouldersLocation;
+		UE_LOG(LogAvatarCharacter, Error, TEXT("LLL Vector Loc %s"), *Direction.ToCompactString());
 		Direction.ToDirectionAndLength(tmp1, distance);
+		UE_LOG(LogAvatarCharacter, Error, TEXT("LLL Distance %f"), distance);
 		spineAngle += 5;
 	} while (distance > elongation && spineAngle <= 90);
 
@@ -1055,7 +1068,7 @@ void UTaskAnimParamLogic::Calculate_PointBook_EndPose_Curves(float vPageLoc, flo
 	FVector Local = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
 
 	// Spine
-	EndPose.Spine_01_Rot = CalculateSpineRot(Local, 80);
+	EndPose.Spine_01_Rot = CalculateSpineRot(Local, 70);
 
 	if (AnimParams.bUsingRightHand) {
 		EndPose.RH_IndexLoc = EndPoint;
@@ -1186,13 +1199,13 @@ void UTaskAnimParamLogic::StartPassPageAnimChain(AActor *Target, bool bLast, FSt
 	if (AnimParams.bUsingRightHand) {
 		EndPose.RH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
 		EndPose.RH_Loc += RH_LocEndPoint_Adjustment;
-		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.RH_Loc, 65);
+		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.RH_Loc, 52);
 	}
 
 	if (AnimParams.bUsingLeftHand) {
 		EndPose.LH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
 		EndPose.LH_Loc += LH_LocEndPoint_Adjustment;
-		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.LH_Loc, 65);
+		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.LH_Loc, 52);
 	}
 
 	// Set corresponding curves
@@ -1439,7 +1452,7 @@ void UTaskAnimParamLogic::StartPlacingAnimChain(FString targetPlace, FString Han
 		return;
 	}
 
-	EndPose.Spine_01_Rot = CalculateSpineRot(TargetLocation, 65);
+	EndPose.Spine_01_Rot = CalculateSpineRot(TargetLocation, 52);
 
 	if (AnimParams.bUsingRightHand) {
 		EndPose.RH_Loc = TargetLocation;
@@ -1484,7 +1497,7 @@ void UTaskAnimParamLogic::StartFeedingAnimChain(ACharacter *Person) {
 	EndPose.Head_Rot = CalculateHeadRot(TargetLocation);
 	TargetLocation = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(TargetLocation);
 	TargetLocation += Offset;
-	EndPose.Spine_01_Rot = CalculateSpineRot(TargetLocation, 65);
+	EndPose.Spine_01_Rot = CalculateSpineRot(TargetLocation, 52);
 	EndPose.RH_Loc = TargetLocation;
 
 	// Set corresponding curves
@@ -1943,7 +1956,7 @@ void UTaskAnimParamLogic::RunSlicingAnimChain(int stage) {
 		Obj2BCut.HoldLoc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Obj2BCut.HoldLoc);
 
 		// Spine
-		EndPose.Spine_01_Rot = CalculateSpineRot(Obj2BCut.HoldLoc, 65);
+		EndPose.Spine_01_Rot = CalculateSpineRot(Obj2BCut.HoldLoc, 52);
 
 		EndPose.RH_Loc = Obj2BCut.CutLoc;
 		EndPose.RH_Loc.Y = (Obj2BCut.CutLoc.Y - StartPose.RH_Loc.Y) / 3 + StartPose.RH_Loc.Y;
@@ -1989,7 +2002,7 @@ void UTaskAnimParamLogic::RunSlicingAnimChain(int stage) {
 		EndPose.RH_Rot = FRotator(75, -145, 35);
 		EndPose.LH_Rot = FRotator(-55, 110, -120);
 
-		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.LH_Loc, 65);
+		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.LH_Loc, 52);
 		EndPose.Head_Rot = FRotator(0,0,0);
 
 		Curves = ReachingCurves;
@@ -2181,7 +2194,7 @@ void UTaskAnimParamLogic::StartForkAnimation(AActor* Target) {
 	RotEndPoint = FRotator(9,-90,45);
 
 	//Spine
-	SpineRotEndPoint = CalculateSpineRot(LocEndPoint,65);
+	SpineRotEndPoint = CalculateSpineRot(LocEndPoint,52);
 
 	// Multipliers
 	LocMultiplier = LocEndPoint - LocStartPoint;

@@ -305,6 +305,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		FRotator SkelControl_Head;
 
+	// Activate sitting animation
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		bool bActivateSitAnim;
+
 	void resetRightHandFingerRots();
 	void resetLeftHandFingerRots();
 }; 

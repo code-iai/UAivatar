@@ -1265,6 +1265,13 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			if (tokens[0].Equals("list")) {
 				SetTargetObject();
 			}
+			// Sit
+			else if (tokens[0].Equals("sit")) {
+				// Get Animation
+				UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
+				check(AnimationInstance != nullptr);
+				AnimationInstance->bActivateSitAnim = true;
+			}
 			// Stopping hand raise
 			else if (tokens[0].Equals("drop")) {
 				GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Yellow, \
@@ -1302,6 +1309,13 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			if (tokens[0].Equals("grasp")) {
 				AnimLogic->CallGraspingAnimChain(tokens[1], "any");
 				//GraspTargetObject_ROS();
+			}
+			// Stand Up
+			else if (tokens[0].Equals("stand") && tokens[1].Equals("up")) {
+				// Get Animation
+				UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
+				check(AnimationInstance != nullptr);
+				AnimationInstance->bActivateSitAnim = false;
 			}
 			// Feed Person
 			else if (tokens[0].Equals("feed")) {
