@@ -404,8 +404,18 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 		 ObjLocationInCompSpace = GetMesh()->GetComponentTransform().InverseTransformPosition((*It).ImpactPoint);
 		 obj_name = (*It).Actor->GetName();
 
+		 // Get Animation
+		 UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
+		 check(AnimationInstance != nullptr);
+		 
+		 int check_from = 0;
+
+		 if (AnimationInstance->bActivateSitAnim) {
+			 check_from = -10;
+		 }
+
 		 // Verifying locations
-		 if (ObjLocationInCompSpace.Y > 0 && ObjLocationInCompSpace.Z > -6.5) {			// Front and over surface
+		 if (ObjLocationInCompSpace.Y > check_from && ObjLocationInCompSpace.Z > -6.5) {			// Front and over surface
 
 			 if (!MyUniqueHits.Contains(obj_name)) { // Ensure unique objects
 				 MyUniqueHits.Emplace(obj_name, *It); // Add to list
@@ -1435,6 +1445,12 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 						"ERROR: Can't process argument \"%s\".\n Try an <angle value> or \"camera\""),	\
 						*tokens[1]), true, FVector2D(1.7, 1.7));
 				}
+			}
+			// Move to left sit
+			else if (tokens[0].Equals("move") && tokens[1].Equals("sit") && tokens[2].Equals("left")) {
+				UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
+				check(AnimationInstance != nullptr);
+				AnimationInstance->bActivateMoveToLeftSit = true;
 			}
 			// Cut
 			else if (tokens[0].Equals("cut")) {

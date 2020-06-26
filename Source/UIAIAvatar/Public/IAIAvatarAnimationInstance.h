@@ -309,6 +309,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
 		bool bActivateSitAnim;
 
+	// Move to left sit
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = IAIAvatar)
+		bool bActivateMoveToLeftSit;
+
 	void resetRightHandFingerRots();
 	void resetLeftHandFingerRots();
 }; 

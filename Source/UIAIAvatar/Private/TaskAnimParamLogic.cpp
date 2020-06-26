@@ -738,7 +738,12 @@ void UTaskAnimParamLogic::SetHoldingObjPose(FAvatarPose_t &Pose) {
 	else if (AnimParams.Object->ActorHasTag("DinnerFork")) {
 		if (AnimParams.bUsingRightHand) {
 			Pose.RH_Rot = FRotator(9, -100, -25);
-			Pose.RH_Loc = FVector(-15, 15, 100);
+			if (Animation->bActivateSitAnim) {
+				Pose.RH_Loc = FVector(-15, 5, 75);
+			}
+			else {
+				Pose.RH_Loc = FVector(-15, 15, 100);
+			}
 		}
 	}
 	else if (AnimParams.Object->ActorHasTag("Plate")) {
@@ -764,7 +769,7 @@ void UTaskAnimParamLogic::SetHoldingObjPose(FAvatarPose_t &Pose) {
 		Pose.Spine_01_Rot = CalculateSpineRot(Pose.RH_Loc, 52);
 	}
 
-	Pose.Head_Rot = FRotator(0, 0, 0);
+	Pose.Head_Rot = FRotator(0, 15, 0);
 }
 
 void UTaskAnimParamLogic::SaveOriginalPose() {
@@ -940,7 +945,7 @@ FRotator UTaskAnimParamLogic::CalculateSpineRot(FVector LocalEndPoint, float elo
 		UE_LOG(LogAvatarCharacter, Error, TEXT("LLL Vector Loc %s"), *Direction.ToCompactString());
 		Direction.ToDirectionAndLength(tmp1, distance);
 		UE_LOG(LogAvatarCharacter, Error, TEXT("LLL Distance %f"), distance);
-		spineAngle += 5;
+		spineAngle += 2;
 	} while (distance > elongation && spineAngle <= 90);
 
 	return SpineRotEndPoint;
@@ -1113,9 +1118,9 @@ void UTaskAnimParamLogic::Calculate_PassPage_EndPose_Curves(FAvatarPose_t &EndPo
 	// Hand Rotation trajectory
 	// Pitch Yaw  Roll
 	//  Y     Z     X
-	// 60      0   120 
-	//  0    -90    90
-	// 60   -150   120 
+	// 60      0   120   45  -70  20
+	//  0    -90    90    0  -90 
+	// 60   -150   120   45 -120 145
 	EndPose.RH_Rot = FRotator(0, -150, 90);
 
 	Curves = PassingPageCurves;
@@ -1175,7 +1180,8 @@ void UTaskAnimParamLogic::StartPassPageAnimChain(AActor *Target, bool bLast, FSt
 		if (AnimParams.bUsingRightHand) {
 
 			RH_LocEndPoint_Adjustment = FVector(-3, 0, 10);
-			EndPose.RH_Rot = FRotator(60, 0, 120);
+			//EndPose.RH_Rot = FRotator(60, 0, 120);
+			EndPose.RH_Rot = FRotator(45, -70, 20);
 
 			EndPose.RH_FingerRots.thumb_01 = FRotator(10, -50, 140);
 			EndPose.RH_FingerRots.thumb_02 = FRotator(0, -0, 0);
@@ -1199,13 +1205,13 @@ void UTaskAnimParamLogic::StartPassPageAnimChain(AActor *Target, bool bLast, FSt
 	if (AnimParams.bUsingRightHand) {
 		EndPose.RH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
 		EndPose.RH_Loc += RH_LocEndPoint_Adjustment;
-		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.RH_Loc, 52);
+		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.RH_Loc, 55);
 	}
 
 	if (AnimParams.bUsingLeftHand) {
 		EndPose.LH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
 		EndPose.LH_Loc += LH_LocEndPoint_Adjustment;
-		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.LH_Loc, 52);
+		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.LH_Loc, 55);
 	}
 
 	// Set corresponding curves
@@ -2003,7 +2009,7 @@ void UTaskAnimParamLogic::RunSlicingAnimChain(int stage) {
 		EndPose.LH_Rot = FRotator(-55, 110, -120);
 
 		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.LH_Loc, 52);
-		EndPose.Head_Rot = FRotator(0,0,0);
+		EndPose.Head_Rot = FRotator(0,15,0);
 
 		Curves = ReachingCurves;
 
@@ -2355,7 +2361,7 @@ void UTaskAnimParamLogic::StartReleaseLookAnimation() {
 	StartPose = GetCurrentAvatarPose();
 	EndPose = StartPose;
 
-	EndPose.Head_Rot = FRotator(0,0,0);
+	EndPose.Head_Rot = FRotator(0,15,0);
 
 	Curves.time = 1.25;
 	Curves.Head_Rot_Interpolation = ReachingCurves.Head_Rot_Interpolation;
@@ -2557,12 +2563,17 @@ void UTaskAnimParamLogic::CallSpoonAnimation(FString ObjectName) {
 
 // Forking
 void UTaskAnimParamLogic::CallForkAnimation(FString ObjectName) {
-	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
+
+	TMap<FString, FHitResult> MyUniqueHits = Avatar->ListObjects();
+	AActor *Object = MyUniqueHits.FindRef(ObjectName).GetActor();
+
 	if (Object != NULL) {
 		StartForkAnimation(Object);
 	}
 	else {
-		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
+		UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Object \"%s\" not found!"), *ObjectName);
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Object \"%s\" not found!"), *ObjectName), true, FVector2D(1.7, 1.7));
+		return;
 	}
 }
 
@@ -2579,7 +2590,10 @@ void UTaskAnimParamLogic::CallPourAnimation(FString ObjectName) {
 
 // Poiting book
 void UTaskAnimParamLogic::CallReadBookAnimChain(FString ObjectName, FString Page) {
-	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
+	
+	TMap<FString, FHitResult> MyUniqueHits = Avatar->ListObjects();
+	AActor *Object = MyUniqueHits.FindRef(ObjectName).GetActor();
+
 	if (Object != NULL) {
 		if (Object->ActorHasTag("book")) {
 			StartReadNewspaperAnimChain(Object, Page);
@@ -2589,13 +2603,18 @@ void UTaskAnimParamLogic::CallReadBookAnimChain(FString ObjectName, FString Page
 		}
 	}
 	else {
-		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
+		UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Object \"%s\" not found!"), *ObjectName);
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Object \"%s\" not found!"), *ObjectName), true, FVector2D(1.7, 1.7));
+		return;
 	}
 }
 
 // Passing page
 void UTaskAnimParamLogic::CallPassPageAnimChain(FString ObjectName) {
-	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
+
+	TMap<FString, FHitResult> MyUniqueHits = Avatar->ListObjects();
+	AActor *Object = MyUniqueHits.FindRef(ObjectName).GetActor();
+
 	if (Object != NULL) {
 		if (Object->ActorHasTag("book")) {
 			StartPassPageAnimChain(Object);
@@ -2605,13 +2624,18 @@ void UTaskAnimParamLogic::CallPassPageAnimChain(FString ObjectName) {
 		}
 	}
 	else {
-		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
+		UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Object \"%s\" not found!"), *ObjectName);
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Object \"%s\" not found!"), *ObjectName), true, FVector2D(1.7, 1.7));
+		return;
 	}
 }
 
 // Closing book
 void UTaskAnimParamLogic::CallCloseBookAnimChain(FString ObjectName) {
-	AActor * Object = CheckForObject(Avatar->ListObjects(), ObjectName);
+
+	TMap<FString, FHitResult> MyUniqueHits = Avatar->ListObjects();
+	AActor *Object = MyUniqueHits.FindRef(ObjectName).GetActor();
+
 	if (Object != NULL) {
 		if (Object->ActorHasTag("book")) {
 			StartPassPageAnimChain(Object, true);
@@ -2621,7 +2645,9 @@ void UTaskAnimParamLogic::CallCloseBookAnimChain(FString ObjectName) {
 		}
 	}
 	else {
-		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: no valid object provided."));
+		UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Object \"%s\" not found!"), *ObjectName);
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Object \"%s\" not found!"), *ObjectName), true, FVector2D(1.7, 1.7));
+		return;
 	}
 }
 
