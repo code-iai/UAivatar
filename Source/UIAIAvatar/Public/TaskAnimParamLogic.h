@@ -351,7 +351,7 @@ public:
 	AActor* CheckForObject(TMap<FString, FHitResult> Objects, FString ObjName);
 
 	// Calculate needed spine rotation to reacha location
-	FRotator CalculateSpineRot(FVector LocalEndPoint, float elongation);
+	FRotator CalculateSpineRot(FVector LocalEndPoint, float elongation, bool bRotateSpine = false);
 
 	// Calculate head rotation to look to WorlEndPoint
 	FRotator CalculateHeadRot(FVector WorldEndPoint);
@@ -397,6 +397,9 @@ public:
 	// Feeding
 	void StartFeedingAnimChain(ACharacter *Person);
 
+	// Forking 
+	void StartForkAnimChain(AActor* Target);
+
 	// ****** Running Chains ****** //
 
 	// Poiting Book
@@ -414,8 +417,11 @@ public:
 	// Placing Object
 	void RunPlacingAnimChain(int stage);
 
-	//Feeding
+	// Feeding
 	void RunFeedingAnimChain(int stage);
+
+	// Forking
+	void RunForkAnimChain(int stage);
 
 	// ****** Setting Parameters ****** //
 
@@ -424,9 +430,6 @@ public:
 
 	// Set parameters for pour animation
 	void StartPourAnimation(AActor* Target);
-
-	// Set parameters for fork animation
-	void StartForkAnimation(AActor* Target);
 
 	// Set parameters for Spoon animation
 	void StartSpoonAnimation(AActor* Target);
