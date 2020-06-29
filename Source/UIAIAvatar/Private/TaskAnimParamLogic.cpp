@@ -940,11 +940,11 @@ FRotator UTaskAnimParamLogic::CalculateSpineRot(FVector LocalEndPoint, float elo
 		UE_LOG(LogAvatarCharacter, Error, TEXT("LLL Prev Rot direction %s"), *Direction.ToCompactString());
 		FRotator A = Direction.ToOrientationRotator();
 		FRotator B = Avatar->GetActorForwardVector().ToOrientationRotator();
-		angle = A.Yaw - B.Yaw;
+		angle = A.Yaw - 90;
 
 		SpineRotEndPoint.Pitch = angle;
-		ShoulderRotator.Yaw = angle - 90;
-		UE_LOG(LogAvatarCharacter, Error, TEXT("LLL Angle %f"), angle);
+		ShoulderRotator.Yaw = angle;
+		UE_LOG(LogAvatarCharacter, Error, TEXT("LLL A %f - B %f = Angle %f"), A.Yaw, B.Yaw, angle);
 
 	}
 
@@ -953,7 +953,7 @@ FRotator UTaskAnimParamLogic::CalculateSpineRot(FVector LocalEndPoint, float elo
 	ShouldersLocation = ShoulderVector + SpineHeight;
 	Direction = LocalEndPoint - ShouldersLocation;
 	Direction.ToDirectionAndLength(tmp1, distance);
-
+	ShoulderRotator.Yaw -=  90;
 	float prev_dist = distance;
 
 	do {
@@ -1235,7 +1235,7 @@ void UTaskAnimParamLogic::StartReadNewspaperAnimChain(AActor *Target, FString Ha
 	AnimParams.bUsingRightHand = false;
 	AnimParams.bUsingLeftHand = false;
 
-	pendingStates = 3;
+	pendingStates = 19;
 	SaveOriginalPose();
 	AnimParams.Object = Target;
 	AnimParams.ActionContext = "TurnPageBox"; // This is a hack to get a location where to point
@@ -1771,7 +1771,7 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 	if (AnimParams.bUsingLeftHand) page_start = -1;
 	
 	// Section 1:	- Big paragraph Top
-	if (pendingStates == 3) {
+	if (pendingStates == 19) {
 		speedFactor = 1;
 		Calculate_PointBook_EndPose_Curves(-0.35, page_start + 0.15, EndPose, Curves);
 		Curves = ReachingCurves;
@@ -1875,7 +1875,7 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 		Curves = ReachingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 	}//				- Paragraph 3 End
-	if (pendingStates == 19) {
+	if (pendingStates == 3) {
 		speedFactor = 1;
 		Calculate_PointBook_EndPose_Curves(0.95, page_start + 0.45, EndPose, Curves);
 		EndPose.Jaw_Rot = FRotator(0, 150, 0);
