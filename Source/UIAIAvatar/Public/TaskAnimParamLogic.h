@@ -363,9 +363,6 @@ public:
 	// vPageLoc and hPageLoc values fron 0 to 1
 	void Calculate_PointBook_EndPose_Curves(float vPageLoc, float hPageLoc, FAvatarPose_t &EndPose, FCurvesSet_t &Curves);
 
-	// Calculate EndPose for passing page and set corresponding curves
-	void Calculate_PassPage_EndPose_Curves(FAvatarPose_t &EndPose, FCurvesSet_t &Curves);
-
 	// ****** Cutting Help Functions ****** //
 
 	// Check for cuttable items within a list of unique hit results and filter out those out of proper reach
@@ -400,6 +397,9 @@ public:
 	// Forking 
 	void StartForkAnimChain(AActor* Target);
 
+	// Sliding 
+	void StartSlideObjectAnimChain(FString ToSide, AActor* Target);
+
 	// ****** Running Chains ****** //
 
 	// Poiting Book
@@ -422,6 +422,9 @@ public:
 
 	// Forking
 	void RunForkAnimChain(int stage);
+
+	// Sliding
+	void RunSlideObjectAnimChain(int stage);
 
 	// ****** Setting Parameters ****** //
 
@@ -485,6 +488,9 @@ public:
 
 	// Feeding Person
 	void CallFeedingAnimChain(FString PersonName);
+
+	// Slide object
+	void CallSlideObject(FString ToSide, FString ObjectName);
 
 	void WriteCSV(float time);
 };

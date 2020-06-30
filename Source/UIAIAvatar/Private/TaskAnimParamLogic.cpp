@@ -1107,50 +1107,6 @@ void UTaskAnimParamLogic::Calculate_PointBook_EndPose_Curves(float vPageLoc, flo
 	}
 }
 
-void UTaskAnimParamLogic::Calculate_PassPage_EndPose_Curves(FAvatarPose_t &EndPose, FCurvesSet_t &Curves) {
-
-	// Pass Page Box Location 
-	FVector EndPoint = CalculateReachBookLocation(AnimParams.Object, *AnimParams.ActionContext, false);
-
-	// Get oposite side of book
-	EndPoint.Y *= -1;
-
-	// Get looking point
-	FVector LookingPoint = EndPoint;
-	LookingPoint = AnimParams.Object->GetActorTransform().TransformPosition(LookingPoint);
-	EndPose.Head_Rot = CalculateHeadRot(LookingPoint);
-
-	// Modify end point for multiplier 
-	EndPoint.Y += 10;
-	EndPoint.Z += EndPoint.Y;
-
-	// Relative to world
-	EndPoint = AnimParams.Object->GetActorTransform().TransformPosition(EndPoint);
-
-	// Relative to Avatar
-	EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
-
-	EndPoint = EndPoint + FVector(0, 0, 5);
-
-	if (AnimParams.bUsingRightHand) {
-		EndPose.RH_Loc = EndPoint;
-	}
-	else {
-		EndPose.LH_Loc = EndPoint;
-	}
-
-	// Hand Rotation trajectory
-	// Pitch Yaw  Roll
-	//  Y     Z     X
-	// 60      0   120   45  -70  20
-	//  0    -90    90    0  -90 
-	// 60   -150   120   45 -120 145
-	EndPose.RH_Rot = FRotator(0, -150, 90);
-
-	Curves = PassingPageCurves;
-
-}
-
 // **************** Setting Up Animation Chains *****************
 
 // Start passing page animation chain
@@ -1581,6 +1537,7 @@ void UTaskAnimParamLogic::StartSlicingAnimChain() {
 	SetAnimParams(StartPose, EndPose, Curves);
 }
 
+// Start forking animation chain
 void UTaskAnimParamLogic::StartForkAnimChain(AActor* Target) {
 
 	FAvatarPose_t StartPose, EndPose, MultiplierPose;
@@ -1616,6 +1573,64 @@ void UTaskAnimParamLogic::StartForkAnimChain(AActor* Target) {
 
 	//Spine
 	EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.RH_Loc, 52);
+
+	// Set corresponding curves
+	Curves = ReachingCurves;
+
+	SetAnimParams(StartPose, EndPose, Curves);
+}
+
+// Start sliding animation chain
+void  UTaskAnimParamLogic::StartSlideObjectAnimChain(FString ToSide, AActor* Target) {
+
+	FAvatarPose_t StartPose, EndPose, MultiplierPose;
+	FCurvesSet_t Curves;
+
+	pendingStates = 4;
+	SaveOriginalPose();
+	speedFactor = 2;
+	AnimChain.BindUObject(this, &UTaskAnimParamLogic::RunSlideObjectAnimChain);
+
+	AnimParams.ClearJointFlags();
+	AnimParams.bUsingRightHand = true;
+	AnimParams.bUsingLeftHand = false;
+
+	AnimParams.Object = Target;
+
+	// Getting location relative to component
+	FVector ObjLocationInCompSpace = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Target->GetActorLocation());
+
+	// Set params for first animation in chain ************************
+	// Prepare for grasping
+	speedFactor = 2;
+	StartPose = GetCurrentAvatarPose();
+	EndPose = StartPose;
+
+	// Head
+	EndPose.Head_Rot = CalculateHeadRot(Target->GetActorLocation());
+
+	// Pre step for reaching object
+	if (AnimParams.bUsingRightHand) {
+		if (Animation->bActivateSitAnim) {
+			EndPose.RH_Loc = FVector(-20, -20, 85);
+			EndPose.RH_Rot = FRotator(10, -130, 80);
+		}
+		else {
+			EndPose.RH_Loc = FVector(-20, 15, 100);
+			EndPose.RH_Rot = FRotator(45, -110, 60);
+		}
+	}
+
+	if (AnimParams.bUsingLeftHand) {
+		if (Animation->bActivateSitAnim) {
+			EndPose.LH_Loc = FVector(20, -20, 85);
+			EndPose.LH_Rot = FRotator(-10, 130, -100);
+		}
+		else {
+			EndPose.LH_Loc = FVector(20, 15, 100);
+			EndPose.LH_Rot = FRotator(-45, 110, -120);
+		}
+	}
 
 	// Set corresponding curves
 	Curves = ReachingCurves;
@@ -1731,7 +1746,7 @@ void UTaskAnimParamLogic::RunPassPageAnimChain(int state) {
 
 		// Modify end point for multiplier 
 		EndPoint.Y *= -1;
-		EndPoint.Y += 10;
+		EndPoint.Y -= 30;
 
 		// Get looking point
 		FVector LookingPoint = EndPoint;
@@ -1742,7 +1757,7 @@ void UTaskAnimParamLogic::RunPassPageAnimChain(int state) {
 		EndPoint = AnimParams.Object->GetActorTransform().TransformPosition(EndPoint);
 		// Relative to Avatar
 		EndPoint = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPoint);
-		EndPoint = EndPoint + FVector(0, 0, 5);
+		EndPoint = EndPoint + FVector(0, 0, 7);
 
 		// Spine
 		EndPose.Spine_01_Rot = CalculateSpineRot(EndPoint, 52, true);
@@ -1767,7 +1782,6 @@ void UTaskAnimParamLogic::RunPassPageAnimChain(int state) {
 		EndPose.Head_Rot = OriginalPose.Head_Rot;
 
 		if (AnimParams.bUsingRightHand) {
-			EndPose.RH_Rot = OriginalPose.RH_Rot;
 			EndPose.RH_FingerRots = OriginalPose.RH_FingerRots;
 			if (Animation->bActivateSitAnim) {
 				EndPose.RH_Loc = FVector(-15, -20, 85);
@@ -1779,7 +1793,6 @@ void UTaskAnimParamLogic::RunPassPageAnimChain(int state) {
 			}
 		}
 		else if (AnimParams.bUsingLeftHand) {
-			EndPose.LH_Rot = OriginalPose.LH_Rot;
 			EndPose.LH_FingerRots = OriginalPose.LH_FingerRots;
 			if (Animation->bActivateSitAnim) {
 				EndPose.LH_Loc = FVector(15, -20, 85);
@@ -1800,13 +1813,12 @@ void UTaskAnimParamLogic::RunPassPageAnimChain(int state) {
 		if (AnimParams.bUsingRightHand) {
 			AnimParams.bUnSet_RH_Loc = false;
 			AnimParams.bUnSet_RH_Rot = false;
-			Animation->RightFingerIKAlpha = 0;
 		}
 		else if (AnimParams.bUsingLeftHand) {
 			AnimParams.bUnSet_LH_Loc = false;
 			AnimParams.bUnSet_LH_Rot = false;
-			Animation->LeftFingerIKAlpha = 0;
 		}
+
 	} // Release hand
 	if (pendingStates == 1) {
 		speedFactor = 3;
@@ -1956,7 +1968,6 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 		EndPose.Head_Rot = OriginalPose.Head_Rot;
 
 		if (AnimParams.bUsingRightHand) {
-			EndPose.RH_Rot = OriginalPose.RH_Rot;
 			EndPose.RH_FingerRots = OriginalPose.RH_FingerRots;
 			if (Animation->bActivateSitAnim) {
 				EndPose.RH_Loc = FVector(-15,-20,85);
@@ -1968,7 +1979,6 @@ void UTaskAnimParamLogic::RunReadNewspaperAnimChain(int state) {
 			}	
 		}
 		else if (AnimParams.bUsingLeftHand) {
-			EndPose.LH_Rot = OriginalPose.LH_Rot;
 			EndPose.LH_FingerRots = OriginalPose.LH_FingerRots;
 			if (Animation->bActivateSitAnim) {
 				EndPose.LH_Loc = FVector(15, -20, 85);
@@ -2348,6 +2358,96 @@ void UTaskAnimParamLogic::RunForkAnimChain(int stage) {
 	}
 		
 	pendingStates--;
+}
+
+// Run slide animation chain
+void UTaskAnimParamLogic::RunSlideObjectAnimChain(int stage) {
+
+	FAvatarPose_t StartPose, EndPose, MultiplierPose;
+	FCurvesSet_t Curves;
+
+	AnimParams.ClearJointFlags();
+	StartPose = GetCurrentAvatarPose();
+	EndPose = StartPose;
+
+	// Calculate EndPose
+
+	// Grasp
+	if (pendingStates == 4) {
+		speedFactor = 1.5;
+		EndPose.RH_Loc = AnimParams.Object->GetActorLocation();
+		EndPose.Head_Rot = CalculateHeadRot(EndPose.RH_Loc);
+		EndPose.RH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPose.RH_Loc);
+		EndPose.RH_Loc += FVector(0, 0, 5);
+		if (AnimParams.Object->ActorHasTag("book")) {
+			EndPose.RH_Loc += FVector(15, 0, 0);
+		}
+		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.RH_Loc,52,true);
+		EndPose.RH_Rot = FRotator(-10, -90, 80);
+		Curves = ReachingCurves;
+		SetAnimParams(StartPose, EndPose, Curves);
+	} // Slide
+	else if (pendingStates == 3) {
+		// Attach
+		FAttachmentTransformRules attachRules = FAttachmentTransformRules(
+			EAttachmentRule::KeepWorld,
+			EAttachmentRule::KeepWorld,
+			EAttachmentRule::KeepWorld,
+			true);
+		Avatar->isGrasped_r = true;
+		Avatar->graspedObject_r = AnimParams.Object;
+		AnimParams.Object->AttachToComponent(Avatar->GetMesh(), attachRules, "hand_rSocket");
+
+		speedFactor = 1;
+		EndPose.RH_Loc += FVector(-50, 0, 0);
+		EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.RH_Loc, 52, true);
+		Curves = ReachingCurves;
+		SetAnimParams(StartPose, EndPose, Curves);
+	} // Take hand back
+	else if (pendingStates == 2) {
+		// Detach
+		Avatar->DetachGraspedObject_r();
+
+		speedFactor = 2;
+		EndPose.Spine_01_Rot = OriginalPose.Spine_01_Rot;
+		EndPose.Head_Rot = OriginalPose.Head_Rot;
+		EndPose.RH_FingerRots = OriginalPose.RH_FingerRots;
+		Curves = ReachingCurves;
+
+		if (Animation->bActivateSitAnim) {
+			EndPose.RH_Loc = FVector(-15, -20, 85);
+			EndPose.RH_Rot = FRotator(10, -130, 80);
+		}
+		else {
+			EndPose.RH_Loc = FVector(-20, 15, 100);
+			EndPose.RH_Rot = FRotator(45, -110, 60);
+		}
+
+		SetAnimParams(StartPose, EndPose, Curves);
+		AnimParams.bUnSet_Head_Rot = true;
+		AnimParams.bUnSet_S01_Rot = true;
+		AnimParams.bUnSet_RF_Rot = true;
+
+	} // Release hand
+	if (pendingStates == 1) {
+		speedFactor = 3;
+		if (AnimParams.bUsingRightHand) {
+			EndPose.RH_Loc = OriginalPose.RH_Loc;
+			EndPose.RH_Rot = OriginalPose.RH_Rot;
+		}
+		else if (AnimParams.bUsingLeftHand) {
+			EndPose.LH_Loc = OriginalPose.LH_Loc;
+			EndPose.LH_Rot = OriginalPose.LH_Rot;
+		}
+		Curves = DroppingCurves;
+		SetAnimParams(StartPose, EndPose, Curves, true);
+	}
+	// Set corresponding curves
+	Curves = ReachingCurves;
+
+	SetAnimParams(StartPose, EndPose, Curves);
+	pendingStates--;
+
 }
 
 // ********** Set parameters for tasks' animation **********
@@ -2940,6 +3040,21 @@ void UTaskAnimParamLogic::CallFeedingAnimChain(FString PersonName) {
 	}
 
 	StartFeedingAnimChain(Person);
+}
+
+void UTaskAnimParamLogic::CallSlideObject(FString ToSide, FString ObjectName) {
+
+	TMap<FString, FHitResult> MyUniqueHits = Avatar->ListObjects();
+	AActor *Object = MyUniqueHits.FindRef(ObjectName).GetActor();
+
+	if (Object != NULL) {
+		StartSlideObjectAnimChain(ToSide, Object);
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Log, TEXT("ERROR: Object \"%s\" not found!"), *ObjectName);
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: Object \"%s\" not found!"), *ObjectName), true, FVector2D(1.7, 1.7));
+		return;
+	}
 }
 
 void UTaskAnimParamLogic::WriteCSV(float time) {

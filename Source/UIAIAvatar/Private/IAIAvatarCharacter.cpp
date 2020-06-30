@@ -1446,6 +1446,10 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 						*tokens[1]), true, FVector2D(1.7, 1.7));
 				}
 			}
+			// Slide object
+			else if (tokens[0].Equals("slide")) {
+				AnimLogic->CallSlideObject(tokens[1],tokens[2]);
+			}
 			// Move to left sit
 			else if (tokens[0].Equals("move") && tokens[1].Equals("sit") && tokens[2].Equals("left")) {
 				UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
