@@ -989,7 +989,7 @@ FRotator UTaskAnimParamLogic::CalculateHeadRot(FVector Point) {
 
 	float temp = TempRotOut.Roll;
 	TempRotOut.Roll = TempRotOut.Pitch;
-	TempRotOut.Yaw += 90;
+	TempRotOut.Yaw += 105;
 	TempRotOut.Pitch = 0; // = temp - 90; // Or = 0
 
 	// Limit rotation so Avatar doesn't look wierd
