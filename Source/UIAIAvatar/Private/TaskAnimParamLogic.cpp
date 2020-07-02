@@ -2336,7 +2336,7 @@ void UTaskAnimParamLogic::RunForkAnimChain(int stage) {
 
 	if (pendingStates == 2) {
 		speedFactor = 1;
-		EndPose.RH_Loc.Z -= 7;
+		EndPose.RH_Loc.Z -= 6;
 		Curves = ForkingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
 		AnimParams.AnimFunctionDelegate.BindUObject(this, &UTaskAnimParamLogic::RunForkAnimation);
@@ -2813,7 +2813,7 @@ void UTaskAnimParamLogic::RunForkAnimation(float time) {
 	
 	RunAnimation(time);
 
-	if (!attached && time > 2) {
+	if (!attached && time > 1) {
 	
 		if (Avatar->graspedObject_r->ActorHasTag("DinnerFork")) {
 			
@@ -2885,7 +2885,18 @@ void UTaskAnimParamLogic::CallSpoonAnimation(FString ObjectName) {
 void UTaskAnimParamLogic::CallForkAnimation(FString ObjectName) {
 
 	TMap<FString, FHitResult> MyUniqueHits = Avatar->ListObjects();
-	AActor *Object = MyUniqueHits.FindRef(ObjectName).GetActor();
+	AActor *Object = NULL;
+
+	// Filtering non cuttable objects
+	for (auto& It : MyUniqueHits)
+	{
+		AActor *Item = It.Value.GetActor();
+		// Check if cuttable
+		if (Item->ActorHasTag(*ObjectName)) {
+			Object = MyUniqueHits.FindRef(ObjectName).GetActor();
+			break;
+		}
+	}
 
 	if (Object != NULL) {
 		StartForkAnimChain(Object);
