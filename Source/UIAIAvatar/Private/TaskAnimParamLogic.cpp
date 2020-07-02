@@ -2887,11 +2887,10 @@ void UTaskAnimParamLogic::CallForkAnimation(FString ObjectName) {
 	TMap<FString, FHitResult> MyUniqueHits = Avatar->ListObjects();
 	AActor *Object = NULL;
 
-	// Filtering non cuttable objects
+	// Look for object
 	for (auto& It : MyUniqueHits)
 	{
 		AActor *Item = It.Value.GetActor();
-		// Check if cuttable
 		if (Item->ActorHasTag(*ObjectName)) {
 			Object = MyUniqueHits.FindRef(ObjectName).GetActor();
 			break;
