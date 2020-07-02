@@ -987,7 +987,6 @@ FRotator UTaskAnimParamLogic::CalculateHeadRot(FVector Point) {
 
 	Avatar->GetMesh()->TransformToBoneSpace("spine_03", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
 
-	float temp = TempRotOut.Roll;
 	TempRotOut.Roll = TempRotOut.Pitch;
 	TempRotOut.Yaw += 105;
 	TempRotOut.Pitch = 0; // = temp - 90; // Or = 0
