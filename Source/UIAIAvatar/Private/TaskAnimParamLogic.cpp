@@ -1565,7 +1565,7 @@ void UTaskAnimParamLogic::StartForkAnimChain(AActor* Target) {
 
 	// Hand Loc
 	EndPose.RH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPose.RH_Loc);
-	EndPose.RH_Loc += FVector(-7, -7, 22);
+	EndPose.RH_Loc += FVector(-4, -3, 21.5);
 	
 	// Hand Rot
 	EndPose.RH_Rot = FRotator(9, -90, 45);
