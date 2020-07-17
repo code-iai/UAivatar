@@ -718,12 +718,12 @@ void UTaskAnimParamLogic::SetGraspingObjPose(FAvatarPose_t &Pose) {
 	if (AnimParams.bUsingLeftHand) {
 		Pose.LH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(ObjectLoc);
 		Pose.LH_Loc += LH_LocEndPoint_Adjustment;
-		Pose.Spine_01_Rot = CalculateSpineRot(Pose.LH_Loc, 52);
+		Pose.Spine_01_Rot = CalculateSpineRot(Pose.LH_Loc, 52, false);
 	}
 	if (AnimParams.bUsingRightHand) {
 		Pose.RH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(ObjectLoc);
 		Pose.RH_Loc += RH_LocEndPoint_Adjustment;
-		Pose.Spine_01_Rot = CalculateSpineRot(Pose.RH_Loc, 52);
+		Pose.Spine_01_Rot = CalculateSpineRot(Pose.RH_Loc, 52, false);
 	}
 }
 
@@ -917,6 +917,7 @@ FAvatarPose_t UTaskAnimParamLogic::GetCurrentAvatarPose() {
 	return Pose;
 }
 
+#pragma optimize("", off)
 FRotator UTaskAnimParamLogic::CalculateSpineRot(FVector LocalEndPoint, float elongation, bool bRotateSpine) {
 
 	FRotator SpineRotEndPoint = FRotator(0, 0, 0);
@@ -945,7 +946,6 @@ FRotator UTaskAnimParamLogic::CalculateSpineRot(FVector LocalEndPoint, float elo
 		SpineRotEndPoint.Pitch = angle;
 		ShoulderRotator.Yaw = angle;
 		UE_LOG(LogAvatarCharacter, Error, TEXT("LLL A %f - B %f = Angle %f"), A.Yaw, B.Yaw, angle);
-
 	}
 
 	float distance, spineAngle = 0;
@@ -974,6 +974,7 @@ FRotator UTaskAnimParamLogic::CalculateSpineRot(FVector LocalEndPoint, float elo
 
 	return SpineRotEndPoint;
 }
+#pragma optimize("", on)
 
 FRotator UTaskAnimParamLogic::CalculateHeadRot(FVector Point) {
 
@@ -1565,7 +1566,7 @@ void UTaskAnimParamLogic::StartForkAnimChain(AActor* Target) {
 
 	// Hand Loc
 	EndPose.RH_Loc = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(EndPose.RH_Loc);
-	EndPose.RH_Loc += FVector(-4, -3, 21.5);
+	EndPose.RH_Loc += FVector(-7, -6, 22);
 	
 	// Hand Rot
 	EndPose.RH_Rot = FRotator(9, -90, 45);
@@ -2129,13 +2130,24 @@ void UTaskAnimParamLogic::RunFeedingAnimChain(int stage) {
 	else if (pendingStates == 1) {
 	
 		speedFactor = 1;
+		AnimParams.Object->Destroy();
 
 		// Calculate EndPose
 		if (AnimParams.bUsingRightHand) {
-			EndPose.RH_Loc = FVector(-15, 15, 100);
+			if (Animation->bActivateSitAnim) {
+				EndPose.RH_Loc = FVector(-15, 5, 80);
+			}
+			else {
+				EndPose.RH_Loc = FVector(-15, 15, 100);
+			}
 		}
 		else {
-			EndPose.LH_Loc = FVector(15, 15, 100);
+			if (Animation->bActivateSitAnim) {
+				EndPose.RH_Loc = FVector(15, 5, 80);
+			}
+			else {
+				EndPose.RH_Loc = FVector(15, 15, 100);
+			}
 		}
 
 		EndPose.Spine_01_Rot = FRotator(0, 0, 0);
