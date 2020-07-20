@@ -2904,7 +2904,7 @@ void UTaskAnimParamLogic::CallForkAnimation(FString ObjectName) {
 	{
 		AActor *Item = It.Value.GetActor();
 		if (Item->ActorHasTag(*ObjectName)) {
-			Object = MyUniqueHits.FindRef(ObjectName).GetActor();
+			Object = Item;
 			break;
 		}
 	}
