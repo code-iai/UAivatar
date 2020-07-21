@@ -66,7 +66,7 @@ void UTFBonePublisher::TickComponent(float DeltaTime, ELevelTick TickType, FActo
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	CurrentDeltaForPublishRate += DeltaTime;
-	if (CurrentDeltaForPublishRate < ConstantPublishRate) 
+	if (CurrentDeltaForPublishRate < ConstantPublishRate)
 		return;
 
 	// We've exceeded deltatime. Reset counter and execute tf
@@ -179,8 +179,8 @@ geometry_msgs::TransformStamped UTFBonePublisher::GetTransformStampedMsg(const F
 
     //FTransform ROSTransf = FConversions::UToROS(bone_transform.SetToRelativeTransform(Mesh->GetBoneTransform(pbone_index)));
 
-    //FTransform ROSTransf = FConversions::UToROS(UKismetMathLibrary::ConvertTransformToRelative(ParentTransform,ChildTransform));
-	FTransform ROSTransf = FConversions::UToROS(UKismetMathLibrary::MakeRelativeTransform(ParentTransform, ChildTransform));
+    FTransform ROSTransf = FConversions::UToROS(UKismetMathLibrary::ConvertTransformToRelative(ParentTransform,ChildTransform));
+	// FTransform ROSTransf = FConversions::UToROS(UKismetMathLibrary::MakeRelativeTransform(ParentTransform, ChildTransform));
 
     geometry_msgs::Transform TransfMsg(
             geometry_msgs::Vector3(ROSTransf.GetLocation()),
@@ -231,7 +231,7 @@ geometry_msgs::TransformStamped UTFBonePublisher::GetTransformStampedMsgRoot(con
     //// Transform to ROS coordinate system
 
     // FTransform ROSTransf = FConversions::UToROS(
-    //(myCharacter->GetTransform() * Mesh->GetBoneTransform(0).Inverse()).Inverse());
+    // (myCharacter->GetTransform() * Mesh->GetBoneTransform(0).Inverse()).Inverse());
     FTransform ROSTransf = FConversions::UToROS(Mesh->GetBoneTransform(0));
 
 
@@ -251,9 +251,3 @@ geometry_msgs::TransformStamped UTFBonePublisher::GetTransformStampedMsgRoot(con
 
 
 }
-
-
-
-
-
-
