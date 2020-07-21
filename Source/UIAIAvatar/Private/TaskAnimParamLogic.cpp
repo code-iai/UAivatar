@@ -921,7 +921,7 @@ FAvatarPose_t UTaskAnimParamLogic::GetCurrentAvatarPose() {
 FRotator UTaskAnimParamLogic::CalculateSpineRot(FVector LocalEndPoint, float elongation, bool bRotateSpine) {
 
 	FRotator SpineRotEndPoint = FRotator(0, 0, 0);
-	FRotator ShoulderRotator;
+	FRotator ShoulderRotator = FRotator(0, 0, 0);
 	FVector tmp1, Direction;
 	FVector ShoulderVector;
 	FVector ShoulderVectorStart = FVector(0, 0, 32); // Height with respect to spine_01
@@ -948,15 +948,17 @@ FRotator UTaskAnimParamLogic::CalculateSpineRot(FVector LocalEndPoint, float elo
 		UE_LOG(LogAvatarCharacter, Error, TEXT("LLL A %f - B %f = Angle %f"), A.Yaw, B.Yaw, angle);
 	}
 
-	float distance, spineAngle = 0;
+	float distance = 999;
+	float spineAngle = 0;
+	float prev_dist = distance;
 
 	ShouldersLocation = ShoulderVector + SpineHeight;
 	Direction = LocalEndPoint - ShouldersLocation;
 	Direction.ToDirectionAndLength(tmp1, distance);
 	ShoulderRotator.Yaw -=  90;
-	float prev_dist = distance;
 
 	do {
+
 		SpineRotEndPoint.Yaw = spineAngle;
 		ShoulderRotator.Pitch = spineAngle;
 		ShoulderVector = ShoulderRotator.RotateVector(ShoulderVectorStart);
@@ -993,8 +995,8 @@ FRotator UTaskAnimParamLogic::CalculateHeadRot(FVector Point) {
 	TempRotOut.Pitch = 0; // = temp - 90; // Or = 0
 
 	// Limit rotation so Avatar doesn't look wierd
-	if (TempRotOut.Yaw > 35) {
-		TempRotOut.Yaw = 35;
+	if (TempRotOut.Yaw > 60) {
+		TempRotOut.Yaw = 65;
 	}
 
 	UE_LOG(LogAvatarCharacter, Log, TEXT("Rotator: %f %f %f' ."), TempRotOut.Roll, TempRotOut.Pitch, TempRotOut.Yaw);
@@ -1480,7 +1482,7 @@ void UTaskAnimParamLogic::StartFeedingAnimChain(ACharacter *Person) {
 
 	pendingStates = 2;
 	AnimChain.BindUObject(this, &UTaskAnimParamLogic::RunFeedingAnimChain);
-	speedFactor = 0.7;
+	speedFactor = 0.5;
 
 	// Set params for first animation in chain ************************
 	// Approach fork to mouth
@@ -1698,7 +1700,7 @@ void UTaskAnimParamLogic::RunPassPageAnimChain(int state) {
 			EndPose.LH_Loc += LH_LocEndPoint_Adjustment;
 			EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.LH_Loc, 52, false);
 		}
-
+		UE_LOG(LogTemp, Warning, TEXT("Reach location %s"), *EndPose.RH_Loc.ToString());
 		// Set corresponding curves
 		Curves = ReachingCurves;
 		SetAnimParams(StartPose, EndPose, Curves);
