@@ -996,7 +996,7 @@ FRotator UTaskAnimParamLogic::CalculateHeadRot(FVector Point) {
 
 	// Limit rotation so Avatar doesn't look wierd
 	if (TempRotOut.Yaw > 60) {
-		TempRotOut.Yaw = 65;
+		TempRotOut.Yaw = 60;
 	}
 
 	UE_LOG(LogAvatarCharacter, Log, TEXT("Rotator: %f %f %f' ."), TempRotOut.Roll, TempRotOut.Pitch, TempRotOut.Yaw);
