@@ -1601,6 +1601,15 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			else if (tokens[0].Equals("grasp") && (tokens[1].Equals("right") || tokens[1].Equals("left") || tokens[1].Equals("any"))) {
 				AnimLogic->CallGraspingAnimChain(tokens[2], tokens[1]);
 			}
+			// Hand Reaching
+			else if (tokens[1].Equals("hand") && tokens[2].Equals("reach")) {
+				if (tokens[0].Equals("right")) {
+					AnimLogic->StartHandReachAnimation(true, tokens[3]);
+				}
+				else {
+					AnimLogic->StartHandReachAnimation(false, tokens[3]);
+				}
+			}
 			// Placing objects
 			else if (tokens[0].Equals("place")) {
 				if (tokens[1].IsNumeric() && tokens[2].IsNumeric() && tokens[3].IsNumeric()) {

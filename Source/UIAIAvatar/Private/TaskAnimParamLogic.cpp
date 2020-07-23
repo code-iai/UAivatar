@@ -1021,8 +1021,6 @@ FVector UTaskAnimParamLogic::CalculateReachBookLocation(AActor *Book, FName Tag,
 	return EndPoint;
 }
 
-// **************** EndPose Calculators *****************
-
 void UTaskAnimParamLogic::Calculate_PointBook_EndPose_Curves(float vPageLoc, float hPageLoc, FAvatarPose_t &EndPose, FCurvesSet_t &Curves) {
 	
 	FVector EndPoint;
@@ -2114,12 +2112,6 @@ void UTaskAnimParamLogic::RunPlacingAnimChain(int stage) {
 // Run feeding animation chain
 void UTaskAnimParamLogic::RunFeedingAnimChain(int stage) {
 
-	FAvatarPose_t StartPose, EndPose, MultiplierPose;
-	FCurvesSet_t Curves;
-
-	AnimParams.ClearJointFlags();
-	StartPose = GetCurrentAvatarPose();
-	EndPose = StartPose;
 
 	if (pendingStates == 2) {
 		// 1.5 Seconds Delay
@@ -2131,33 +2123,8 @@ void UTaskAnimParamLogic::RunFeedingAnimChain(int stage) {
 	}
 	else if (pendingStates == 1) {
 	
-		speedFactor = 1;
 		AnimParams.Object->Destroy();
 
-		// Calculate EndPose
-		if (AnimParams.bUsingRightHand) {
-			if (Animation->bActivateSitAnim) {
-				EndPose.RH_Loc = FVector(-15, 5, 80);
-			}
-			else {
-				EndPose.RH_Loc = FVector(-15, 15, 100);
-			}
-		}
-		else {
-			if (Animation->bActivateSitAnim) {
-				EndPose.RH_Loc = FVector(15, 5, 80);
-			}
-			else {
-				EndPose.RH_Loc = FVector(15, 15, 100);
-			}
-		}
-
-		EndPose.Spine_01_Rot = FRotator(0, 0, 0);
-
-		// Set corresponding curves
-		Curves = ReachingCurves;
-
-		SetAnimParams(StartPose, EndPose, Curves);
 	}
 
 	pendingStates--;
@@ -2701,6 +2668,66 @@ void UTaskAnimParamLogic::StartReleaseLookAnimation() {
 	Curves.Head_Rot_Interpolation = ReachingCurves.Head_Rot_Interpolation;
 
 	SetAnimParams(StartPose, EndPose, Curves, true);
+}
+
+void UTaskAnimParamLogic::StartHandReachAnimation(bool bRightHand, FString Position, FVector Point) {
+
+	FAvatarPose_t StartPose, EndPose, MultiplierPose;
+	FCurvesSet_t Curves;
+
+	AnimParams.ClearJointFlags();
+	StartPose = GetCurrentAvatarPose();
+	EndPose = StartPose;
+
+	speedFactor = 1;
+
+	if (bRightHand) {
+		AnimParams.bUsingRightHand = true;
+		AnimParams.bUsingLeftHand = false;
+	}
+	else {
+		AnimParams.bUsingRightHand = false;
+		AnimParams.bUsingLeftHand = true;
+	}
+
+	// Calculate EndPose
+	if (Position.Equals("holding_position")) {
+		if (AnimParams.bUsingRightHand) {
+			if (Animation->bActivateSitAnim) {
+				EndPose.RH_Loc = FVector(-15, 5, 80);
+			}
+			else {
+				EndPose.RH_Loc = FVector(-15, 15, 100);
+			}
+			EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.RH_Loc, 52);
+		}
+		else {
+			if (Animation->bActivateSitAnim) {
+				EndPose.LH_Loc = FVector(15, 5, 80);
+			}
+			else {
+				EndPose.LH_Loc = FVector(15, 15, 100);
+			}
+			EndPose.Spine_01_Rot = CalculateSpineRot(EndPose.LH_Loc, 52);
+		}
+	}
+	else if (Position.Equals("Point")) {
+		EndPose.Head_Rot = CalculateHeadRot(Point);
+		Point = Avatar->GetMesh()->GetComponentTransform().InverseTransformPosition(Point);
+		EndPose.Spine_01_Rot = CalculateSpineRot(Point, 52);
+		if (AnimParams.bUsingRightHand) {
+			EndPose.RH_Loc = Point;
+		}
+		else {
+			EndPose.LH_Loc = Point;
+		}
+	}
+
+	// Set corresponding curves
+	Curves = ReachingCurves;
+
+	SetAnimParams(StartPose, EndPose, Curves);
+
 }
 
 // ******************* Run Animations ************************

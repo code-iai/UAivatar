@@ -443,6 +443,8 @@ public:
 	// Set parameters for releasing looking animation
 	void StartReleaseLookAnimation();
 
+	void StartHandReachAnimation(bool bRightHand, FString Position, FVector Point = FVector(0, 0, 0));
+
 	// ****** Running Animations ****** //
 
 	// Running animation
