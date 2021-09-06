@@ -1016,7 +1016,7 @@ FVector UTaskAnimParamLogic::CalculateReachBookLocation(AActor *Book, FName Tag,
 	}
 	else {
 		// Relative to Object
-		EndPoint = box->RelativeLocation;
+		EndPoint = box->USceneComponent::GetRelativeLocation();
 	}
 	return EndPoint;
 }

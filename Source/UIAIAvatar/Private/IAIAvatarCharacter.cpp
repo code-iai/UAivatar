@@ -2508,7 +2508,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 
  void AIAIAvatarCharacter::SimpleMoveToTargetPoint() {
 	 UE_LOG(LogAvatarCharacter, Log, TEXT("AutoMove"));
-	 UNavigationSystem *NavigationSystem = FNavigationSystem::GetCurrent<UNavigationSystem>(GetWorld());
+	 UNavigationSystemV1 *NavigationSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 	 check(NavigationSystem != nullptr);
 	 //NavigationSystem->SimpleMoveToLocation(GetController(), FVector(-740, 940, 200));
 	 UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), TargetPoint); // TODO comment back in!
