@@ -1,6 +1,6 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
-#include "AvatarPerceiveObjActionResultPublisher.h"
+#include "ROSCommunication/AvatarPerceiveObjActionResultPublisher.h"
 
 void UAvatarPerceiveObjActionResultPublisher::SetMessageType()
 {

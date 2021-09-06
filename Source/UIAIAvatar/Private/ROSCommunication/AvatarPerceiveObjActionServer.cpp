@@ -1,6 +1,6 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
-#include "AvatarPerceiveObjActionServer.h"
+#include "ROSCommunication/AvatarPerceiveObjActionServer.h"
 
 UAvatarPerceiveObjActionServer::UAvatarPerceiveObjActionServer()
 {

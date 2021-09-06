@@ -1,7 +1,7 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
 
-#include "AvatarPerceiveObjActionGoalSubscriber.h"
+#include "ROSCommunication/AvatarPerceiveObjActionGoalSubscriber.h"
 
 void UAvatarPerceiveObjActionGoalSubscriber::SetMessageType()
 {

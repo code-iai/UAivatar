@@ -4,7 +4,7 @@
 #include "ROSBridgeGameInstance.h"
 #include "UIAIAvatarModule.h" // include for log levels
 #include "Math/TransformNonVectorized.h"
-#include "Classes/Kismet/KismetMathLibrary.h"
+#include "Runtime/Engine/Classes/Kismet/KismetMathLibrary.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "IAIAvatarCharacter.h"
 #include "Components/SkinnedMeshComponent.h"

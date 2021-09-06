@@ -1,6 +1,6 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
-#include "AControllerComponent.h"
+#include "Controller/AControllerComponent.h"
 
 // Sets default values for this component's properties
 UAControllerComponent::UAControllerComponent()

@@ -1,7 +1,7 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
 
-#include "AvatarQnAActionServer.h"
+#include "ROSCommunication/AvatarQnAActionServer.h"
 
 UAvatarQnAActionServer::UAvatarQnAActionServer()
 {

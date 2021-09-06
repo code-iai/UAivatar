@@ -1,6 +1,6 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
-#include "AvatarPerceiveObjController.h"
+#include "Controller/AvatarPerceiveObjController.h"
 #include "Engine.h"
 
 void UAvatarPerceiveObjController::Init(AActor* InAgent)

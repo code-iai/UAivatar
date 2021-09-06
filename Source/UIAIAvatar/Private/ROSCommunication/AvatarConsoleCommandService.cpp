@@ -1,6 +1,6 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
-#include "AvatarConsoleCommandService.h"
+#include "ROSCommunication/AvatarConsoleCommandService.h"
 
 void UAvatarConsoleCommandService::SetOwner(UObject* InOwner)
 {

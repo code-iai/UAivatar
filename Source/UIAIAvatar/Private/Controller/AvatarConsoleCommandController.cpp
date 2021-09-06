@@ -1,7 +1,7 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
 
-#include "AvatarConsoleCommandController.h"
+#include "Controller/AvatarConsoleCommandController.h"
 
 void UAvatarConsoleCommandController::Init(AActor* InAgent)
 {

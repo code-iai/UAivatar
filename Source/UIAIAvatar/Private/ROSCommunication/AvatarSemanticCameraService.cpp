@@ -1,7 +1,7 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
 
-#include "AvatarSemanticCameraService.h"
+#include "ROSCommunication/AvatarSemanticCameraService.h"
 
 void UAvatarSemanticCameraService::SetOwner(UObject* InOwner)
 {

@@ -1,6 +1,6 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
-#include "AvatarQnAController.h"
+#include "Controller/AvatarQnAController.h"
 #include "Engine.h"
 
 void UAvatarQnAController::Init(AActor* InAgent)

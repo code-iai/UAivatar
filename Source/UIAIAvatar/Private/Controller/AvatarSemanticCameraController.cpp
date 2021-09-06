@@ -1,7 +1,7 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
 
-#include "AvatarSemanticCameraController.h"
+#include "Controller/AvatarSemanticCameraController.h"
 
 void UAvatarSemanticCameraController::Init(AActor* InAgent)
 {

@@ -1,6 +1,6 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
-#include "AvatarQnAActionResultPublisher.h"
+#include "ROSCommunication/AvatarQnAActionResultPublisher.h"
 
 void UAvatarQnAActionResultPublisher::SetMessageType()
 {

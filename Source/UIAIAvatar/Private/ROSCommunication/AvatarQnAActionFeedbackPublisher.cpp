@@ -1,7 +1,7 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
 
-#include "AvatarQnAActionFeedbackPublisher.h"
+#include "ROSCommunication/AvatarQnAActionFeedbackPublisher.h"
 
 void UAvatarQnAActionFeedbackPublisher::SetMessageType()
 {

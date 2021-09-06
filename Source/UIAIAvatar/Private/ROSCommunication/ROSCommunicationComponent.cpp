@@ -1,6 +1,6 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
-#include "ROSCommunicationComponent.h"
+#include "ROSCommunication/ROSCommunicationComponent.h"
 
 // Sets default values for this component's properties
 UROSCommunicationComponent::UROSCommunicationComponent()

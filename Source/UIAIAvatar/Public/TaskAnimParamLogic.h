@@ -10,7 +10,7 @@
 
 #include "Engine/DataTable.h"
 #include "DataTableEditorUtils.h"
-#include "ConstructorHelpers.h"
+#include "UObject/ConstructorHelpers.h"
 
 #include "TaskAnimParamLogic.generated.h"
 

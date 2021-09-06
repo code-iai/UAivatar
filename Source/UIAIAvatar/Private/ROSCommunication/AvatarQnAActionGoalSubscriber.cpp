@@ -1,7 +1,7 @@
 // Copyright 2019, Institute for Artificial Intelligence - University of Bremen
 
 
-#include "AvatarQnAActionGoalSubscriber.h"
+#include "ROSCommunication/AvatarQnAActionGoalSubscriber.h"
 
 void UAvatarQnAActionGoalSubscriber::SetMessageType()
 {
