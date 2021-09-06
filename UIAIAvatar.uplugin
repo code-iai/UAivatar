@@ -16,7 +16,7 @@
   "Modules": [
     {
       "Name": "UIAIAvatar",
-      "Type": "Developer",
+      "Type": "DeveloperTool",
       "LoadingPhase": "Default",
       "AdditionalDependencies": [
         "UROSBridge"
