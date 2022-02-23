@@ -10,6 +10,7 @@
 #include "Runtime/Engine/Classes/Components/TimelineComponent.h"
 #include "InterpolationHandler.h"
 #include "ProceduralMeshHelper.h"
+#include "Components/SplineComponent.h"
 #include "IAIAvatarCharacter.generated.h"
 
 UCLASS(config=Game)
@@ -407,6 +408,9 @@ public:
 	void DetachGraspObject_r();
 	void DetachGraspedObject_r();
 
+	/** Patrol*/
+	void RandomPatrol();
+
 	// ******** Raising hands ********
 
 	/** Start Left Hand raising */
@@ -457,6 +461,14 @@ public:
 	void TurnTo(FString mode, float angle = 0);
 
 	void StartPathFollowing(FString Path);
+	void FollowSpline();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IAI Avatar Configuration")
+		bool isSplineRunning = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IAI Avatar Configuration")
+		USplineComponent* TrackRef;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IAI Avatar Configuration")
+		AActor* LevelSpline;
 
 	// ******** Other Functions ********
 
@@ -494,4 +506,19 @@ public:
 
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	/*UPROPERTY()
+		class UNavigationSystemV1* NavigationSystem;*/
+
+	private:
+
+		/*class UNavigationSystemV1* NavArea;*/
+
+		FVector RandomLocation;
+
+//private:
+//	union { // anonymous union
+//		UPROPERTY()
+//			class UNavigationSystemV1* NavigationSystem;
+//	};
 };
