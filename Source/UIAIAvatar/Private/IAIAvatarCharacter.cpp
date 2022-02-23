@@ -18,6 +18,11 @@
 #include "Kismet/GameplayStatics.h"
 #include "TaskAnimParamLogic.h"
 #include "Engine.h"
+#include "Runtime/Engine/Classes/Engine/World.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "GameFramework/PlayerController.h"
+#include "Navigation/PathFollowingComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AIAIAvatarCharacter
@@ -1282,6 +1287,10 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 				check(AnimationInstance != nullptr);
 				AnimationInstance->bActivateSitAnim = true;
 			}
+			else if (tokens[0].Equals("patrol")) {
+				// Get Animation
+				RandomPatrol();
+			}
 			// Stopping hand raise
 			else if (tokens[0].Equals("drop")) {
 				GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Yellow, \
@@ -2532,12 +2541,12 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 	 AAIController* x = Cast<AAIController>(GetController());
 	 check(x);
 
-	 FOutputDeviceNull ar;
-	 const FString command = FString::Printf(TEXT("MoveTo %f %f %f"), PositionInWorld.X, PositionInWorld.Y, PositionInWorld.Z);
-	 bool return_val = x->CallFunctionByNameWithArguments(*command, ar, NULL, true);
-	 UE_LOG(LogAvatarCharacter, Log, TEXT("Returned: %s "), return_val ? TEXT("TRUE") : TEXT("FALSE"));
+	 //FOutputDeviceNull ar;
+	 //const FString command = FString::Printf(TEXT("MoveTo %f %f %f"), PositionInWorld.X, PositionInWorld.Y, PositionInWorld.Z);
+	 //bool return_val = x->CallFunctionByNameWithArguments(*command, ar, NULL, true);
+	 //UE_LOG(LogAvatarCharacter, Log, TEXT("Returned: %s "), return_val ? TEXT("TRUE") : TEXT("FALSE"));
 
-	 /*
+	 
 	 EPathFollowingRequestResult::Type MoveToLocationResult;
 	 MoveToLocationResult = x->MoveToLocation(PositionInWorld,  // const FVector & Dest,
 		 2.0f, // float AcceptanceRadius,
@@ -2559,7 +2568,24 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 	 case EPathFollowingRequestResult::Type::RequestSuccessful:
 		 UE_LOG(LogAvatarCharacter, Warning, TEXT("MoveToLocation succeeded"));
 		 break;
-	 }*/
+	 }
+ }
+ void AIAIAvatarCharacter::RandomPatrol(){	 
+
+	 UNavigationSystemV1* NavigationSystem = UNavigationSystemV1::GetCurrent(GetWorld());
+	 check(NavigationSystem != nullptr);
+	 ////NavigationSystem->SimpleMoveToLocation(GetController(), PositionInWorld);
+
+	 check(GetController());
+	 AAIController* x = Cast<AAIController>(GetController());
+	 check(x);
+	 if (NavigationSystem)
+	 {
+		 NavigationSystem->K2_GetRandomReachablePointInRadius(GetWorld(), GetActorLocation(),
+			 RandomLocation, 15000.0f);
+
+		 MoveTo(RandomLocation);
+	 }
  }
 
  void AIAIAvatarCharacter::StartPathFollowing(FString Path) {
@@ -2578,10 +2604,40 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 	 AAIController* x = Cast<AAIController>(GetController());
 	 check(x);
 
-	 FOutputDeviceNull ar;
+	/* FOutputDeviceNull ar;
 	 const FString command = FString::Printf(TEXT("StartSpline %s"), *Path);
 	 bool return_val = x->CallFunctionByNameWithArguments(*command, ar, NULL, true);
-	 UE_LOG(LogAvatarCharacter, Log, TEXT("Returned: %s "), return_val ? TEXT("TRUE") : TEXT("FALSE"));
+	 UE_LOG(LogAvatarCharacter, Log, TEXT("Returned: %s "), return_val ? TEXT("TRUE") : TEXT("FALSE"));*/
+
+	 /////////// C++ Follow Path ///////////
+	 isSplineRunning = true;
+
+	 
+
+	 if (isSplineRunning) {
+		 FollowSpline();
+	 }
+
+ }
+ void AIAIAvatarCharacter::FollowSpline() {
+
+	 check(GetController());
+	 AAIController* x = Cast<AAIController>(GetController());
+	 check(x);
+
+	 USplineComponent* TrackRef = Cast<USplineComponent>(LevelSpline->GetComponentByClass(USplineComponent::StaticClass()));
+	 
+	/* float SplineLength;
+	 FVector LocationAtDistanceAlongSpline;
+	 FRotator RotationClosesttoWorldLocation;
+	 FVector LocationClosesttoWorldLocation;
+	 ESplineCoordinateSpace::Type SplineCoordinateSpace;*/
+
+	 /*SplineLength = TrackRef->GetSplineLength();
+	 LocationAtDistanceAlongSpline = TrackRef->GetLocationAtDistanceAlongSpline(SplineLength, SplineCoordinateSpace);
+	 RotationClosesttoWorldLocation = TrackRef->FindRotationClosestToWorldLocation(->Mesh);
+	 LocationClosesttoWorldLocation = TrackRef->*/
+
 
  }
 
@@ -2604,6 +2660,20 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 void AIAIAvatarCharacter::BeginPlay() {
 	Super::BeginPlay();
 	
+	//limit pitch of camera view
+
+	/*APlayerCameraManager* const cam_manager = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
+	cam_manager->ViewPitchMin = -50.0f;
+	cam_manager->ViewPitchMax = 10.0f;
+
+	UMaterialInstanceDynamic* const material_instance = UMaterialInstanceDynamic::Create(GetMesh()->GetMaterial(0), this);
+	if (material_instance)
+	{
+		material_instance->SetVectorParameterValue("BodyColor", FLinearColor(0.0f, 1.0f, 0.0f, 1.0f));
+		GetMesh()->SetMaterial(0, material_instance);
+	}
+*/
+
 	 // Decide if this is a Player or AI controlled instance
 	check(ControlledByAI() || ControlledByPlayer());
 
@@ -2626,6 +2696,8 @@ void AIAIAvatarCharacter::BeginPlay() {
 	 AnimationInstance->HipRotation    = HipRotation;
 	 AnimationInstance->HandRotation = HandRotation;
 	 AnimationInstance->RightHandRotation = RightHandRotation;
+
+	 RandomPatrol();
 
 }
 
