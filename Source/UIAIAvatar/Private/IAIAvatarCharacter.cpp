@@ -2570,15 +2570,16 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 		 break;
 	 }
  }
- void AIAIAvatarCharacter::RandomPatrol(){	 
+  void AIAIAvatarCharacter::RandomPatrol(){
 
-	 UNavigationSystemV1* NavigationSystem = UNavigationSystemV1::GetCurrent(GetWorld());
+	 const UNavigationSystemV1* NavigationSystem = UNavigationSystemV1::GetCurrent(GetWorld());
 	 check(NavigationSystem != nullptr);
-	 ////NavigationSystem->SimpleMoveToLocation(GetController(), PositionInWorld);
+	 
 
 	 check(GetController());
 	 AAIController* x = Cast<AAIController>(GetController());
 	 check(x);
+
 	 if (NavigationSystem)
 	 {
 		 NavigationSystem->K2_GetRandomReachablePointInRadius(GetWorld(), GetActorLocation(),
@@ -2697,7 +2698,7 @@ void AIAIAvatarCharacter::BeginPlay() {
 	 AnimationInstance->HandRotation = HandRotation;
 	 AnimationInstance->RightHandRotation = RightHandRotation;
 
-	 RandomPatrol();
+	 //RandomPatrol();
 
 }
 
