@@ -504,6 +504,11 @@ public:
 	/** Reset Camera Rotation*/
 	void ResetFollowCamera();
 
+	void SetupStimulus();
+	class UAIPerceptionStimuliSourceComponent* Stimulus;
+
+
+
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 

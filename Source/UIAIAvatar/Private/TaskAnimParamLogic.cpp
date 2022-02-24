@@ -898,7 +898,8 @@ FAvatarPose_t UTaskAnimParamLogic::GetCurrentAvatarPose() {
 	Avatar->GetMesh()->TransformToBoneSpace("spine_03", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
 	Pose.Head_Rot = TempRotOut;
 
-	TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("jaw", EBoneSpaces::WorldSpace).Rotator();
+	//TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("jaw", EBoneSpaces::WorldSpace).Rotator(); //ERIC
+	TempRotIn = Avatar->GetMesh()->GetBoneQuaternion("neck_02", EBoneSpaces::WorldSpace).Rotator();
 	Avatar->GetMesh()->TransformToBoneSpace("head", TempVecIn, TempRotIn, TempVecOut, TempRotOut);
 	Pose.Jaw_Rot = TempRotOut;
 

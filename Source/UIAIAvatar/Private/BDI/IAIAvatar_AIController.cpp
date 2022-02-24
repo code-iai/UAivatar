@@ -16,6 +16,7 @@
 #include "GameFramework/Character.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "Runtime/Engine/Classes/Engine/Engine.h"
+#include "Runtime/Engine/Public/EngineGlobals.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 
 AIAIAvatar_AIController::AIAIAvatar_AIController(FObjectInitializer const& object_initializer)
@@ -59,7 +60,7 @@ UBlackboardComponent* AIAIAvatar_AIController::GetBlackboard() const
 	return BlackboardComp;
 }
 
-void AIAIAvatar_AIController::OnPerceptionUpdated(TArray<AActor*> const& UpdatedActors)
+void AIAIAvatar_AIController::OnUpdated(TArray<AActor*> const& UpdatedActors)
 {
 	//If Avatar detects EmptyShelf register this to BlackboardComponent
 
@@ -77,6 +78,10 @@ void AIAIAvatar_AIController::OnPerceptionUpdated(TArray<AActor*> const& Updated
 			{
 				GetBlackboard()->SetValueAsBool(BBKeys::shelf_is_empty, stim.WasSuccessfullySensed());
 				//GetBlackboard()->SetValueAsVector(BBKeys::target_location, stim.StimulusLocation);
+				int32 IntegerExample = 4; // you can use int8, uint8, int16, uint16, int32, uint32, int64, uint64 to log this way
+				float FloatExample = 10.4;
+				FVector VectorExample = FVector(100, 200, 300);
+				GEngine->AddOnScreenDebugMessage(-1, 12.f, FColor::White, FString::Printf(TEXT("Output: %d %f %s"), IntegerExample, FloatExample, *VectorExample.ToString()));
 			}
 
 			// if (UpdatedActors[x]-> has IsA<AAICharacter_AD>() && !GetSeeingPawn())
@@ -113,21 +118,23 @@ void AIAIAvatar_AIController::SetupPerceptionSystem()
 		// add sight configuration component to perception component
 		GetPerceptionComponent()->SetDominantSense(*SightConfig->GetSenseImplementation());
 		GetPerceptionComponent()->ConfigureSense(*SightConfig);
+
+		//GetPerceptionComponent()->OnPerceptionUpdated.AddDynamic(this, &AIAIAvatar_AIController::OnUpdated);
 	}
 
-	//// create and initialise hearing config object
-	//hearing_config = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("Hearing config"));
-	//if (hearing_config)
-	//{
-	//	hearing_config->HearingRange = 3000.0f;
-	//	hearing_config->DetectionByAffiliation.bDetectEnemies =
-	//		hearing_config->DetectionByAffiliation.bDetectFriendlies =
-	//		hearing_config->DetectionByAffiliation.bDetectNeutrals = true;
+	// create and initialise hearing config object
+	hearing_config = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("Hearing config"));
+	if (hearing_config)
+	{
+		hearing_config->HearingRange = 3000.0f;
+		hearing_config->DetectionByAffiliation.bDetectEnemies =
+			hearing_config->DetectionByAffiliation.bDetectFriendlies =
+			hearing_config->DetectionByAffiliation.bDetectNeutrals = true;
 
-	//	// add sight configuration component to perception component
-	//	GetPerceptionComponent()->OnPerceptionUpdated.AddDynamic(this, &AIAIAvatar_AIController::OnPerceptionUpdated);
-	//	GetPerceptionComponent()->ConfigureSense(*hearing_config);
-	//}
+		// add sight configuration component to perception component
+		GetPerceptionComponent()->OnPerceptionUpdated.AddDynamic(this, &AIAIAvatar_AIController::OnUpdated);
+		GetPerceptionComponent()->ConfigureSense(*hearing_config);
+	}
 }
 
 

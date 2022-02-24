@@ -23,6 +23,9 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "GameFramework/PlayerController.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
+#include "Perception/AISense_Hearing.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AIAIAvatarCharacter
@@ -154,6 +157,8 @@ void AIAIAvatarCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 
 	// VR headset functionality
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AIAIAvatarCharacter::OnResetVR);
+
+	SetupStimulus();
 }
 
 void AIAIAvatarCharacter::OnResetVR()
@@ -3728,4 +3733,11 @@ void AIAIAvatarCharacter::StartRightFingerIKDisablement()
  void AIAIAvatarCharacter::ResetFollowCamera() {
 	 FollowCamera->SetRelativeRotation(FRotator(0,0,0));
 	 Cast<UIAIAvatarAnimationInstance>(this->GetMesh()->GetAnimInstance())->SkelControl_Head = FRotator(0,0,0);
+ }
+
+ void AIAIAvatarCharacter::SetupStimulus()
+ {
+	 Stimulus = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("stimulus"));
+	 Stimulus->RegisterForSense(TSubclassOf<UAISense_Sight>());
+	 Stimulus->RegisterWithPerceptionSystem();
  }

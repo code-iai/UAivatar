@@ -56,10 +56,10 @@ private:
 
 	class UAISenseConfig_Sight* SightConfig;
 
-	//class UAISenseConfig_Hearing* hearing_config;
+	class UAISenseConfig_Hearing* hearing_config;
 
 	UFUNCTION()
-		void OnPerceptionUpdated(TArray<AActor*> const& UpdatedActors);
+		void OnUpdated(TArray<AActor*> const& UpdatedActors);
 
 	void SetupPerceptionSystem();
 

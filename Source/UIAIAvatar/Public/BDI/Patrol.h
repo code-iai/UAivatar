@@ -23,25 +23,9 @@ public:
 
 	EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& owner_comp, uint8* node_memory);
 
-	//UFUNCTION()
-		//void RandomPatrol();
-	//void Access_RandomPatrol() {
-
-	//	//AIAIAvatarCharacter* AC = nullptr;
-	//	//AC->RandomPatrol();
-	//	//AIAIAvatarCharacter::RandomPatrol();
-
-	//	//AIAIAvatarCharacter* AC = UObject::CreateDefaultSubobject<AIAIAvatarCharacter>();	
-	//		
-
-	//}
-
 private:
 	union { // anonymous union
-		//UPROPERTY()
 			AIAIAvatar_AIController* Controller;
 			AIAIAvatarCharacter* Character;
-		//UPROPERTY()
-		//class UNavigationSystemV1* NavigationSystem;
 	};
 };
