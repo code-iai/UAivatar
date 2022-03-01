@@ -493,8 +493,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TMap<FString, FHitResult> ListObjects();
 
+	UFUNCTION(BlueprintCallable)
+		TArray<FString> ListObjectComponets(TMap<FString, FHitResult> MyUniqueHits);
+
 	/** Press microwave button */
 	void PressMicrowaveButton(FString button);
+
+	/** Open Door */
+	void OpenDoor(FString door);
 
 	/** Close Door */
 	void CloseDoor(FString door);

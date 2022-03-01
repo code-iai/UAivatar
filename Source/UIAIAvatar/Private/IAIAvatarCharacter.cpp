@@ -158,7 +158,7 @@ void AIAIAvatarCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 	// VR headset functionality
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AIAIAvatarCharacter::OnResetVR);
 
-	SetupStimulus();
+	//SetupStimulus();
 }
 
 void AIAIAvatarCharacter::OnResetVR()
@@ -401,6 +401,7 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 	 FVector ObjLocationInCompSpace;
 	 FString obj_name;
 	 TMap<FString, FHitResult> MyUniqueHits;
+	 TArray<UStaticMeshComponent*> Comps;
 
 	 HitResults = TraceObjectsWithBP();
 
@@ -414,6 +415,7 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 		 ObjLocationInCompSpace = GetMesh()->GetComponentTransform().InverseTransformPosition((*It).ImpactPoint);
 		 obj_name = (*It).Actor->GetName();
 
+
 		 // Get Animation
 		 UIAIAvatarAnimationInstance *AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
 		 check(AnimationInstance != nullptr);
@@ -423,7 +425,6 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 		 if (AnimationInstance->bActivateSitAnim) {
 			 check_from = -10;
 		 }
-
 		 // Verifying locations
 		 if (ObjLocationInCompSpace.Y > check_from && ObjLocationInCompSpace.Z > -6.5) {			// Front and over surface
 
@@ -431,9 +432,54 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 				 MyUniqueHits.Emplace(obj_name, *It); // Add to list
 			 }
 		 }
+		 
+		 GetComponents(Comps);
+		
+		 if (Comps.Num() > 0) {
+			
+			 ListObjectComponets(MyUniqueHits);
+		 }
+
+
 	 }
 
 	 return MyUniqueHits;
+ }
+ // List reachable objects
+ TArray<FString> AIAIAvatarCharacter::ListObjectComponets(TMap<FString, FHitResult> MyUniqueHits){
+
+	 TArray<FString> CompsArray;
+	 FTransform ObjectTransform;
+	 FVector ObjLocationInCompSpace;
+	 FString obj_name;
+	 TInlineComponentArray<UStaticMeshComponent*> Comps;
+
+
+	for (auto It = MyUniqueHits.CreateIterator(); It; It++)
+ {
+	GetComponents(Comps);
+	 
+	 obj_name = (*It)->GetName();
+
+	 // Get Animation
+	 UIAIAvatarAnimationInstance* AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
+	 check(AnimationInstance != nullptr);
+
+	 int check_from = 0;
+
+	 if (AnimationInstance->bActivateSitAnim) {
+		 check_from = -10;
+	 }
+
+	 if (ObjLocationInCompSpace.Y > check_from && ObjLocationInCompSpace.Z > -6.5) {			// Front and over surface
+
+		 if (!CompsArray.Contains(obj_name)) { // Ensure unique objects
+			 CompsArray.Emplace(obj_name, *It); // Add to list
+		 }
+	 }
+ }
+
+ return CompsArray;
  }
 
  // List reachable objects and set a target
@@ -1151,6 +1197,112 @@ void AIAIAvatarCharacter::PressMicrowaveButton(FString button) {
 		GetWorldTimerManager().SetTimer(SpineTimeHandle_end, SpineDelegate_end, 5, false, 2.7);
 	}
 }
+//Open a door
+void AIAIAvatarCharacter::OpenDoor(FString door) {
+
+	// Local variables
+	TArray<FString> CompsArray;
+	TMap<FString, FHitResult>MyUniqueHits;
+	FRotator Hand_Rotation;
+	FRotator ObjRotation;
+	FVector ObjLocation;
+	FVector MidLocation;
+	FVector DoorLocation;
+
+	FTimerHandle HandIKTimeHandle_target;
+	FTimerHandle HandIKTimeHandle_mid;
+	FTimerHandle HandIKTimeHandle_end;
+	FTimerHandle SpineTimeHandle_end;
+	FTimerHandle HandRotTimeHandle_end;
+
+	FTimerDelegate HandIKSetDelegate_target;
+	FTimerDelegate HandIKSetDelegate_mid;
+	FTimerDelegate HandIKSetDelegate_end;
+	FTimerDelegate SpineDelegate_end;
+	FTimerDelegate HandRotDelegate_end;
+
+	MyUniqueHits = ListObjects();
+	AActor door = MyUniqueHits.Find
+
+
+	// Get Animation
+	UIAIAvatarAnimationInstance* AnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
+	check(AnimationInstance != nullptr);
+
+	
+
+	 if (door.Contains("door")) {
+		// Verify agent is standing infront of the door
+		if (MyUniqueHits.FindRef("DoorHandleMesh").GetComponent() == NULL) {
+			UE_LOG(LogAvatarCharacter, Error, TEXT("ERROR: You are not standing infront of the door."));
+			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: The microwave is not near to you.")), true, FVector2D(1.7, 1.7));
+			return;
+		}
+		//else {
+
+		//	// Getting location
+		//	ObjLocation = MyUniqueHits.FindRef("DoorHandleMesh").GetActor()->GetActorLocation();
+		//	ObjRotation = MyUniqueHits.FindRef("DoorHandleMesh").GetActor()->GetActorRotation();
+
+		//	ObjLocation += ObjRotation.RotateVector(FVector(-12, 57, 0));
+		//	MidLocation = ObjLocation;
+		//	MidLocation += ObjRotation.RotateVector(FVector(-20, 10, 0));
+		//	DoorLocation = GetMesh()->GetComponentTransform().InverseTransformPosition(ObjLocation);
+
+		//	// Define mid location
+		//	MidLocation = GetMesh()->GetComponentTransform().InverseTransformPosition(MidLocation);
+
+		//}
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: Unrecognized door \"%s\"."), *door);
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("Error: Unrecognized door \"%s\"."), *door), true, FVector2D(1.7, 1.7));
+		return;
+	}
+
+	// Using right or left hand
+	if (!isGrasped_l) {
+
+		Hand_Rotation = FRotator(0, 45, 180);
+
+		// 0s) Move Hand to mid location
+		StartLeftHandIKEnablement(MidLocation);
+		StartLeftHandRotationEnablement(Hand_Rotation);
+
+		HandRotDelegate_end = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::StartLeftHandRotationDisablement);
+		HandIKSetDelegate_target = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::InterpolateLeftHandIKTo, DoorLocation);
+		HandIKSetDelegate_mid = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::InterpolateLeftHandIKTo, MidLocation);
+		HandIKSetDelegate_end = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::StartLeftHandIKDisablement);
+	}
+	else if (!isGrasped_r) {
+
+		Hand_Rotation = FRotator(0, -45, 0);
+
+		// 0s) Move Hand to mid location
+		StartRightHandIKEnablement(MidLocation);
+		StartRightHandRotationEnablement(Hand_Rotation);
+
+		HandRotDelegate_end = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::StartRightHandRotationDisablement);
+		HandIKSetDelegate_target = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::InterpolateRightHandIKTo, DoorLocation);
+		HandIKSetDelegate_mid = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::InterpolateRightHandIKTo, MidLocation);
+		HandIKSetDelegate_end = FTimerDelegate::CreateUObject(this, &AIAIAvatarCharacter::StartRightHandIKDisablement);
+	}
+	else {
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: Both hands are busy."));
+		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, TEXT("Error: Both hands are busy."), true, FVector2D(1.7, 1.7));
+		return;
+	}
+
+	// 1s) Move hand to target location
+	GetWorldTimerManager().SetTimer(HandIKTimeHandle_target, HandIKSetDelegate_target, 5, false, 1);
+
+	// 2.7s) Move hand back
+	GetWorldTimerManager().SetTimer(HandIKTimeHandle_end, HandIKSetDelegate_end, 5, false, 2.7);
+
+	// 2.7s) Move rotation back
+	GetWorldTimerManager().SetTimer(HandRotTimeHandle_end, HandRotDelegate_end, 5, false, 2.5);
+
+}
 
 // Close a door
 void AIAIAvatarCharacter::CloseDoor(FString door) {
@@ -1203,6 +1355,30 @@ void AIAIAvatarCharacter::CloseDoor(FString door) {
 			MidLocation = GetMesh()->GetComponentTransform().InverseTransformPosition(MidLocation);
 
 		}
+	}
+
+	else if (door.Contains("door")) {
+		// Verify agent is standing infront of the door
+		if (MyUniqueHits.FindRef("DoorHandleMesh").GetComponent() == NULL) {
+			UE_LOG(LogAvatarCharacter, Error, TEXT("ERROR: You are not standing infront of the door."));
+			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Red, FString::Printf(TEXT("ERROR: The microwave is not near to you.")), true, FVector2D(1.7, 1.7));
+			return;
+		}
+		//else {
+
+		//	// Getting location
+		//	ObjLocation = MyUniqueHits.FindRef("DoorHandleMesh").GetActor()->GetActorLocation();
+		//	ObjRotation = MyUniqueHits.FindRef("DoorHandleMesh").GetActor()->GetActorRotation();
+
+		//	ObjLocation += ObjRotation.RotateVector(FVector(-12, 57, 0));
+		//	MidLocation = ObjLocation;
+		//	MidLocation += ObjRotation.RotateVector(FVector(-20, 10, 0));
+		//	DoorLocation = GetMesh()->GetComponentTransform().InverseTransformPosition(ObjLocation);
+
+		//	// Define mid location
+		//	MidLocation = GetMesh()->GetComponentTransform().InverseTransformPosition(MidLocation);
+
+		//}
 	}
 	else {
 		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: Unrecognized door \"%s\"."), *door);
@@ -2441,7 +2617,6 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 	 }
  }
 
-
  void AIAIAvatarCharacter::DetachGraspedObject_r() {
 	 
 	 if (isGrasped_r) {
@@ -2575,7 +2750,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 		 break;
 	 }
  }
-  void AIAIAvatarCharacter::RandomPatrol(){
+ void AIAIAvatarCharacter::RandomPatrol(){
 
 	 const UNavigationSystemV1* NavigationSystem = UNavigationSystemV1::GetCurrent(GetWorld());
 	 check(NavigationSystem != nullptr);
@@ -2625,6 +2800,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 	 }
 
  }
+
  void AIAIAvatarCharacter::FollowSpline() {
 
 	 check(GetController());
@@ -2706,8 +2882,6 @@ void AIAIAvatarCharacter::BeginPlay() {
 	 //RandomPatrol();
 
 }
-
-
 
 void AIAIAvatarCharacter::SetAbsoluteActorRotationWithTimeline(FRotator rot) {
 	// Set up the rotation 
@@ -3047,7 +3221,6 @@ void AIAIAvatarCharacter::HandleLeftHandRotationAlphaInterpolationProgress(float
 	AnimationInstance->HandRotationAlpha = Value;
 	//UE_LOG(LogTemp, Error, TEXT("LH: Rot Interpol active %f"), Value);
 }
-
 void AIAIAvatarCharacter::HandleLeftHandRotationBoneInterpolationProgress(float Value) {
 	FRotator New = FMath::Lerp(LeftHandRotationBoneInterpolation.InitialValue, LeftHandRotationBoneInterpolation.TargetValue, Value);
 
@@ -3058,7 +3231,6 @@ void AIAIAvatarCharacter::HandleLeftHandRotationBoneInterpolationProgress(float 
 
 	//UE_LOG(LogTemp, Error, TEXT("LH: Rot Bone Interpol active %f"), Value);
 }
-
 void AIAIAvatarCharacter::StartLeftHandRotationEnablement(FRotator NewRot) {
 	if (HandRotationCurveFloat)
 	{
@@ -3090,7 +3262,6 @@ void AIAIAvatarCharacter::StartLeftHandRotationEnablement(FRotator NewRot) {
 	}
 
 }
-
 void AIAIAvatarCharacter::InterpolateLeftHandRotationTo(FRotator NewRot) {
 	if (HandRotationCurveFloat)
 	{
@@ -3112,7 +3283,6 @@ void AIAIAvatarCharacter::InterpolateLeftHandRotationTo(FRotator NewRot) {
 		UE_LOG(LogAvatarCharacter, Error, TEXT("LH: Can't execute InterpolateSpineTo without a HandRotationCurveFloat"));
 	}
 }
-
 void AIAIAvatarCharacter::StartLeftHandRotationDisablement() {
 	if (HandRotationCurveFloat)
 	{
@@ -3246,7 +3416,6 @@ void AIAIAvatarCharacter::HandleLeftHandIKAlphaInterpolationProgress(float Value
 	AnimationInstance->LeftHandIKAlpha = Value;
 	//UE_LOG(LogTemp, Error, TEXT("LH: Interpol active %f"), Value);
 }
-
 void AIAIAvatarCharacter::HandleLeftHandIKBoneInterpolationProgress(float Value)
 {
 	FVector New = FMath::Lerp(LeftHandIKBoneInterpolation.InitialValue, LeftHandIKBoneInterpolation.TargetValue, Value);
@@ -3258,7 +3427,6 @@ void AIAIAvatarCharacter::HandleLeftHandIKBoneInterpolationProgress(float Value)
 
 	//UE_LOG(LogTemp, Error, TEXT("LH: Bone Interpol active %f"), Value);
 }
-
 void AIAIAvatarCharacter::StartLeftHandIKEnablement(FVector NewVec)
 {
 	if (LeftHandIKCurveFloat)
@@ -3350,7 +3518,6 @@ void AIAIAvatarCharacter::HandleRightHandIKAlphaInterpolationProgress(float Valu
 	AnimationInstance->RightHandIKAlpha = Value;
 	//UE_LOG(LogTemp, Error, TEXT("RH: Interpol active %f"), Value);
 }
-
 void AIAIAvatarCharacter::HandleRightHandIKBoneInterpolationProgress(float Value)
 {
 	FVector New = FMath::Lerp(RightHandIKBoneInterpolation.InitialValue, RightHandIKBoneInterpolation.TargetValue, Value);
@@ -3362,7 +3529,6 @@ void AIAIAvatarCharacter::HandleRightHandIKBoneInterpolationProgress(float Value
 
 	//UE_LOG(LogTemp, Error, TEXT("RH: Bone Interpol active %f"), Value);
 }
-
 void AIAIAvatarCharacter::StartRightHandIKEnablement(FVector NewVec)
 {
 	if (RightHandIKCurveFloat)
@@ -3446,7 +3612,6 @@ void AIAIAvatarCharacter::StartRightHandIKDisablement()
 	}
 }
 
-
 // Left Finger IK interpolation handling
 void AIAIAvatarCharacter::HandleLeftFingerIKAlphaInterpolationProgress(float Value)
 {
@@ -3455,7 +3620,6 @@ void AIAIAvatarCharacter::HandleLeftFingerIKAlphaInterpolationProgress(float Val
 	AnimationInstance->LeftFingerIKAlpha = Value;
 	//UE_LOG(LogTemp, Error, TEXT("LH: Interpol active %f"), Value);
 }
-
 void AIAIAvatarCharacter::HandleLeftFingerIKBoneInterpolationProgress(float Value)
 {
 	FVector New = FMath::Lerp(LeftFingerIKBoneInterpolation.InitialValue, LeftFingerIKBoneInterpolation.TargetValue, Value);
@@ -3467,7 +3631,6 @@ void AIAIAvatarCharacter::HandleLeftFingerIKBoneInterpolationProgress(float Valu
 
 	//UE_LOG(LogTemp, Error, TEXT("LH: Bone Interpol active %f"), Value);
 }
-
 void AIAIAvatarCharacter::StartLeftFingerIKEnablement(FVector NewVec)
 {
 	if (LeftFingerIKCurveFloat)
@@ -3499,7 +3662,6 @@ void AIAIAvatarCharacter::StartLeftFingerIKEnablement(FVector NewVec)
 		UE_LOG(LogAvatarCharacter, Error, TEXT("LH: Can't execute StartLeftFingerIKEnablement without a LeftFingerIKCurveFloat"));
 	}
 }
-
 void AIAIAvatarCharacter::InterpolateLeftFingerIKTo(FVector NewVec)
 {
 	if (LeftFingerIKCurveFloat)
@@ -3523,7 +3685,6 @@ void AIAIAvatarCharacter::InterpolateLeftFingerIKTo(FVector NewVec)
 		UE_LOG(LogAvatarCharacter, Error, TEXT("LH: Can't execute InterpolateLeftFingerIKTo without a LeftFingerIKCurveFloat"));
 	}
 }
-
 void AIAIAvatarCharacter::StartLeftFingerIKDisablement()
 {
 	if (LeftFingerIKCurveFloat)
@@ -3553,7 +3714,6 @@ void AIAIAvatarCharacter::StartLeftFingerIKDisablement()
 	}
 }
 
-
 // Right Finger IK interpolation Handling
 void AIAIAvatarCharacter::HandleRightFingerIKAlphaInterpolationProgress(float Value)
 {
@@ -3562,7 +3722,6 @@ void AIAIAvatarCharacter::HandleRightFingerIKAlphaInterpolationProgress(float Va
 	AnimationInstance->RightFingerIKAlpha = Value;
 	//UE_LOG(LogTemp, Error, TEXT("RH: Interpol active %f"), Value);
 }
-
 void AIAIAvatarCharacter::HandleRightFingerIKBoneInterpolationProgress(float Value)
 {
 	FVector New = FMath::Lerp(RightFingerIKBoneInterpolation.InitialValue, RightFingerIKBoneInterpolation.TargetValue, Value);
@@ -3574,7 +3733,6 @@ void AIAIAvatarCharacter::HandleRightFingerIKBoneInterpolationProgress(float Val
 
 	UE_LOG(LogTemp, Error, TEXT("RF: Bone Interpol active %f"), Value);
 }
-
 void AIAIAvatarCharacter::StartRightFingerIKEnablement(FVector NewVec)
 {
 	if (RightFingerIKCurveFloat)
@@ -3606,7 +3764,6 @@ void AIAIAvatarCharacter::StartRightFingerIKEnablement(FVector NewVec)
 		UE_LOG(LogAvatarCharacter, Error, TEXT("RH: Can't execute StartRightFingerIKEnablement without a RightFingerIKCurveFloat"));
 	}
 }
-
 void AIAIAvatarCharacter::InterpolateRightFingerIKTo(FVector NewVec)
 {
 	if (RightFingerIKCurveFloat)
@@ -3630,7 +3787,6 @@ void AIAIAvatarCharacter::InterpolateRightFingerIKTo(FVector NewVec)
 		UE_LOG(LogAvatarCharacter, Error, TEXT("RF: Can't execute InterpolateRightFingerIKTo without a RightFingerIKCurveFloat"));
 	}
 }
-
 void AIAIAvatarCharacter::StartRightFingerIKDisablement()
 {
 	if (RightFingerIKCurveFloat)
@@ -3660,7 +3816,7 @@ void AIAIAvatarCharacter::StartRightFingerIKDisablement()
 	}
 }
 
- void AIAIAvatarCharacter::PostEditChangeProperty(struct FPropertyChangedEvent& e) {
+void AIAIAvatarCharacter::PostEditChangeProperty(struct FPropertyChangedEvent& e) {
 	 Super::PostEditChangeProperty(e);
 
 	 //Property : Name of the changed variable. If its inside a struct, you will only see the name of the variable
@@ -3730,12 +3886,12 @@ void AIAIAvatarCharacter::StartRightFingerIKDisablement()
 	 }
  }
 
- void AIAIAvatarCharacter::ResetFollowCamera() {
+void AIAIAvatarCharacter::ResetFollowCamera() {
 	 FollowCamera->SetRelativeRotation(FRotator(0,0,0));
 	 Cast<UIAIAvatarAnimationInstance>(this->GetMesh()->GetAnimInstance())->SkelControl_Head = FRotator(0,0,0);
  }
 
- void AIAIAvatarCharacter::SetupStimulus()
+void AIAIAvatarCharacter::SetupStimulus()
  {
 	 Stimulus = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("stimulus"));
 	 Stimulus->RegisterForSense(TSubclassOf<UAISense_Sight>());
