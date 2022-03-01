@@ -4,11 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "EnvironmentQuery/EnvQueryTypes.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Sight.h"
+#include "Perception/AISenseConfig_Hearing.h"
 #include "IAIAvatar_AIController.generated.h"
 
-/**
- * 
- */
+
+class UEnvQuery;
+
 UCLASS()
 class UIAIAVATAR_API AIAIAvatar_AIController : public AAIController
 {
@@ -49,6 +53,9 @@ private:
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI", meta = (AllowPrivateAccess = "true"))
 		class UBehaviorTree* BehaviorTree;
 
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI", meta = (AllowPrivateAccess = "true"))
+		class UBeliefStatePublisher* BeliefState;
+
 	UPROPERTY(VisibleAnywhere)
 		UAIPerceptionComponent* AIPerceptionComponent;
 
@@ -56,15 +63,19 @@ private:
 
 	class UAISenseConfig_Sight* SightConfig;
 
-	class UAISenseConfig_Hearing* hearing_config;
+	class UAISenseConfig_Hearing* HearingConfig;
 
 	UFUNCTION()
-		void OnUpdated(TArray<AActor*> const& UpdatedActors);
+		void OnPerceptionUpdated(TArray<AActor*> const& UpdatedActors);
 
 	void SetupPerceptionSystem();
 
 	/*class UNavigationSystemV1* NavArea;
 
 	FVector RandomLocation;*/
+
 	
+
+
+
 };

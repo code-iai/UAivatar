@@ -7,8 +7,6 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "IAIAvatarCharacter.h"
-#include "Perception/AISenseConfig_Sight.h"
-#include "Perception/AISenseConfig_Hearing.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "BDI/BlackBoardKeys.h"
@@ -18,6 +16,7 @@
 #include "Runtime/Engine/Classes/Engine/Engine.h"
 #include "Runtime/Engine/Public/EngineGlobals.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
+#include "BeliefStatePublisher.h"
 
 AIAIAvatar_AIController::AIAIAvatar_AIController(FObjectInitializer const& object_initializer)
 {
@@ -32,6 +31,8 @@ AIAIAvatar_AIController::AIAIAvatar_AIController(FObjectInitializer const& objec
 	BehaviorTreeComp = object_initializer.CreateDefaultSubobject<UBehaviorTreeComponent>(this, TEXT("BehaviorComp"));
 
 	BlackboardComp = object_initializer.CreateDefaultSubobject<UBlackboardComponent>(this, TEXT("BlackboardComp"));
+
+	BeliefState = object_initializer.CreateDefaultSubobject<UBeliefStatePublisher>(this, TEXT("BeliefState"));
 
 	SetupPerceptionSystem(); 
 }
@@ -60,7 +61,7 @@ UBlackboardComponent* AIAIAvatar_AIController::GetBlackboard() const
 	return BlackboardComp;
 }
 
-void AIAIAvatar_AIController::OnUpdated(TArray<AActor*> const& UpdatedActors)
+void AIAIAvatar_AIController::OnPerceptionUpdated(TArray<AActor*> const& UpdatedActors)
 {
 	//If Avatar detects EmptyShelf register this to BlackboardComponent
 
@@ -84,16 +85,25 @@ void AIAIAvatar_AIController::OnUpdated(TArray<AActor*> const& UpdatedActors)
 				GEngine->AddOnScreenDebugMessage(-1, 12.f, FColor::White, FString::Printf(TEXT("Output: %d %f %s"), IntegerExample, FloatExample, *VectorExample.ToString()));
 			}
 
-			// if (UpdatedActors[x]-> has IsA<AAICharacter_AD>() && !GetSeeingPawn())
-			//{
-			//	//BlackboardComp->SetValueAsObject(BlackboardKey_EmptyShelf, UpdatedActors[x]);
-			//	GetBlackboard()->SetValueAsBool(BBKeys::shelf_is_empty, stim.WasSuccessfullySensed());
-			//	return;
-			//}
-			/*else if (stim.Type.Name == "Default__AISense_Sight")
+			 if (UpdatedActors[x]->ActorHasTag(tags::EmptyShelfTag))
 			{
-				get_blackboard()->SetValueAsBool(bb_keys::can_see_player, stim.WasSuccessfullySensed());
-			}*/
+				//BlackboardComp->SetValueAsObject(BlackboardKey_EmptyShelf, UpdatedActors[x]);
+				GetBlackboard()->SetValueAsBool(BBKeys::shelf_is_empty, stim.WasSuccessfullySensed());
+				GEngine->AddOnScreenDebugMessage(-1, 12.f, FColor::Blue, FString::Printf(TEXT("Empty shelf detected.")));
+
+				BeliefState->SetValue();
+
+				
+				//return;
+			}
+			else if (stim.Type.Name == "Default__AISense_Sight")
+			{
+				GetBlackboard()->SetValueAsBool(BBKeys::shelf_is_empty, stim.WasSuccessfullySensed());
+				int32 IntegerExample = 4; // you can use int8, uint8, int16, uint16, int32, uint32, int64, uint64 to log this way
+				float FloatExample = 10.4;
+				FVector VectorExample = FVector(100, 200, 300);
+				GEngine->AddOnScreenDebugMessage(-1, 12.f, FColor::White, FString::Printf(TEXT("Output: %d %f %s"), IntegerExample, FloatExample, *VectorExample.ToString()));
+			}
 		}
 	}
 }
@@ -105,7 +115,7 @@ void AIAIAvatar_AIController::SetupPerceptionSystem()
 	if (SightConfig)
 	{
 		SetPerceptionComponent(*CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception Component")));
-		SightConfig->SightRadius = 500.0f;
+		SightConfig->SightRadius = 600.0f;
 		SightConfig->LoseSightRadius = SightConfig->SightRadius + 25.0f;
 		SightConfig->PeripheralVisionAngleDegrees = 90.0f;
 		SightConfig->SetMaxAge(5.0f);
@@ -123,17 +133,17 @@ void AIAIAvatar_AIController::SetupPerceptionSystem()
 	}
 
 	// create and initialise hearing config object
-	hearing_config = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("Hearing config"));
-	if (hearing_config)
+	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("Hearing config"));
+	if (HearingConfig)
 	{
-		hearing_config->HearingRange = 3000.0f;
-		hearing_config->DetectionByAffiliation.bDetectEnemies =
-			hearing_config->DetectionByAffiliation.bDetectFriendlies =
-			hearing_config->DetectionByAffiliation.bDetectNeutrals = true;
+		HearingConfig->HearingRange = 3000.0f;
+		HearingConfig->DetectionByAffiliation.bDetectEnemies =
+			HearingConfig->DetectionByAffiliation.bDetectFriendlies =
+			HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
 
 		// add sight configuration component to perception component
-		GetPerceptionComponent()->OnPerceptionUpdated.AddDynamic(this, &AIAIAvatar_AIController::OnUpdated);
-		GetPerceptionComponent()->ConfigureSense(*hearing_config);
+		GetPerceptionComponent()->OnPerceptionUpdated.AddDynamic(this, &AIAIAvatar_AIController::OnPerceptionUpdated);
+		GetPerceptionComponent()->ConfigureSense(*HearingConfig);
 	}
 }
 
