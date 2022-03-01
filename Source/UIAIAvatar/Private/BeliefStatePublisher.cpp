@@ -29,6 +29,15 @@ UBeliefStatePublisher::UBeliefStatePublisher()
 //{
 //	
 //}
+bool UBeliefStatePublisher::GetValue() 
+{
+    return bShelfIsEmpty;
+}
+
+void UBeliefStatePublisher::SetValue()
+{
+    bShelfIsEmpty = true;
+}
 
 void UBeliefStatePublisher::BeginPlay()
 {
