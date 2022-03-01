@@ -20,14 +20,20 @@ class UIAIAVATAR_API UBeliefStatePublisher : public UActorComponent
 
 public:
 	UBeliefStatePublisher();
-	
-protected:
 
 	//virtual void SetBelief(UObject* InOwner);
-	
+
 	//// Belief state for Shelf state
 	UPROPERTY(EditAnywhere, Category = BeliefState)
 		bool bShelfIsEmpty = false;
+
+		bool GetValue();
+
+		void SetValue();
+	
+protected:
+
+	
 
 	// Delta time (s) between publishing (0 = on Tick)
 
