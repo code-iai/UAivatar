@@ -3,6 +3,9 @@
 
 #include "ActorAnimations/DoorActor.h"
 #include "Components/BoxComponent.h"
+#include "BDI/ai_tags.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
 
 // Sets default values
 ADoorActor::ADoorActor()
@@ -29,12 +32,25 @@ ADoorActor::ADoorActor()
     DoorHandle_left->AttachToComponent(DoorFrame, FAttachmentTransformRules::KeepRelativeTransform);
     DoorHandleProxVolume_right->AttachToComponent(DoorHandle_right, FAttachmentTransformRules::KeepRelativeTransform);
     DoorHandleProxVolume_left->AttachToComponent(DoorHandle_left, FAttachmentTransformRules::KeepRelativeTransform);
+    
+    Tags.Add(tags::ClosedDoorTag);
+
+    SetupStimulus();
 }
+
+void ADoorActor::SetupStimulus()
+{
+    Stimulus = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("stimulus"));
+    Stimulus->RegisterForSense(TSubclassOf<UAISense_Sight>());
+    Stimulus->RegisterWithPerceptionSystem();
+}
+
 
 // Called when the game starts or when spawned
 void ADoorActor::BeginPlay()
 {
     Super::BeginPlay();
+    
 
     UpdateFunctionFloat.BindDynamic(this, &ADoorActor::UpdateTimelineComp);
 
@@ -66,6 +82,7 @@ void ADoorActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Oth
 void ADoorActor::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
     DoorTimelineComp->Reverse();
+    Tags.Add(tags::OpenDoorTag);
 }
 
 // Called every frame
@@ -73,3 +90,4 @@ void ADoorActor::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 }
+

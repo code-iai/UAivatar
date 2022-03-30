@@ -15,9 +15,13 @@ class UIAIAVATAR_API ADoorActor : public AActor
 public:
     // Sets default values for this actor's properties
     ADoorActor();
+    void SetupStimulus();
+    class UAIPerceptionStimuliSourceComponent* Stimulus;
     //Variable to hold Curve asset
     UPROPERTY(EditAnywhere)
         UCurveFloat* DoorTimelineFloatCurve;
+    /*UPROPERTY(EditAnywhere, BlueprintReadWrite, AdvancedDisplay, Category = Actor)
+    TArray<FName>Tags;*/
 
 protected:
     // Called when the game starts or when spawned 

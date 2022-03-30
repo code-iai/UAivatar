@@ -6,7 +6,6 @@
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "UObject/ConstructorHelpers.h"
-#include "IAIAvatarCharacter.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "BDI/BlackBoardKeys.h"
@@ -20,14 +19,32 @@
 
 AIAIAvatar_AIController::AIAIAvatar_AIController(FObjectInitializer const& object_initializer)
 {
-	//todo: select different BT
-	static ConstructorHelpers::FObjectFinder<UBehaviorTree> obj(TEXT("BehaviorTree'/UIAIAvatar/AI-BT/SK_BT_1.SK_BT_1'"));
+	//auto const Character = Cast<AActor>(GetCharacter());
+	//auto const ActorRole = Cast<FName>(Character->ActorHasTag());
 
-	if (obj.Succeeded())
-	{
-		BehaviorTree = obj.Object;
-	}
 
+	//if(Character->ActorHasTag("ShopKeeper"))
+//	{
+		static ConstructorHelpers::FObjectFinder<UBehaviorTree> obj(TEXT("BehaviorTree'/UIAIAvatar/AI-BT/ShopKeeper_BT.ShopKeeper_BT'"));
+		
+		if (obj.Succeeded())
+        	{
+        		BehaviorTree = obj.Object;
+        	}
+	//}
+	// else
+	// {
+	// 	static ConstructorHelpers::FObjectFinder<UBehaviorTree> obj(TEXT("BehaviorTree'/UIAIAvatar/AI-BT/Customer_BT.Customer_BT'"));
+	// 	
+	// 	if (obj.Succeeded())
+	// 	{
+	// 		BehaviorTree = obj.Object;
+	// 	}
+	// }
+
+	
+
+	
 	BehaviorTreeComp = object_initializer.CreateDefaultSubobject<UBehaviorTreeComponent>(this, TEXT("BehaviorComp"));
 
 	BlackboardComp = object_initializer.CreateDefaultSubobject<UBlackboardComponent>(this, TEXT("BlackboardComp"));
@@ -64,7 +81,6 @@ UBlackboardComponent* AIAIAvatar_AIController::GetBlackboard() const
 void AIAIAvatar_AIController::OnPerceptionUpdated(TArray<AActor*> const& UpdatedActors)
 {
 	//If Avatar detects EmptyShelf register this to BlackboardComponent
-
 	for (size_t x = 0; x < UpdatedActors.Num(); ++x)
 	{
 		FActorPerceptionBlueprintInfo Info;
@@ -85,17 +101,24 @@ void AIAIAvatar_AIController::OnPerceptionUpdated(TArray<AActor*> const& Updated
 				GEngine->AddOnScreenDebugMessage(-1, 12.f, FColor::White, FString::Printf(TEXT("Output: %d %f %s"), IntegerExample, FloatExample, *VectorExample.ToString()));
 			}
 
-			 if (UpdatedActors[x]->ActorHasTag(tags::EmptyShelfTag))
+			if (UpdatedActors[x]->ActorHasTag(tags::EmptyShelfTag))
 			{
 				//BlackboardComp->SetValueAsObject(BlackboardKey_EmptyShelf, UpdatedActors[x]);
 				GetBlackboard()->SetValueAsBool(BBKeys::shelf_is_empty, stim.WasSuccessfullySensed());
 				GEngine->AddOnScreenDebugMessage(-1, 12.f, FColor::Blue, FString::Printf(TEXT("Empty shelf detected.")));
 
 				BeliefState->SetValue();
-
 				
 				//return;
 			}
+			
+			 if (UpdatedActors[x]->ActorHasTag(tags::ClosedDoorTag))
+			 {
+			 	
+			 	GEngine->AddOnScreenDebugMessage(-1, 12.f, FColor::Blue, FString::Printf(TEXT("Closed Door detected.")));
+				
+			 	//return;
+			 }
 			else if (stim.Type.Name == "Default__AISense_Sight")
 			{
 				GetBlackboard()->SetValueAsBool(BBKeys::shelf_is_empty, stim.WasSuccessfullySensed());

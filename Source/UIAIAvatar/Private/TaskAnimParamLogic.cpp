@@ -317,7 +317,7 @@ bool UTaskAnimParamLogic::isInGoodAlignment() {
 		Obj2BCut.angle = tempAngle;
 	}
 	else {
-		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: The angle of %f between Item's short axis and the Avatar is too high for cutting. Good angle is 0° with ±6°. %f"), tempAngle);
+		UE_LOG(LogAvatarCharacter, Error, TEXT("Error: The angle of %f between Item's short axis and the Avatar is too high for cutting. Good angle is 0Â° with Â±6Â°. %f"), tempAngle);
 		return false;
 	}
 

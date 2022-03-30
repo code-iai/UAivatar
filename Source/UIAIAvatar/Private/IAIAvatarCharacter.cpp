@@ -252,7 +252,6 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 	 return GetController()->IsA(APlayerController::StaticClass());
  }
 
-
  // Reach for an Actor. Modifies the l_hand bone
  void AIAIAvatarCharacter::LeftHandReachForActor(AActor* Actor) {
 	 UE_LOG(LogAvatarCharacter, Log, TEXT("Setting IK to GraspObject Location"));
@@ -433,12 +432,13 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 			 }
 		 }
 		 
-		 GetComponents(Comps);
+		 /*GetComponents(Comps);
 		
 		 if (Comps.Num() > 0) {
 			
 			 ListObjectComponets(MyUniqueHits);
 		 }
+		 */
 
 
 	 }
@@ -446,7 +446,7 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 	 return MyUniqueHits;
  }
  // List reachable objects
- TArray<FString> AIAIAvatarCharacter::ListObjectComponets(TMap<FString, FHitResult> MyUniqueHits){
+ /*TArray<FString> AIAIAvatarCharacter::ListObjectComponets(TMap<FString, FHitResult> MyUniqueHits){
 
 	 TArray<FString> CompsArray;
 	 FTransform ObjectTransform;
@@ -480,7 +480,7 @@ void AIAIAvatarCharacter::LookCam(float Axis)
  }
 
  return CompsArray;
- }
+ }*/
 
  // List reachable objects and set a target
  void AIAIAvatarCharacter::SetTargetObject() {
@@ -1197,17 +1197,20 @@ void AIAIAvatarCharacter::PressMicrowaveButton(FString button) {
 		GetWorldTimerManager().SetTimer(SpineTimeHandle_end, SpineDelegate_end, 5, false, 2.7);
 	}
 }
+
+/*
 //Open a door
 void AIAIAvatarCharacter::OpenDoor(FString door) {
 
 	// Local variables
-	TArray<FString> CompsArray;
+	/*TArray<FString> CompsArray;
 	TMap<FString, FHitResult>MyUniqueHits;
 	FRotator Hand_Rotation;
 	FRotator ObjRotation;
 	FVector ObjLocation;
 	FVector MidLocation;
 	FVector DoorLocation;
+	#1#
 
 	FTimerHandle HandIKTimeHandle_target;
 	FTimerHandle HandIKTimeHandle_mid;
@@ -1221,8 +1224,8 @@ void AIAIAvatarCharacter::OpenDoor(FString door) {
 	FTimerDelegate SpineDelegate_end;
 	FTimerDelegate HandRotDelegate_end;
 
-	MyUniqueHits = ListObjects();
-	AActor door = MyUniqueHits.Find
+	//MyUniqueHits = ListObjects();
+	
 
 
 	// Get Animation
@@ -1302,7 +1305,7 @@ void AIAIAvatarCharacter::OpenDoor(FString door) {
 	// 2.7s) Move rotation back
 	GetWorldTimerManager().SetTimer(HandRotTimeHandle_end, HandRotDelegate_end, 5, false, 2.5);
 
-}
+}*/
 
 // Close a door
 void AIAIAvatarCharacter::CloseDoor(FString door) {
@@ -2190,7 +2193,7 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 			 attachRules.RotationRule = EAttachmentRule::KeepRelative;
 			 
 			 // Object Location
-			 NewObjLocation = FVector(-3, 5.5, 0);
+			 NewObjLocation = FVector(-7, 2, 0);
 			 
 			 // Fingers' Rotations
 			 // Thumb
@@ -2215,11 +2218,47 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 
 			 // Object Rotation
 			 if (isGrasping_r) {
-				 NewObjRotation = FRotator(-10, 180, 0);
+				 NewObjRotation = FRotator(-15, 50, -55);
 			 } else {
 				 NewObjRotation = FRotator(10, 0, -180);
 			 }
 		 }
+	 	 else if (ObjectToGrasp->ActorHasTag(TEXT("ShoppingBasket"))) {				// ** ShoppingBasket **
+			 
+	 		// Attaching Rule
+	 		attachRules.RotationRule = EAttachmentRule::KeepRelative;
+			 
+	 		// Object Location
+	 		NewObjLocation = FVector(-3, 5.5, 0);
+			 
+	 		// Fingers' Rotations
+	 		// Thumb
+	 		NewFingerRots.thumb_01 = FRotator(-63, -48, 71);
+	 		NewFingerRots.thumb_02 = FRotator(0, -10, 0);
+	 		NewFingerRots.thumb_03 = FRotator(0, -7, 0);
+	 		// Index
+	 		NewFingerRots.index_01 = FRotator(-3, 0, 0);
+	 		NewFingerRots.index_02 = FRotator(0, -40, 0);
+	 		NewFingerRots.index_03 = FRotator(0, -60, 0);
+	 		// Middle
+	 		NewFingerRots.middle_02 = FRotator(0, -55, 0);
+	 		NewFingerRots.middle_03 = FRotator(0, -55, 0);
+	 		// Ring
+	 		NewFingerRots.ring_01 = FRotator(3, 0, 0);
+	 		NewFingerRots.ring_02 = FRotator(0, -45, 0);
+	 		NewFingerRots.ring_03 = FRotator(0, -60, 0);
+	 		// Pinky
+	 		NewFingerRots.pinky_01 = FRotator(5, 0, 0);
+	 		NewFingerRots.pinky_02 = FRotator(0, -30, 10);
+	 		NewFingerRots.pinky_03 = FRotator(0, -45, 0);
+
+	 		// Object Rotation
+	 		if (isGrasping_r) {
+	 			NewObjRotation = FRotator(-10, 180, 0);
+	 		} else {
+	 			NewObjRotation = FRotator(10, 0, -180);
+	 		}
+	 	 }
 		 else if (ObjectToGrasp->ActorHasTag(TEXT("BreadKnife"))) {		// ********** Bread Knife *********
 
 			 // Object Location

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "IAIAvatarCharacter.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
@@ -21,6 +22,8 @@ class UIAIAVATAR_API AIAIAvatar_AIController : public AAIController
 public:
 
 	AIAIAvatar_AIController(FObjectInitializer const& object_initializer = FObjectInitializer::Get());
+
+	//AIAIAvatarCharacter* Character;
 
 	//AIAIAvatae_AIController(FObjectInitializer const& object_initializer);
 	void BeginPlay() override;
