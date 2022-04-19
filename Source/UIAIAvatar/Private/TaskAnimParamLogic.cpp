@@ -459,6 +459,22 @@ void UTaskAnimParamLogic::AttachObject() {
 			NewObjRotation = FRotator(170, 0, 0);
 		}
 	}
+	else if (AnimParams.Object->ActorHasTag(TEXT("ShoppingBasket"))) {			// ********* ShoppingBasket *********
+    
+    		// Attaching Rule
+    		attachRules.RotationRule = EAttachmentRule::KeepRelative;
+    
+    		// Object Location
+    		NewObjLocation = FVector(-7, 2, 0); // original
+    
+    		// Object Rotation
+    		if (AnimParams.bUsingRightHand) {
+    			NewObjRotation = FRotator(-15, 50, -55);
+    		}
+    		else {
+    			NewObjRotation = FRotator(170, 0, 0);
+    		}
+    	}
 	else if (AnimParams.Object->ActorHasTag(TEXT("Jug"))) {		// ********** Milk Jug *********
 
 		if (AnimParams.bUsingRightHand) {
