@@ -8,9 +8,20 @@ public class UIAIAvatar : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "AIModule",
-            "UPIDController","UROSBridge","Json","JsonUtilities", "UTags", "UConversions", "UIds", "ProceduralMeshComponent",
-            "RawMesh"});
+		PublicDependencyModuleNames.AddRange(new string[] { 
+			"Core",
+			"CoreUObject",
+			"Engine",
+			"InputCore",
+			"AIModule",
+			"UROSBridge",
+			"Json",
+			"JsonUtilities",
+			"UTags",
+			"UConversions",
+			"UIds",
+			"ProceduralMeshComponent",
+			"RawMesh"});
 
 
         PrivateDependencyModuleNames.AddRange(new string[] {

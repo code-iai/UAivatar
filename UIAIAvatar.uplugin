@@ -16,7 +16,7 @@
   "Modules": [
     {
       "Name": "UIAIAvatar",
-      "Type": "Developer",
+      "Type": "DeveloperTool",
       "LoadingPhase": "Default",
       "AdditionalDependencies": [
         "UROSBridge"
@@ -30,10 +30,6 @@
     },
     {
       "Name": "UUtils",
-      "Enabled": true
-    },
-    {
-      "Name": "UPIDController",
       "Enabled": true
     },
     {
