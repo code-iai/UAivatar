@@ -2384,12 +2384,12 @@ void AIAIAvatarCharacter::BeginPlay() {
 	 AnimationInstance->HandRotation = HandRotation;
 	 AnimationInstance->RightHandRotation = RightHandRotation;
 
-	 HeadPIDController.P = 1.0f;
-	 HeadPIDController.I = 0.0f;
-	 HeadPIDController.D = 0.0f;
-	 HeadPIDController.MaxOutAbs = 2.f;
+//	 HeadPIDController.P = 1.0f;
+//	 HeadPIDController.I = 0.0f;
+//	 HeadPIDController.D = 0.0f;
+//	 HeadPIDController.MaxOutAbs = 2.f;
 
-	 HeadPIDController.Init();
+//	 HeadPIDController.Init();
 
 }
 
@@ -2475,13 +2475,13 @@ void AIAIAvatarCharacter::Tick(float DeltaTime) {
 
 		 UE_LOG(LogAvatarCharacter, Log, TEXT("  Difference between current head and goal: %s = %f"), *(HeadRotationErrorVector.ToString()), HeadRotationErrorVector.Size());
 
-		 const FVector PIDOutputVector = HeadPIDController.Update(HeadRotationErrorVector, DeltaTime);
-		 UE_LOG(LogAvatarCharacter, Log, TEXT("  PID Output is: %s"), *(PIDOutputVector.ToString()));
+		// const FVector PIDOutputVector = HeadPIDController.Update(HeadRotationErrorVector, DeltaTime);
+		// UE_LOG(LogAvatarCharacter, Log, TEXT("  PID Output is: %s"), *(PIDOutputVector.ToString()));
 
-		 const FRotator PIDOutputRotator = FRotator(PIDOutputVector.X, PIDOutputVector.Y, PIDOutputVector.Z);
+		 // const FRotator PIDOutputRotator = FRotator(PIDOutputVector.X, PIDOutputVector.Y, PIDOutputVector.Z);
 
-		 CurrentAnimationInstance->HeadRotation = PIDOutputRotator + CurrentHeadRotation;
-		 UE_LOG(LogAvatarCharacter, Log, TEXT("  New Head Rotation shall be: %s"), *(CurrentAnimationInstance->HeadRotation.ToString()));
+		 // CurrentAnimationInstance->HeadRotation = PIDOutputRotator + CurrentHeadRotation;
+		 // UE_LOG(LogAvatarCharacter, Log, TEXT("  New Head Rotation shall be: %s"), *(CurrentAnimationInstance->HeadRotation.ToString()));
 	 }
 	
 }
