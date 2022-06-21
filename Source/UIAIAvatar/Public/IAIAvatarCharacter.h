@@ -6,7 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Runtime/Engine/Classes/Engine/TargetPoint.h"
 #include "IAIAvatarAnimationInstance.h"
-#include "PIDController3D.h"
+//#include "PIDController3D.h"
 #include "Runtime/Engine/Classes/Components/TimelineComponent.h"
 #include "InterpolationHandler.h"
 #include "ProceduralMeshHelper.h"
@@ -233,8 +233,8 @@ public:
 	FRotator GoalHeadRotation;
 
 	// Head Controller
-	UPROPERTY(EditAnywhere, Category = "IAI Avatar Configuration|Head PID Controller")
-		FPIDController3D HeadPIDController;
+//	UPROPERTY(EditAnywhere, Category = "IAI Avatar Configuration|Head PID Controller")
+//		FPIDController3D HeadPIDController;
 
 	// After each PID controller iteration, the distance between the current head pose and the desired pose is calculated. 
 	// If it's equal or less than this value, the PID control process will be stopped.
