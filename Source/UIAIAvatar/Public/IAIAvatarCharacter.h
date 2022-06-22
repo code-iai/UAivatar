@@ -17,10 +17,10 @@ class AIAIAvatarCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	// ************************** Private Parameters *******************************
+		// ************************** Private Parameters *******************************
 
-	/** Camera boom positioning the camera behind the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+		/** Camera boom positioning the camera behind the character */
+		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class USpringArmComponent* CameraBoom;
 
 	/** Follow camera */
@@ -38,7 +38,6 @@ class AIAIAvatarCharacter : public ACharacter
 protected:
 
 	// **************************** Protected Parameters ***************************
-	
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		float BaseTurnRate;
@@ -70,6 +69,10 @@ protected:
 	* @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	*/
 	void LookUpAtRate(float Rate);
+
+	void TurnCam(float Axis);
+
+	void LookCam(float Axis);
 
 	/** Handler for when a touch input begins. */
 	void TouchStarted(ETouchIndex::Type FingerIndex, FVector Location);
@@ -230,16 +233,10 @@ public:
 		UCurveFloat* RightFingerIKCurveFloat;
 
 	// ******** For Head ********
-	FRotator GoalHeadRotation;
 
 	// Head Controller
 //	UPROPERTY(EditAnywhere, Category = "IAI Avatar Configuration|Head PID Controller")
 //		FPIDController3D HeadPIDController;
-
-	// After each PID controller iteration, the distance between the current head pose and the desired pose is calculated. 
-	// If it's equal or less than this value, the PID control process will be stopped.
-	UPROPERTY(EditAnywhere, Category = "IAI Avatar Configuration|Head PID Controller", meta = (ClampMin = 0))
-		float HeadRotationErrorThreshold;
 
 	// ******** For IK Handlers ********
 
@@ -269,6 +266,9 @@ public:
 
 	// Current object targeted for grasping
 	TPair<int32, FString> current_obj_target;
+
+	// For enabling Head Movement Recognition 
+	bool enableDTW;
 
 	// ************************** Public Methods ***********************************
 
@@ -397,7 +397,7 @@ public:
 	TArray<FString> GraspTargetObject_ROS(FString targetObject, bool hold = false);
 
 	/** Place object on left hand over/in specified place */
-	void PlaceObject(FString targetPlace, FString Hand = "any", FVector targetPoint = FVector(0,0,0));
+	void PlaceObject(FString targetPlace, FString Hand = "any", FVector targetPoint = FVector(0, 0, 0));
 
 	/**Detach Left Object after Grasping*/
 	void DetachGraspObject();
@@ -442,24 +442,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void StopHandReach();
 
-	// ******** Moving Head ********
-
-	// Use rot to rotate the head to a given rotation
-	// The movement will be interpolated by using this->HeadAlphaInterpolation
-	void MoveHead(FRotator rot);
-
-	void StartMoveHeadUp();
-	void StopMoveHeadUp();
-
-	void StartMoveHeadDown();
-	void StopMoveHeadDown();
-
-	void StartMoveHeadLeft();
-	void StopMoveHeadLeft();
-
-	void StartMoveHeadRight();
-	void StopMoveHeadRight();
-
 	// ******** Moving Avatar ********
 
 	// Navigate to this->TargetPoint by using SimpleMoveToActor. Usable on Player and AI controlled Actors.
@@ -488,15 +470,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void ProcessConsoleCommand(FString inLine);
 
-	/*C++ empty event (BP implemented) to be called from C++*/
-	/* This triggers cutting function in BP*/
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-		void Cut();
-
-	/*C++ empty event (BP implemented) to be called from C++*/
-	/* This triggers cutting function in BP*/
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-		void Spoon();
+	void Feed(FString Character);
 
 	/*C++ empty event (BP implemented) to be called from C++*/
 	/* Uses BP's multi trace by channel */
@@ -504,6 +478,7 @@ public:
 		TArray<FHitResult> TraceObjectsWithBP();
 
 	// List reachable objects 
+	UFUNCTION(BlueprintCallable)
 	TMap<FString, FHitResult> ListObjects();
 
 	/** Press microwave button */
@@ -511,6 +486,11 @@ public:
 
 	/** Close Door */
 	void CloseDoor(FString door);
+
+	void HighLightObject(FString Object_Name, bool OnOff);
+
+	/** Reset Camera Rotation*/
+	void ResetFollowCamera();
 
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;

@@ -68,17 +68,47 @@ namespace iai_avatar_msgs
 			FString Message;
 
 		public:
-			Response() {}
+			Response() {
+				Success = false;
+			}
 
+			Response(bool InSuccess) : Success(InSuccess) {}
+
+			Response(bool InSuccess, FString InMsg) {
+				Success = InSuccess;
+				Message = InMsg;
+			}
+
+			void SetSuccess(bool S)
+			{
+				Success = S;
+			}
+
+			bool GetSuccess()
+			{
+				return Success;
+			}
+
+			void SetMessage(FString S)
+			{
+				Message = S;
+			}
+
+			FString GetMessage()
+			{
+				return Message;
+			}
 
 			virtual void FromJson(TSharedPtr<FJsonObject> JsonObject) override
 			{
-				return;
+				Success = JsonObject->GetBoolField("success");
+				Message = JsonObject->GetStringField("message");
 			}
 
 			static Response GetFromJson(TSharedPtr<FJsonObject> JsonObject)
 			{
-				Response rep; rep.FromJson(JsonObject);
+				Response rep; 
+				rep.FromJson(JsonObject);
 				return rep;
 			}
 
@@ -90,6 +120,8 @@ namespace iai_avatar_msgs
 			virtual TSharedPtr<FJsonObject> ToJsonObject() const
 			{
 				TSharedPtr<FJsonObject> Object = MakeShareable<FJsonObject>(new FJsonObject());
+				Object->SetBoolField("success", Success);
+				Object->SetStringField("message", Message);
 				return Object;
 			}
 		};
