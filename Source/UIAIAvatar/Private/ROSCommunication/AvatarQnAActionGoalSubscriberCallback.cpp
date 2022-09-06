@@ -1,7 +1,7 @@
 #include "ROSCommunication/AvatarQnAActionGoalSubscriberCallback.h"
 #include "actionlib_msgs/GoalStatusArray.h"
 #include "Conversions.h"
-
+/*
 FAvatarQnAActionGoalCallback::FAvatarQnAActionGoalCallback(
 	const FString& InTopic, const FString& InType, UObject* InController) :
 	FROSBridgeSubscriber(InTopic, InType)
@@ -42,4 +42,4 @@ TSharedPtr<FROSBridgeMsg> FAvatarQnAActionGoalCallback::ParseMessage
 
 FAvatarQnAActionGoalCallback::~FAvatarQnAActionGoalCallback()
 {
-}
+}*/

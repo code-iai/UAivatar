@@ -5,11 +5,10 @@
 #include "CoreMinimal.h"
 #include "ROSCommunication/ROSSubscriber.h"
 #include "ROSCommunication/AvatarQnAActionGoalSubscriberCallback.h"
-#include "AvatarQnAActionGoalSubscriber.generated.h"
+//#include "AvatarQnAActionGoalSubscriber.generated.h"
 
 /**
- * 
- */
+ 
 UCLASS()
 class UIAIAVATAR_API UAvatarQnAActionGoalSubscriber : public UROSSubscriber
 {
@@ -18,4 +17,6 @@ public:
 
 	virtual void SetMessageType();
 	virtual void CreateSubscriber();
-};
+}; *
+*/
+

@@ -2,6 +2,7 @@
 
 #include "ROSCommunication/AvatarQnAActionResultPublisher.h"
 
+/*
 void UAvatarQnAActionResultPublisher::SetMessageType()
 {
 	MessageType = TEXT("iai_avatar_msgs/QnAActionResult");
@@ -40,3 +41,4 @@ void UAvatarQnAActionResultPublisher::Publish()
 		UE_LOG(LogTemp, Error, TEXT("Publish QnA Result Sent"));
 	}
 }
+*/

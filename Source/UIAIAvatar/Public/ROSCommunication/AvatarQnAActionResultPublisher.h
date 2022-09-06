@@ -8,11 +8,10 @@
 #include "Controller/AControllerComponent.h"
 #include "actionlib_msgs/GoalStatusArray.h"
 #include "iai_avatar_msgs/actions/QnAActionResult.h"
-#include "AvatarQnAActionResultPublisher.generated.h"
+//#include "AvatarQnAActionResultPublisher.generated.h"
 
 /**
- * 
- */
+ 
 UCLASS()
 class UIAIAVATAR_API UAvatarQnAActionResultPublisher : public UROSPublisher
 {
@@ -26,5 +25,6 @@ protected:
 	virtual void SetOwner(UObject* InOwner);
 
 	UPROPERTY()
-		UAvatarQnAController* Owner;
-};
+//		UAvatarQnAController* Owner;
+};* 
+ */

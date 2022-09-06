@@ -9,15 +9,15 @@
 #include "ROSCommunication/AvatarQnAActionResultPublisher.h"
 #include "ROSCommunication/AvatarQnAActionFeedbackPublisher.h"
 #include "ROSCommunication/AvatarQnAActionGoalSubscriber.h"
-#include "AvatarQnAActionServer.generated.h"
+//#include "AvatarQnAActionServer.generated.h"
 
 /**
- * 
- */
+ 
 UCLASS(Blueprintable, DefaultToInstanced, collapsecategories, hidecategories = Object, editinlinenew)
 class UIAIAVATAR_API UAvatarQnAActionServer : public UROSActionServer
 {
 	GENERATED_BODY()
 public:
 	UAvatarQnAActionServer();
-};
+};* 
+   */

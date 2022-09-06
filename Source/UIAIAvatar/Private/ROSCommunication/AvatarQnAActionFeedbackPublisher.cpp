@@ -3,6 +3,7 @@
 
 #include "ROSCommunication/AvatarQnAActionFeedbackPublisher.h"
 
+/*
 void UAvatarQnAActionFeedbackPublisher::SetMessageType()
 {
 	MessageType = TEXT("iai_avatar_msgs/QnAActionFeedback");
@@ -36,4 +37,4 @@ void UAvatarQnAActionFeedbackPublisher::Publish(float DeltaTime)
 
 		Seq += 1;
 	}
-}
+} */

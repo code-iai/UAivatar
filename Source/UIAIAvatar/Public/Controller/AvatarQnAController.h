@@ -5,12 +5,11 @@
 #include "CoreMinimal.h"
 #include "IAIAvatarCharacter.h"
 #include "Controller/AController.h"
-#include "UDynamicTimeWarp.h"
-#include "AvatarQnAController.generated.h"
+//#include "AvatarQnAController.generated.h"
+/* include "UDynamicTimeWarp.h"
 
-/**
- * 
- */
+
+
 UCLASS(Blueprintable, DefaultToInstanced, collapsecategories, hidecategories = Object, editinlinenew)
 class UIAIAVATAR_API UAvatarQnAController : public UAController
 {
@@ -28,7 +27,7 @@ public:
 
 	UPROPERTY()
 	ACharacter* Avatar;
-	UDTWRecognizer* HeadMoveRecognizer; 
+	// UDTWRecognizer* HeadMoveRecognizer; 
 
 	FTimerHandle TimeOutHandle;
 
@@ -47,4 +46,4 @@ public:
 	bool bSaveCSV;
 
 	bool bAnswering;
-};
+}; */

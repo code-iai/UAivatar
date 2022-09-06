@@ -2,7 +2,7 @@
 
 
 #include "ROSCommunication/AvatarQnAActionGoalSubscriber.h"
-
+/*
 void UAvatarQnAActionGoalSubscriber::SetMessageType()
 {
 	MessageType = TEXT("iai_avatar_msgs/QnAActionGoal");
@@ -19,3 +19,4 @@ void UAvatarQnAActionGoalSubscriber::CreateSubscriber()
 		UE_LOG(LogTemp, Log, TEXT("QnA Action Goal Subscriber connected to RosBridge"));
 	}
 }
+*/

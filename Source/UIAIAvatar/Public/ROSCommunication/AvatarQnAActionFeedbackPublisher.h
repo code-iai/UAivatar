@@ -7,11 +7,10 @@
 #include "Controller/AvatarQnAController.h"
 #include "Controller/AControllerComponent.h"
 #include "iai_avatar_msgs/actions/QnAActionFeedback.h"
-#include "AvatarQnAActionFeedbackPublisher.generated.h"
+//#include "AvatarQnAActionFeedbackPublisher.generated.h"
 
 /**
- * 
- */
+ 
 UCLASS()
 class UIAIAVATAR_API UAvatarQnAActionFeedbackPublisher : public UROSPublisher
 {
@@ -26,5 +25,6 @@ protected:
 	virtual void SetOwner(UObject* InAgent);
 
 	UPROPERTY()
-		UAvatarQnAController* Owner;
-};
+	//	UAvatarQnAController* Owner;
+}; * 
+    */

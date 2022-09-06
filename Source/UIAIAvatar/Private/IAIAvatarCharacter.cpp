@@ -138,9 +138,9 @@ void AIAIAvatarCharacter::SetupPlayerInputComponent(class UInputComponent* Playe
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
 	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn", this, &AIAIAvatarCharacter::TurnCam);
+	//PlayerInputComponent->BindAxis("Turn", this, &AIAIAvatarCharacter::TurnCam);
 	PlayerInputComponent->BindAxis("TurnRate", this, &AIAIAvatarCharacter::TurnAtRate);
-	PlayerInputComponent->BindAxis("LookUp", this, &AIAIAvatarCharacter::LookCam);
+	//PlayerInputComponent->BindAxis("LookUp", this, &AIAIAvatarCharacter::LookCam);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AIAIAvatarCharacter::LookUpAtRate);
 
 	// handle touch devices
@@ -178,7 +178,7 @@ void AIAIAvatarCharacter::LookUpAtRate(float Rate)
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
-void AIAIAvatarCharacter::TurnCam(float Axis)
+/*void AIAIAvatarCharacter::TurnCam(float Axis)
 {
 
 	FRotator HeadRotation;
@@ -204,9 +204,9 @@ void AIAIAvatarCharacter::TurnCam(float Axis)
 		PC->AddYawInput(Axis);
 
 	}
-}
+}*/
 
-void AIAIAvatarCharacter::LookCam(float Axis)
+/*void AIAIAvatarCharacter::LookCam(float Axis)
 {
 
 	FRotator HeadRotation;
@@ -230,7 +230,7 @@ void AIAIAvatarCharacter::LookCam(float Axis)
 		APlayerController* const PC = CastChecked<APlayerController>(Controller);
 		PC->AddPitchInput(Axis);
 	}
-}
+}*/
 
  bool AIAIAvatarCharacter::ControlledByAI() {
 	 check(GetController());
@@ -2627,12 +2627,12 @@ void AIAIAvatarCharacter::BeginPlay() {
 	 AnimationInstance->HandRotation = HandRotation;
 	 AnimationInstance->RightHandRotation = RightHandRotation;
 
-	 HeadPIDController.P = 1.0f;
-	 HeadPIDController.I = 0.0f;
-	 HeadPIDController.D = 0.0f;
-	 HeadPIDController.MaxOutAbs = 2.f;
-
-	 HeadPIDController.Init();
+	 // HeadPIDController.P = 1.0f;
+	 // HeadPIDController.I = 0.0f;
+	 // HeadPIDController.D = 0.0f;
+	 // HeadPIDController.MaxOutAbs = 2.f;
+	 //
+	 // HeadPIDController.Init();
 
 }
 
@@ -2779,7 +2779,7 @@ void AIAIAvatarCharacter::Tick(float DeltaTime) {
 	 {
 		 FRotator CurrentHeadRotation = CurrentAnimationInstance->HeadRotation;
 
-		 const FRotator HeadRotationError = GoalHeadRotation - CurrentHeadRotation;
+//		 const FRotator HeadRotationError = GoalHeadRotation - CurrentHeadRotation;
 		 //UE_LOG(LogTemp, Error, TEXT("Rotation State. Anim %s , Current %s , Goal %s, Error: %s"),
 		 //	*CurrentAnimationInstance->HeadRotation.ToString(),
 		 //	*CurrentHeadRotation.ToString(),
@@ -2788,14 +2788,14 @@ void AIAIAvatarCharacter::Tick(float DeltaTime) {
 
 
 		 // Convert to vector representation to comply with the PID Controller interface
-		 const FVector HeadRotationErrorVector(HeadRotationError.Pitch, HeadRotationError.Yaw, HeadRotationError.Roll);
+	//	 const FVector HeadRotationErrorVector(HeadRotationError.Pitch, HeadRotationError.Yaw, HeadRotationError.Roll);
 
 		 // Get the magnitude of the Vector and decide if we're close enough to the desired Head Pose
-		 if ( HeadRotationErrorVector.Size() <= HeadRotationErrorThreshold) {
+		 /*if ( HeadRotationErrorVector.Size() <= HeadRotationErrorThreshold) {
 			 return;
-		 }
+		 }*/
 
-		 UE_LOG(LogAvatarCharacter, Log, TEXT("  Difference between current head and goal: %s = %f"), *(HeadRotationErrorVector.ToString()), HeadRotationErrorVector.Size());
+	//	 UE_LOG(LogAvatarCharacter, Log, TEXT("  Difference between current head and goal: %s = %f"), *(HeadRotationErrorVector.ToString()), HeadRotationErrorVector.Size());
 
 		// const FVector PIDOutputVector = HeadPIDController.Update(HeadRotationErrorVector, DeltaTime);
 		// UE_LOG(LogAvatarCharacter, Log, TEXT("  PID Output is: %s"), *(PIDOutputVector.ToString()));

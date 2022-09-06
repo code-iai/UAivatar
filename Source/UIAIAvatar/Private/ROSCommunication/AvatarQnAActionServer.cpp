@@ -3,7 +3,7 @@
 
 #include "ROSCommunication/AvatarQnAActionServer.h"
 
-UAvatarQnAActionServer::UAvatarQnAActionServer()
+/*UAvatarQnAActionServer::UAvatarQnAActionServer()
 {
 	CancelSubscriber = CreateDefaultSubobject<UROSActionCancelSubscriber>(TEXT("QnAACancelSubscriber"));
 	StatusPublisher = CreateDefaultSubobject<UROSActionStatusPublisher>(TEXT("QnAAStatusPublisher"));
@@ -11,4 +11,4 @@ UAvatarQnAActionServer::UAvatarQnAActionServer()
 	GoalSubscriber = CreateDefaultSubobject<UAvatarQnAActionGoalSubscriber>(TEXT("QnAAGoalSubscriber"));
 	FeedbackPublisher = CreateDefaultSubobject<UAvatarQnAActionFeedbackPublisher>(TEXT("QnAAFeedbackPublisher"));
 
-}
+}*/

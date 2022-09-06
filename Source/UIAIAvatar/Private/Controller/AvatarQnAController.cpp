@@ -2,7 +2,7 @@
 
 #include "Controller/AvatarQnAController.h"
 #include "Engine.h"
-
+/*
 void UAvatarQnAController::Init(AActor* InAgent)
 {
 	if (!InAgent)
@@ -116,4 +116,4 @@ void UAvatarQnAController::GiveAnswer(FString InAnswer)
 void UAvatarQnAController::TimeOut()
 {
 	GiveAnswer(TEXT("Time Out"));
-}
+} */

@@ -9,7 +9,7 @@
 #include "iai_avatar_msgs/actions/QnAActionGoal.h"
 #include "Controller/AvatarQnAController.h"
 
-
+/*
 class UIAIAVATAR_API FAvatarQnAActionGoalCallback : public FROSBridgeSubscriber
 {
 public:
@@ -21,5 +21,6 @@ public:
 
 	void Callback(TSharedPtr<FROSBridgeMsg> Msg) override;
 
-	UAvatarQnAController* Controller;
-};
+//	UAvatarQnAController* Controller;
+};*
+*/
