@@ -457,6 +457,13 @@ public:
 	void TurnTo(FString mode, float angle = 0);
 
 	void StartPathFollowing(FString Path);
+	//void FollowSpline();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IAI Avatar Configuration")
+		bool isSplineRunning = false;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IAI Avatar Configuration")
+	//	USplineComponent* TrackRef;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IAI Avatar Configuration")
+	//	AActor* LevelSpline;
 
 	// ******** Other Functions ********
 
