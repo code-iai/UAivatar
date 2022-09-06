@@ -315,4 +315,43 @@ public:
 
 	void resetRightHandFingerRots();
 	void resetLeftHandFingerRots();
+       UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator spine_02_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator spine_05_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator neck_01_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator neck_02_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator head_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator clavicle_l_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator clavicle_r_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator upperarm_l_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator upperarm_r_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator lowerarm_l_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator lowerarm_r_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator hand_l_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator hand_r_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator calf_l_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator calf_r_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator thigh_l_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator thigh_r_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator foot_l_Rotation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = IAIAvatar)
+	FRotator foot_r_Rotation;
+	
 }; 

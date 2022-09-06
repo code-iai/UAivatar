@@ -21,7 +21,8 @@ public class UIAIAvatar : ModuleRules
 			"UConversions",
 			"UIds",
 			"ProceduralMeshComponent",
-			"RawMesh"});
+			"RawMesh",
+			"AnimGraph",});
 
 
         PrivateDependencyModuleNames.AddRange(new string[] {
