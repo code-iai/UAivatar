@@ -6,6 +6,7 @@
 #include "ROSCommunication/ROSPublisher.h"
 #include "IAIAvatarCharacter.h"
 #include "IAIAvatarAnimationInstance.h"
+#include "Controller/AvatarConsoleCommandController.h"
 #include "tf2_msgs/TFMessage.h"
 #include "geometry_msgs/TransformStamped.h"
 
@@ -18,27 +19,20 @@ UCLASS()
 class UIAIAVATAR_API UTFBonePublisher : public UROSPublisher
 {
 	GENERATED_BODY()
-	
-	public:
-    
-    	virtual void Publish(float DeltaTime);
 
-	    UPROPERTY(EditAnywhere)
-			FString MapFrameId;
-    
-    protected:
-    	virtual void SetMessageType();
-    	virtual void SetOwner(UObject* InAgent);
-    
-    	UPROPERTY()
-    		AIAIAvatarCharacter* Owner;
-		UPROPERTY()
-			USkeletalMeshComponent* CharacterMesh;
-		UPROPERTY()
-			UIAIAvatarAnimationInstance* AnimationInstance;
+public:
+	virtual void Publish();
 
-	private:
-		uint32 Seq;
-	
+	UPROPERTY(EditAnywhere)
+	FString MapFrameId;
+
+protected:
+	virtual void SetMessageType();
+	virtual void SetOwner(UObject* InOwner);
+
+	UPROPERTY()
+	UAvatarConsoleCommandController* Owner;
+
+private:
+	uint32 Seq;
 };
-
