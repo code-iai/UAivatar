@@ -10,6 +10,8 @@
 #include "Runtime/Engine/Classes/Components/TimelineComponent.h"
 #include "InterpolationHandler.h"
 #include "ProceduralMeshHelper.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 #include "IAIAvatarCharacter.generated.h"
 
 UCLASS(config=Game)
@@ -473,6 +475,12 @@ public:
 	// Check if this Character is currently controlled by an APlayerController
 	bool ControlledByPlayer();
 
+	//Communicate
+	void Communicate(const FString& Content, const FString& Intend);
+
+	USoundCue* SoundCue;
+	UAudioComponent* AudioComponent;
+	
 	/* Process commmands from console */
 	UFUNCTION(BlueprintCallable)
 		void ProcessConsoleCommand(FString inLine);

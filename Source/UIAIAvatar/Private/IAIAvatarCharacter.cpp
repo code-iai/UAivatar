@@ -15,15 +15,19 @@
 #include "Runtime/NavigationSystem/Public/NavigationSystem.h"
 #include "Runtime/Core/Public/Misc/OutputDeviceNull.h"
 #include "Runtime/AIModule/Classes/DetourCrowdAIController.h"
-#include "Kismet/GameplayStatics.h"
 #include "TaskAnimParamLogic.h"
 #include "Engine.h"
+//#include "GameplayStatics.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AIAIAvatarCharacter
 
 AIAIAvatarCharacter::AIAIAvatarCharacter()
 {
+	//Communication
+	static ConstructorHelpers::FObjectFinder<USoundCue> Sound(TEXT("SoundCue'/UIAIAvatar/Interaction/DialougeSound/Help_Cue.Help_Cue'"));
+	SoundCue = Sound.Object;
+	
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -242,8 +246,19 @@ void AIAIAvatarCharacter::LookUpAtRate(float Rate)
 	 return GetController()->IsA(APlayerController::StaticClass());
  }
 
+void AIAIAvatarCharacter::Communicate(const FString& Content, const FString& Intend)
+{
+	
+	if(Content.Equals( TEXT( "greeting" ) ))
+	{
 
- // Reach for an Actor. Modifies the l_hand bone
+		AudioComponent = UGameplayStatics::SpawnSound2D(this, SoundCue, 1);
+
+	}
+}
+
+
+// Reach for an Actor. Modifies the l_hand bone
  void AIAIAvatarCharacter::LeftHandReachForActor(AActor* Actor) {
 	 UE_LOG(LogAvatarCharacter, Log, TEXT("Setting IK to GraspObject Location"));
 
@@ -1445,6 +1460,10 @@ void AIAIAvatarCharacter::ProcessConsoleCommand(FString inLine) {
 						"ERROR: Can't process argument \"%s\".\n Try an <angle value> or \"camera\""),	\
 						*tokens[1]), true, FVector2D(1.7, 1.7));
 				}
+			}
+			//Communicate
+			else if (tokens[0].Equals("comm")) {
+				Communicate(tokens[1],tokens[2]);
 			}
 			// Slide object
 			else if (tokens[0].Equals("slide")) {
@@ -2747,6 +2766,8 @@ void AIAIAvatarCharacter::Tick(float DeltaTime) {
 	 CurrentAnimationInstance = Cast<UIAIAvatarAnimationInstance>(GetMesh()->GetAnimInstance());
 	 check(CurrentAnimationInstance != nullptr);
 
+	//UGameplayStatics::PlayDialogue2D()
+	
 	 //Advancing the actor timeline in every tick
 	 ActorRotationTimeline.TickTimeline(DeltaTime);
 	 //LeftHandIKTimeline.TickTimeline(DeltaTime);
